@@ -11,9 +11,11 @@ import {
   Shield,
   Zap,
   ChevronRight,
-  Star
+  Star,
+  Rocket
 } from 'lucide-react'
 import { Metadata } from 'next'
+import { WaitlistForm } from '@/components/WaitlistForm'
 
 export const metadata: Metadata = {
   title: 'ZZP Tax - BTW Aangifte in 3 Klikken | Automatische Bonscanner',
@@ -48,18 +50,23 @@ export default function LandingPage() {
             </a>
           </nav>
           <div className="flex items-center gap-3">
-            <Link href="/login">
-              <Button variant="ghost">Inloggen</Button>
-            </Link>
-            <Link href="/signup">
-              <Button>Gratis Starten</Button>
-            </Link>
+            <a href="#waitlist">
+              <Button>Meld je aan</Button>
+            </a>
           </div>
         </div>
       </header>
 
+      {/* Coming Soon Banner */}
+      <div className="bg-gradient-to-r from-primary/90 to-primary text-primary-foreground py-3">
+        <div className="container px-4 flex items-center justify-center gap-2 text-sm font-medium">
+          <Rocket className="h-4 w-4" />
+          <span>Coming Soon - Lancering in maart 2026</span>
+        </div>
+      </div>
+
       {/* Hero Section */}
-      <section className="container px-4 py-20 md:py-32">
+      <section id="waitlist" className="container px-4 py-20 md:py-32">
         <div className="mx-auto max-w-4xl text-center">
           <div className="mb-6 inline-block rounded-full bg-primary/10 px-4 py-2 text-sm font-medium text-primary">
             🚀 Nieuw: Automatische bonscanner met AI
@@ -71,22 +78,60 @@ export default function LandingPage() {
             Stop met bonnetjes verzamelen in schoenendozen. Scan je bon, wij berekenen je BTW. 
             Kwartaalrapport klaar in minuten.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/signup">
-              <Button size="lg" className="text-lg px-8 w-full sm:w-auto">
-                Gratis Proberen
-                <ChevronRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-            <Link href="#features">
-              <Button size="lg" variant="outline" className="text-lg px-8 w-full sm:w-auto">
-                Hoe het werkt
-              </Button>
-            </Link>
+          
+          {/* Waitlist Form */}
+          <div className="mb-6">
+            <WaitlistForm />
           </div>
-          <p className="mt-6 text-sm text-muted-foreground">
-            ✓ Geen creditcard vereist  ✓ Opzeggen wanneer je wilt  ✓ GDPR-compliant
+          
+          <p className="text-sm text-muted-foreground">
+            ✓ Vroege toegang  ✓ Exclusieve lanceerkorting  ✓ Updates over ontwikkeling
           </p>
+        </div>
+      </section>
+
+      {/* Coming Soon Section */}
+      <section className="container px-4 py-16">
+        <div className="mx-auto max-w-3xl">
+          <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-8 md:p-12 text-center border border-primary/20">
+            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-semibold mb-6">
+              <Rocket className="h-4 w-4" />
+              Binnenkort Beschikbaar
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              We zijn hard aan het werk!
+            </h2>
+            <p className="text-lg text-muted-foreground mb-6">
+              ZZP Tax lanceert in <span className="font-semibold text-foreground">maart 2026</span>. 
+              Meld je aan voor de wachtlijst en krijg:
+            </p>
+            <div className="grid md:grid-cols-3 gap-4 text-left mb-8">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-1" />
+                <div>
+                  <p className="font-semibold mb-1">Vroege Toegang</p>
+                  <p className="text-sm text-muted-foreground">Als eerste proberen voor de officiële launch</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-1" />
+                <div>
+                  <p className="font-semibold mb-1">Lanceerkorting</p>
+                  <p className="text-sm text-muted-foreground">50% korting op je eerste 3 maanden</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-1" />
+                <div>
+                  <p className="font-semibold mb-1">Updates</p>
+                  <p className="text-sm text-muted-foreground">Blijf op de hoogte van nieuwe features</p>
+                </div>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              📅 Verwachte lancering: <span className="font-semibold text-foreground">Maart 2026</span>
+            </p>
+          </div>
         </div>
       </section>
 
@@ -315,11 +360,11 @@ export default function LandingPage() {
                       <span className="ml-7">Geen bonscanner</span>
                     </li>
                   </ul>
-                  <Link href="/signup">
+                  <a href="#waitlist">
                     <Button variant="outline" className="w-full">
-                      Gratis Starten
+                      Meld je aan
                     </Button>
-                  </Link>
+                  </a>
                 </CardContent>
               </Card>
 
@@ -354,11 +399,11 @@ export default function LandingPage() {
                       <span>Alle categorieën</span>
                     </li>
                   </ul>
-                  <Link href="/signup">
+                  <a href="#waitlist">
                     <Button className="w-full">
-                      Kies Basis
+                      Meld je aan
                     </Button>
-                  </Link>
+                  </a>
                 </CardContent>
               </Card>
 
@@ -390,11 +435,11 @@ export default function LandingPage() {
                       <span>Prio support</span>
                     </li>
                   </ul>
-                  <Link href="/signup">
+                  <a href="#waitlist">
                     <Button variant="outline" className="w-full">
-                      Kies Pro
+                      Meld je aan
                     </Button>
-                  </Link>
+                  </a>
                 </CardContent>
               </Card>
             </div>
@@ -533,19 +578,16 @@ export default function LandingPage() {
       <section className="container px-4 py-16 md:py-24">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Klaar om tijd te besparen?
+            Mis de lancering niet!
           </h2>
           <p className="text-xl text-muted-foreground mb-8">
-            Doe je eerste BTW-aangifte in minder dan 5 minuten. Gratis account aanmaken duurt 30 seconden.
+            Schrijf je in voor vroege toegang en 50% korting op de eerste 3 maanden.
           </p>
-          <Link href="/signup">
-            <Button size="lg" className="text-lg px-8">
-              Gratis Account Aanmaken
-              <ChevronRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
+          <div className="mb-4">
+            <WaitlistForm />
+          </div>
           <p className="mt-4 text-sm text-muted-foreground">
-            Geen creditcard nodig • Opzeggen wanneer je wilt • Direct beginnen
+            Geen spam • Alleen belangrijke updates • Lancering in maart 2026
           </p>
         </div>
       </section>
