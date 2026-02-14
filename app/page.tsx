@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { Metadata } from 'next'
 import { WaitlistForm } from '@/components/WaitlistForm'
+import { AppSwitcher } from '@/components/AppSwitcher'
 
 export const metadata: Metadata = {
   title: 'ZZP Tax - BTW Aangifte in 3 Klikken | Automatische Bonscanner',
@@ -31,26 +32,33 @@ export default function LandingPage() {
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 glass">
         <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-2 font-bold text-2xl">
-            <FileText className="h-6 w-6 text-primary" />
-            ZZP Tax
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 font-bold text-xl">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-accent-tax/10">
+                <Calculator className="h-5 w-5 accent-tax" />
+              </div>
+              <span className="hidden sm:inline">Belastingbot</span>
+            </div>
+            <div className="hidden lg:block">
+              <AppSwitcher currentApp="tax" />
+            </div>
           </div>
           <nav className="hidden md:flex items-center gap-6">
-            <a href="#features" className="text-sm font-medium hover:text-primary transition-colors">
+            <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Functies
             </a>
-            <a href="#pricing" className="text-sm font-medium hover:text-primary transition-colors">
+            <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               Prijzen
             </a>
-            <a href="#faq" className="text-sm font-medium hover:text-primary transition-colors">
+            <a href="#faq" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
               FAQ
             </a>
           </nav>
           <div className="flex items-center gap-3">
             <a href="#waitlist">
-              <Button>Meld je aan</Button>
+              <Button className="bg-primary hover:bg-primary/90">Meld je aan</Button>
             </a>
           </div>
         </div>
@@ -202,93 +210,81 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-6">
             {/* Feature 1: Scanner */}
-            <Card className="relative overflow-hidden">
-              <CardHeader>
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <ScanLine className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle className="text-xl">Bon Scanner</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mb-4">
-                  Maak een foto van je bon. AI leest automatisch bedrag, datum, leverancier en BTW-tarief.
-                </p>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-                    <span>Google Vision AI</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-                    <span>Werkt met foto&apos;s en PDF&apos;s</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-                    <span>Herkent NL bonformaten</span>
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
+            <div className="card-premium p-6 animate-fade-in">
+              <div className="h-12 w-12 rounded-xl bg-accent-tax/10 flex items-center justify-center mb-4">
+                <ScanLine className="h-6 w-6 accent-tax" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Bon Scanner</h3>
+              <p className="text-muted-foreground mb-4 text-sm">
+                Maak een foto van je bon. AI leest automatisch bedrag, datum, leverancier en BTW-tarief.
+              </p>
+              <ul className="space-y-2.5 text-sm">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 accent-tax shrink-0 mt-0.5" />
+                  <span>Google Vision AI</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 accent-tax shrink-0 mt-0.5" />
+                  <span>Werkt met foto&apos;s en PDF&apos;s</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 accent-tax shrink-0 mt-0.5" />
+                  <span>Herkent NL bonformaten</span>
+                </li>
+              </ul>
+            </div>
 
             {/* Feature 2: BTW Berekening */}
-            <Card className="relative overflow-hidden">
-              <CardHeader>
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <Calculator className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle className="text-xl">BTW Berekening</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mb-4">
-                  Automatische berekening van alle BTW-rubrieken volgens Belastingdienst-standaard.
-                </p>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-                    <span>0%, 9% en 21% BTW</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-                    <span>Splitst excl/incl bedragen</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-                    <span>Toont teruggaaf direct</span>
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
+            <div className="card-premium p-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                <Calculator className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3">BTW Berekening</h3>
+              <p className="text-muted-foreground mb-4 text-sm">
+                Automatische berekening van alle BTW-rubrieken volgens Belastingdienst-standaard.
+              </p>
+              <ul className="space-y-2.5 text-sm">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 accent-tax shrink-0 mt-0.5" />
+                  <span>0%, 9% en 21% BTW</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 accent-tax shrink-0 mt-0.5" />
+                  <span>Splitst excl/incl bedragen</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 accent-tax shrink-0 mt-0.5" />
+                  <span>Toont teruggaaf direct</span>
+                </li>
+              </ul>
+            </div>
 
             {/* Feature 3: Kwartaalrapport */}
-            <Card className="relative overflow-hidden">
-              <CardHeader>
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <BarChart3 className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle className="text-xl">Kwartaalrapport</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mb-4">
-                  Genereer een compleet BTW-rapport met één klik. Download als PDF voor je boekhouder.
-                </p>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-                    <span>Alle uitgaven per categorie</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-                    <span>BTW-rubriek overzicht</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-                    <span>Professional PDF export</span>
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
+            <div className="card-premium p-6 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+                <BarChart3 className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Kwartaalrapport</h3>
+              <p className="text-muted-foreground mb-4 text-sm">
+                Genereer een compleet BTW-rapport met één klik. Download als PDF voor je boekhouder.
+              </p>
+              <ul className="space-y-2.5 text-sm">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 accent-tax shrink-0 mt-0.5" />
+                  <span>Alle uitgaven per categorie</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 accent-tax shrink-0 mt-0.5" />
+                  <span>BTW-rubriek overzicht</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 accent-tax shrink-0 mt-0.5" />
+                  <span>Professional PDF export</span>
+                </li>
+              </ul>
+            </div>
           </div>
 
           {/* Additional Features */}
