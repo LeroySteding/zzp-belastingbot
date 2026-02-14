@@ -8,6 +8,18 @@ export async function middleware(request: NextRequest) {
     },
   })
 
+  // Allow public access to homepage and marketing pages if Supabase is not configured
+  const publicPaths = ['/', '/login', '/signup']
+  const isPublicPath = publicPaths.some(path => request.nextUrl.pathname === path)
+  
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    // If Supabase is not configured, allow public pages and redirect protected routes to login
+    if (!isPublicPath) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+    return response
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -57,7 +69,7 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   // Redirect to login if not authenticated and trying to access protected routes
-  if (!user && !request.nextUrl.pathname.startsWith('/login') && !request.nextUrl.pathname.startsWith('/signup')) {
+  if (!user && !isPublicPath) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
