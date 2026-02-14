@@ -7,13 +7,16 @@ import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { profileSchema, type ProfileFormValues } from '@/lib/validations'
 import { mockProfile } from '@/lib/mock-data'
+import { getKORBenefits, getKORRequirements } from '@/lib/kor-check'
 
 export default function SettingsPage() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [korEnabled, setKorEnabled] = useState(mockProfile.kor_enabled || false)
 
   const {
     register,
@@ -135,6 +138,56 @@ export default function SettingsPage() {
                 </Button>
               </div>
             </form>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Kleineondernemersregeling (KOR)</CardTitle>
+            <CardDescription>
+              Voor bedrijven met een jaaromzet onder €20.000
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="kor-enabled" className="text-base">
+                    KOR ingeschakeld
+                  </Label>
+                  <p className="text-sm text-gray-500">
+                    Schakel de KOR-modus in als je jaaromzet onder €20.000 blijft
+                  </p>
+                </div>
+                <Switch
+                  id="kor-enabled"
+                  checked={korEnabled}
+                  onCheckedChange={setKorEnabled}
+                />
+              </div>
+
+              {korEnabled && (
+                <div className="border-t pt-4 space-y-4">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-blue-900 mb-2">Voordelen</h4>
+                    <ul className="space-y-1 text-sm text-blue-800">
+                      {getKORBenefits().map((benefit, idx) => (
+                        <li key={idx}>{benefit}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="bg-yellow-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-yellow-900 mb-2">Let op</h4>
+                    <ul className="list-disc list-inside space-y-1 text-sm text-yellow-800">
+                      {getKORRequirements().map((req, idx) => (
+                        <li key={idx}>{req}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 

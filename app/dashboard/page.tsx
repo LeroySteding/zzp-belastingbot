@@ -3,7 +3,10 @@
 import { ProtectedLayout } from '@/components/layout/protected-layout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { mockExpenses, calculateQuarterSummary } from '@/lib/mock-data'
-import { Euro, FileText, Receipt, TrendingUp } from 'lucide-react'
+import { Euro, FileText, Receipt, TrendingUp, CalendarClock } from 'lucide-react'
+import { KORBanner } from '@/components/kor-banner'
+import { BTWDeadlineWidget } from '@/components/btw-deadline-widget'
+import { checkKOReligibility } from '@/lib/kor-check'
 import {
   PieChart,
   Pie,
@@ -70,6 +73,19 @@ export default function DashboardPage() {
   const btwTarget = 2000
   const btwPercentage = Math.min((btwAmount / btwTarget) * 100, 100)
 
+  // Calculate yearly expenses for KOR check
+  const yearlyExpenses = mockExpenses
+    .filter((e) => e.year === currentYear)
+    .reduce((sum, e) => sum + e.amount_incl, 0)
+  
+  const korStatus = checkKOReligibility(yearlyExpenses)
+
+  // Calculate recurring expenses forecast for next month
+  const recurringExpenses = mockExpenses.filter((e) => e.is_recurring)
+  const nextMonthForecast = recurringExpenses
+    .filter((e) => e.recurring_frequency === 'monthly')
+    .reduce((sum, e) => sum + e.amount_incl, 0)
+
   return (
     <ProtectedLayout>
       <div className="space-y-6">
@@ -78,6 +94,37 @@ export default function DashboardPage() {
           <p className="text-gray-600 mt-2">
             Overzicht van Q{currentQuarter} {currentYear}
           </p>
+        </div>
+
+        {/* KOR Banner */}
+        <KORBanner korStatus={korStatus} />
+
+        {/* BTW Deadline & Recurring Expenses Row */}
+        <div className="grid gap-4 md:grid-cols-2">
+          <BTWDeadlineWidget />
+          
+          {/* Recurring Expenses Forecast */}
+          {nextMonthForecast > 0 && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Verwachte kosten volgende maand
+                </CardTitle>
+                <CalendarClock className="h-4 w-4 text-gray-600" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600">
+                  € {nextMonthForecast.toFixed(2)}
+                </div>
+                <p className="text-xs text-gray-600 mt-1">
+                  {recurringExpenses.filter(e => e.recurring_frequency === 'monthly').length} terugkerende uitgaven
+                </p>
+                <p className="text-xs text-gray-500 mt-2">
+                  Gebaseerd op maandelijkse abonnementen
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Key Metrics */}

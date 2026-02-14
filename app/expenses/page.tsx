@@ -24,7 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Plus, Pencil, Trash2, Receipt, FileText } from 'lucide-react'
+import { Plus, Pencil, Trash2, Receipt, FileText, Download } from 'lucide-react'
 import { mockExpenses } from '@/lib/mock-data'
 import { EXPENSE_CATEGORIES } from '@/lib/types'
 import { format } from 'date-fns'
@@ -64,6 +64,11 @@ export default function ExpensesPage() {
     }
   }
 
+  const handleExportCSV = () => {
+    const url = `/api/expenses/export?year=${selectedYear}&quarter=${selectedQuarter}`
+    window.location.href = url
+  }
+
   return (
     <ProtectedLayout>
       <div className="space-y-6">
@@ -74,12 +79,22 @@ export default function ExpensesPage() {
               Beheer je zakelijke uitgaven en onkosten
             </p>
           </div>
-          <Link href="/expenses/new">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Nieuwe uitgave
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleExportCSV}
+              disabled={filteredExpenses.length === 0}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Exporteer CSV
             </Button>
-          </Link>
+            <Link href="/expenses/new">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Nieuwe uitgave
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Filters */}

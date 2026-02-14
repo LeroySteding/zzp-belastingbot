@@ -1,13 +1,22 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+const supabase = process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
+  ? createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    )
+  : null
 
 export async function POST(request: NextRequest) {
   try {
+    if (!supabase) {
+      return NextResponse.json(
+        { error: 'Service niet beschikbaar' },
+        { status: 503 }
+      )
+    }
+
     const { email } = await request.json()
 
     if (!email || !email.includes('@')) {
@@ -60,8 +69,12 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
+    if (!supabase) {
+      return NextResponse.json({ count: 0 }, { status: 200 })
+    }
+
     const { count, error } = await supabase
       .from('waitlist')
       .select('*', { count: 'exact', head: true })

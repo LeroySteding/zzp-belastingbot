@@ -12,13 +12,15 @@ import {
   LogOut,
   Menu,
   X,
-  Tag
+  Tag,
+  Upload
 } from 'lucide-react'
 import { useState } from 'react'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Uitgaven', href: '/expenses', icon: Receipt },
+  { name: 'Importeren', href: '/import', icon: Upload },
   { name: 'Categorieën', href: '/categories', icon: Tag },
   { name: 'Rapporten', href: '/reports', icon: FileText },
   { name: 'Instellingen', href: '/settings', icon: Settings },

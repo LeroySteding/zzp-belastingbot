@@ -10,7 +10,6 @@ import {
   Clock,
   Shield,
   Zap,
-  ChevronRight,
   Star,
   Rocket
 } from 'lucide-react'

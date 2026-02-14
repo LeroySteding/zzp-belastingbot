@@ -34,26 +34,26 @@ export function WaitlistForm() {
       const data = await response.json()
 
       if (response.ok) {
-        toast.success(
-          'Je staat op de wachtlijst!',
-          'We houden je op de hoogte van de lancering.'
-        )
+        toast({
+          title: 'Je staat op de wachtlijst!',
+          description: 'We houden je op de hoogte van de lancering.',
+        })
         setEmail('')
         // Update count
         if (count !== null) {
           setCount(count + 1)
         }
       } else {
-        toast.error(
-          'Oeps!',
-          data.error || 'Er ging iets mis. Probeer het opnieuw.'
-        )
+        toast({
+          title: 'Oeps!',
+          description: data.error || 'Er ging iets mis. Probeer het opnieuw.',
+        })
       }
-    } catch (error) {
-      toast.error(
-        'Fout',
-        'Kan geen verbinding maken. Controleer je internet.'
-      )
+    } catch {
+      toast({
+        title: 'Fout',
+        description: 'Kan geen verbinding maken. Controleer je internet.',
+      })
     } finally {
       setLoading(false)
     }
