@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
     ).toISOString()
 
     // Fetch accounts using the new access token
-    let accounts = []
+    let accounts: Array<{ iban: string; name: string; currency: string; balance?: number }> = []
     try {
       accounts = await client.getAccounts(tokens.access_token)
     } catch (accountError) {

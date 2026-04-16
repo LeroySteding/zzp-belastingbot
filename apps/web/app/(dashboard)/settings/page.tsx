@@ -181,6 +181,26 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <UsersRound className="h-5 w-5" />
+            Team beheer
+          </CardTitle>
+          <CardDescription>
+            Nodig boekhouders of medewerkers uit om toegang te krijgen tot je administratie
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Link href="/settings/team">
+            <Button variant="outline" className="gap-2">
+              <UsersRound className="h-4 w-4" />
+              Ga naar team beheer
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
     </div>
   )
 }

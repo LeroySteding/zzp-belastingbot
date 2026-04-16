@@ -24,11 +24,18 @@ import {
   ArrowLeft,
   Link2,
   Clock,
+  RefreshCw,
+  Unplug,
+  Info,
+  Zap,
 } from 'lucide-react'
 import { BankTransaction } from '@/lib/belasting/types'
 import { EXPENSE_CATEGORIES, BTW_RATES } from '@/lib/types/index'
 import { parseBankStatement, type BankName } from '@/lib/belasting/bank-parser'
 import { importBankTransactions, getBankImports } from '@/lib/belasting/actions'
+import { getBankConnections, revokeBankConnection } from '@/lib/integrations/psd2/actions'
+import { PSD2_BANKS } from '@/lib/integrations/psd2'
+import type { BankConnection, PSD2Bank } from '@/lib/integrations/psd2/types'
 import type { BankImport } from '@/lib/types/index'
 
 interface SelectableBankTransaction extends BankTransaction {
@@ -47,6 +54,14 @@ export default function BankImportPage() {
   const [importHistory, setImportHistory] = useState<BankImport[]>([])
   const [loadingHistory, setLoadingHistory] = useState(true)
 
+  // PSD2 bank connections state
+  const [bankConnections, setBankConnections] = useState<BankConnection[]>([])
+  const [loadingConnections, setLoadingConnections] = useState(true)
+  const [connectingBank, setConnectingBank] = useState<PSD2Bank | null>(null)
+  const [syncingBank, setSyncingBank] = useState<PSD2Bank | null>(null)
+  const [revokingBank, setRevokingBank] = useState<PSD2Bank | null>(null)
+  const [psd2Message, setPsd2Message] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
   const loadHistory = useCallback(async () => {
     setLoadingHistory(true)
     try {
@@ -59,9 +74,136 @@ export default function BankImportPage() {
     }
   }, [])
 
+  const loadBankConnections = useCallback(async () => {
+    setLoadingConnections(true)
+    try {
+      const connections = await getBankConnections()
+      setBankConnections(connections)
+    } catch {
+      // Silently handle - connections are non-critical for page load
+    } finally {
+      setLoadingConnections(false)
+    }
+  }, [])
+
   useEffect(() => {
     loadHistory()
-  }, [loadHistory])
+    loadBankConnections()
+  }, [loadHistory, loadBankConnections])
+
+  // Check URL params for PSD2 callback results
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const psd2Success = params.get('psd2_success')
+    const psd2Error = params.get('psd2_error')
+
+    if (psd2Success) {
+      setPsd2Message({ type: 'success', text: `${psd2Success} is succesvol gekoppeld!` })
+      loadBankConnections()
+      // Clean up URL
+      const url = new URL(window.location.href)
+      url.searchParams.delete('psd2_success')
+      url.searchParams.delete('tab')
+      window.history.replaceState({}, '', url.pathname)
+    } else if (psd2Error) {
+      setPsd2Message({ type: 'error', text: psd2Error })
+      // Clean up URL
+      const url = new URL(window.location.href)
+      url.searchParams.delete('psd2_error')
+      url.searchParams.delete('tab')
+      window.history.replaceState({}, '', url.pathname)
+    }
+  }, [loadBankConnections])
+
+  // PSD2: Start OAuth flow for a bank
+  const handleConnectBank = async (bank: PSD2Bank) => {
+    setConnectingBank(bank)
+    setPsd2Message(null)
+    try {
+      // Build OAuth2 state parameter (base64url-encoded JSON)
+      // In production, you would also include a CSRF token
+      const statePayload = JSON.stringify({ user_id: 'current', bank })
+      const state = btoa(statePayload)
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '')
+
+      // Call PSD2 client to get auth URL
+      // For now, redirect to the API endpoint that builds the auth URL
+      const redirectUri = `${window.location.origin}/api/integrations/psd2/callback`
+      const params = new URLSearchParams({
+        bank,
+        redirect_uri: redirectUri,
+        state,
+      })
+
+      // Note: In production, the auth URL is built server-side.
+      // Here we redirect to the bank's OAuth2 page via a server endpoint.
+      window.location.href = `/api/integrations/psd2/connect?${params.toString()}`
+    } catch {
+      setPsd2Message({ type: 'error', text: `Verbinden met ${bank} mislukt` })
+    } finally {
+      setConnectingBank(null)
+    }
+  }
+
+  // PSD2: Sync transactions from a connected bank
+  const handleSyncBank = async (bank: PSD2Bank) => {
+    setSyncingBank(bank)
+    setPsd2Message(null)
+    try {
+      const response = await fetch('/api/integrations/psd2/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bank }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        setPsd2Message({ type: 'error', text: result.error || 'Synchronisatie mislukt' })
+        return
+      }
+
+      setPsd2Message({
+        type: 'success',
+        text: `${result.transactions_imported} transactie(s) geimporteerd van ${bank}`,
+      })
+      loadBankConnections()
+      loadHistory()
+    } catch {
+      setPsd2Message({ type: 'error', text: 'Synchronisatie mislukt door een netwerkfout' })
+    } finally {
+      setSyncingBank(null)
+    }
+  }
+
+  // PSD2: Revoke a bank connection
+  const handleRevokeBank = async (bank: PSD2Bank) => {
+    if (!confirm(`Weet je zeker dat je de ${bank} koppeling wilt ontkoppelen?`)) return
+
+    setRevokingBank(bank)
+    setPsd2Message(null)
+    try {
+      const result = await revokeBankConnection(bank)
+      if (result.success) {
+        setPsd2Message({ type: 'success', text: `${bank} koppeling is ontkoppeld` })
+        loadBankConnections()
+      } else {
+        setPsd2Message({ type: 'error', text: result.error || 'Ontkoppelen mislukt' })
+      }
+    } catch {
+      setPsd2Message({ type: 'error', text: 'Ontkoppelen mislukt' })
+    } finally {
+      setRevokingBank(null)
+    }
+  }
+
+  // Helper: get connection for a bank
+  const getConnection = (bank: PSD2Bank): BankConnection | undefined => {
+    return bankConnections.find((c) => c.bank === bank)
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
@@ -463,11 +605,194 @@ export default function BankImportPage() {
 
         {/* ==================== INTEGRATIONS TAB ==================== */}
         <TabsContent value="integrations" className="space-y-6">
+
+          {/* PSD2 info banner */}
+          <Alert className="border-blue-200 bg-blue-50">
+            <Info className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-800">
+              <strong>PSD2 Open Banking</strong> - Directe bankkoppelingen vereisen een AISP-registratie
+              (Account Information Service Provider) bij De Nederlandsche Bank (DNB) en eIDAS-certificaten.
+              De koppelingen hieronder zijn voorbereid voor productiegebruik zodra de registratie rond is.
+            </AlertDescription>
+          </Alert>
+
+          {/* PSD2 success/error messages */}
+          {psd2Message && (
+            <Alert
+              className={
+                psd2Message.type === 'success'
+                  ? 'border-green-200 bg-green-50'
+                  : 'border-red-200 bg-red-50'
+              }
+            >
+              {psd2Message.type === 'success' ? (
+                <CheckCircle className="h-4 w-4 text-green-600" />
+              ) : (
+                <AlertCircle className="h-4 w-4 text-red-600" />
+              )}
+              <AlertDescription
+                className={
+                  psd2Message.type === 'success' ? 'text-green-800' : 'text-red-800'
+                }
+              >
+                {psd2Message.text}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* ---- Bank Koppelingen (PSD2) ---- */}
           <Card>
             <CardHeader>
-              <CardTitle>Bankkoppelingen &amp; Integraties</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="h-5 w-5 text-amber-500" />
+                Bank Koppelingen (PSD2)
+              </CardTitle>
               <CardDescription>
-                Overzicht van beschikbare importmogelijkheden en toekomstige koppelingen
+                Koppel je bank voor automatische transactie-synchronisatie via PSD2 Open Banking
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {loadingConnections ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {PSD2_BANKS.map((bankInfo) => {
+                    const connection = getConnection(bankInfo.bank)
+                    const isConnected = connection?.status === 'connected'
+                    const isExpired = connection?.status === 'expired'
+                    const isRevoked = connection?.status === 'revoked'
+                    const isPending = connection?.status === 'pending'
+
+                    return (
+                      <div
+                        key={bankInfo.bank}
+                        className="border rounded-lg p-4 flex items-center justify-between"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium">{bankInfo.displayName}</p>
+                            {/* Status badge */}
+                            {isConnected && (
+                              <Badge className="bg-green-100 text-green-800 border-green-200">
+                                Verbonden
+                              </Badge>
+                            )}
+                            {isExpired && (
+                              <Badge className="bg-amber-100 text-amber-800 border-amber-200">
+                                Verlopen
+                              </Badge>
+                            )}
+                            {isRevoked && (
+                              <Badge variant="outline" className="text-gray-500">
+                                Ontkoppeld
+                              </Badge>
+                            )}
+                            {isPending && (
+                              <Badge variant="outline" className="text-blue-600 border-blue-300">
+                                Bezig...
+                              </Badge>
+                            )}
+                            {!connection && !bankInfo.available && (
+                              <Badge variant="outline" className="text-amber-700 border-amber-300 bg-amber-50">
+                                Binnenkort
+                              </Badge>
+                            )}
+                            {!connection && bankInfo.available && (
+                              <Badge variant="outline" className="text-gray-500">
+                                Niet verbonden
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-500 mt-0.5">
+                            {bankInfo.description}
+                          </p>
+                          {/* Last sync timestamp */}
+                          {connection?.last_sync_at && (
+                            <p className="text-xs text-gray-400 mt-1">
+                              Laatst gesynchroniseerd:{' '}
+                              {new Date(connection.last_sync_at).toLocaleString('nl-NL', {
+                                dateStyle: 'medium',
+                                timeStyle: 'short',
+                              })}
+                            </p>
+                          )}
+                          {/* Connected accounts */}
+                          {isConnected && connection?.accounts && connection.accounts.length > 0 && (
+                            <p className="text-xs text-gray-400 mt-0.5">
+                              {connection.accounts.length} rekening(en) gekoppeld
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="flex gap-2 ml-4 flex-shrink-0">
+                          {/* Connect / Reconnect button */}
+                          {bankInfo.available && (!connection || isExpired || isRevoked) && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleConnectBank(bankInfo.bank)}
+                              disabled={connectingBank === bankInfo.bank}
+                            >
+                              {connectingBank === bankInfo.bank ? (
+                                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Link2 className="mr-1.5 h-3.5 w-3.5" />
+                              )}
+                              {isExpired ? 'Opnieuw verbinden' : 'Verbinden'}
+                            </Button>
+                          )}
+
+                          {/* Sync button (only when connected) */}
+                          {isConnected && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleSyncBank(bankInfo.bank)}
+                              disabled={syncingBank === bankInfo.bank}
+                            >
+                              {syncingBank === bankInfo.bank ? (
+                                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                              )}
+                              Synchroniseer
+                            </Button>
+                          )}
+
+                          {/* Disconnect button (when connected or expired) */}
+                          {(isConnected || isExpired || isPending) && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={() => handleRevokeBank(bankInfo.bank)}
+                              disabled={revokingBank === bankInfo.bank}
+                            >
+                              {revokingBank === bankInfo.bank ? (
+                                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <Unplug className="mr-1.5 h-3.5 w-3.5" />
+                              )}
+                              Ontkoppelen
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* ---- CSV Import Overview ---- */}
+          <Card>
+            <CardHeader>
+              <CardTitle>CSV Import &amp; Overige Integraties</CardTitle>
+              <CardDescription>
+                Overzicht van beschikbare importmogelijkheden
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -488,8 +813,8 @@ export default function BankImportPage() {
                     name="Rabobank"
                     description="CSV export vanuit Rabo Internetbankieren"
                     csvStatus="available"
-                    apiStatus="planned"
-                    apiLabel="PSD2 API koppeling binnenkort"
+                    apiStatus="available"
+                    apiLabel="PSD2 API koppeling"
                   />
                   <IntegrationRow
                     name="ABN AMRO"
@@ -501,14 +826,15 @@ export default function BankImportPage() {
                     name="Knab"
                     description="CSV export vanuit Knab Online"
                     csvStatus="available"
-                    apiStatus="none"
+                    apiStatus="planned"
+                    apiLabel="PSD2 API binnenkort"
                   />
                   <IntegrationRow
                     name="Revolut"
                     description="CSV export vanuit Revolut Business"
                     csvStatus="available"
-                    apiStatus="planned"
-                    apiLabel="API koppeling binnenkort"
+                    apiStatus="available"
+                    apiLabel="Business API koppeling"
                   />
                 </div>
               </div>
@@ -518,23 +844,9 @@ export default function BankImportPage() {
               {/* Toekomstige koppelingen */}
               <div>
                 <h3 className="font-semibold text-sm text-gray-700 uppercase tracking-wide mb-3">
-                  Direct koppelingen (toekomstig)
+                  Overige integraties (toekomstig)
                 </h3>
                 <div className="space-y-3">
-                  <IntegrationRow
-                    name="Rabobank PSD2"
-                    description="Automatisch transacties ophalen via PSD2 Open Banking API"
-                    csvStatus="none"
-                    apiStatus="planned"
-                    apiLabel="API koppeling binnenkort"
-                  />
-                  <IntegrationRow
-                    name="Revolut Business API"
-                    description="Automatisch transacties synchroniseren vanuit Revolut"
-                    csvStatus="none"
-                    apiStatus="planned"
-                    apiLabel="API koppeling binnenkort"
-                  />
                   <IntegrationRow
                     name="Mollie"
                     description="Inkomende betalingen matchen met facturen voor automatische aflettering"
