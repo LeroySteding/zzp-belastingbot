@@ -1,6 +1,7 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
+import { SERVICE_PROFILE } from './service-profile';
+import type { ServiceProfile, IdealCustomerProfile, ServiceDefinition } from './service-profile';
 
 // ============================================
 // TYPES
@@ -15,7 +16,7 @@ export interface ICPProfile {
   highValueServices: { description: string; totalRevenue: number }[];
   avgInvoiceValue: number;
   suggestedSearches: SearchProfile[];
-  confidence: number; // 0-100, based on data availability
+  confidence: number;
   dataPoints: {
     clientCount: number;
     invoiceCount: number;
@@ -36,416 +37,117 @@ export interface SearchProfile {
   minCompanySize?: number;
   maxCompanySize?: number;
   estimatedLeadCount?: number;
+  relevantService?: string;
+  apolloSearchSuggestions?: ApolloSearchSuggestion[];
+}
+
+export interface ApolloSearchSuggestion {
+  type: 'company' | 'contacts';
+  description: string;
+  searchParams: {
+    domains?: string[];
+    industries?: string[];
+    locations?: string[];
+    jobTitles?: string[];
+    companySizeRange?: { min: number; max: number };
+    keywords?: string[];
+  };
+  exampleCompanies?: { name: string; domain: string; reason: string }[];
 }
 
 // ============================================
-// INDUSTRY KEYWORDS MAPPING
+// SERVICE PROFILE ACCESSORS
 // ============================================
 
-const INDUSTRY_KEYWORDS: Record<string, string[]> = {
-  'Marketing & Communicatie': ['marketing', 'communicatie', 'reclame', 'advertising', 'branding', 'media', 'pr', 'content'],
-  'IT & Software': ['software', 'it', 'tech', 'digital', 'web', 'app', 'saas', 'cloud', 'data', 'cyber'],
-  'E-commerce': ['ecommerce', 'e-commerce', 'webshop', 'online', 'retail', 'shop'],
-  'Financieel': ['finance', 'bank', 'verzekering', 'accountant', 'boekhouding', 'financieel', 'fintech'],
-  'Gezondheidszorg': ['health', 'zorg', 'medisch', 'kliniek', 'apotheek', 'fysiotherapie'],
-  'Onderwijs': ['school', 'onderwijs', 'training', 'opleiding', 'coaching', 'academy'],
-  'Bouw & Vastgoed': ['bouw', 'vastgoed', 'makelaardij', 'architectuur', 'constructie', 'immobilien'],
-  'Horeca': ['restaurant', 'hotel', 'catering', 'horeca', 'café', 'bar'],
-  'Creatief & Design': ['design', 'creative', 'studio', 'fotografie', 'video', 'grafisch', 'kunst'],
-  'Juridisch': ['advocaat', 'juridisch', 'notaris', 'legal', 'recht'],
-  'Consultancy': ['consultancy', 'advies', 'consulting', 'bureau', 'agency'],
-  'Productie & Industrie': ['productie', 'fabriek', 'manufacturing', 'industrie', 'logistiek'],
-};
-
-const SERVICE_KEYWORDS: Record<string, string[]> = {
-  'Webontwikkeling': ['website', 'web', 'frontend', 'backend', 'react', 'next', 'wordpress', 'webshop'],
-  'App ontwikkeling': ['app', 'mobile', 'ios', 'android', 'react native', 'flutter'],
-  'Design & UX': ['design', 'ux', 'ui', 'branding', 'huisstijl', 'logo', 'grafisch'],
-  'Marketing': ['marketing', 'seo', 'social media', 'campagne', 'content', 'advertising'],
-  'Consulting': ['advies', 'strategie', 'consulting', 'analyse', 'optimalisatie'],
-  'Boekhouding & Administratie': ['boekhouding', 'administratie', 'btw', 'belasting', 'jaarrekening'],
-  'Copywriting': ['tekst', 'copy', 'content', 'blog', 'artikel', 'redactie'],
-  'Fotografie & Video': ['fotografie', 'video', 'film', 'productie', 'editing'],
-};
-
-// ============================================
-// HELPER FUNCTIONS
-// ============================================
-
-function classifyIndustry(text: string): string | null {
-  const lower = text.toLowerCase();
-  for (const [industry, keywords] of Object.entries(INDUSTRY_KEYWORDS)) {
-    for (const keyword of keywords) {
-      if (lower.includes(keyword)) {
-        return industry;
-      }
-    }
-  }
-  return null;
+export function getServiceProfile(): ServiceProfile {
+  return SERVICE_PROFILE;
 }
 
-function classifyService(text: string): string | null {
-  const lower = text.toLowerCase();
-  for (const [service, keywords] of Object.entries(SERVICE_KEYWORDS)) {
-    for (const keyword of keywords) {
-      if (lower.includes(keyword)) {
-        return service;
-      }
-    }
-  }
-  return null;
+export function getICPProfiles(): IdealCustomerProfile[] {
+  return SERVICE_PROFILE.idealCustomerProfiles;
 }
 
-function extractCompanySizeRange(size: string | null): string {
-  if (!size) return 'Onbekend';
-  const lower = size.toLowerCase();
-  if (lower.includes('1-10') || lower.includes('micro') || lower.includes('zzp') || lower.includes('solo')) return '1-10';
-  if (lower.includes('11-50') || lower.includes('klein') || lower.includes('small')) return '11-50';
-  if (lower.includes('51-200') || lower.includes('middelgroot') || lower.includes('medium')) return '51-200';
-  if (lower.includes('201-500') || lower.includes('groot') || lower.includes('large')) return '201-500';
-  if (lower.includes('500+') || lower.includes('enterprise') || lower.includes('corporate')) return '500+';
-  // Try to parse a number
-  const num = parseInt(size);
-  if (!isNaN(num)) {
-    if (num <= 10) return '1-10';
-    if (num <= 50) return '11-50';
-    if (num <= 200) return '51-200';
-    if (num <= 500) return '201-500';
-    return '500+';
-  }
-  return 'Onbekend';
+export function getServices(): ServiceDefinition[] {
+  return SERVICE_PROFILE.services;
+}
+
+export function getServiceById(serviceId: string): ServiceDefinition | undefined {
+  return SERVICE_PROFILE.services.find(s => s.id === serviceId);
 }
 
 // ============================================
-// MAIN ANALYSIS
+// ICP ANALYSIS (SERVICE-PROFILE DRIVEN)
 // ============================================
 
+/**
+ * Build an ICPProfile from the hardcoded service profile.
+ * No longer depends on client/invoice data from Supabase.
+ */
 export async function analyzeICP(): Promise<ICPProfile> {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const profile = SERVICE_PROFILE;
 
-  if (!user) {
-    return emptyProfile();
-  }
-
-  // Fetch all relevant data in parallel
-  const [
-    { data: clients },
-    { data: invoices },
-    { data: invoiceItems },
-    { data: projects },
-    { data: leads },
-  ] = await Promise.all([
-    supabase.from('clients').select('*').eq('user_id', user.id),
-    supabase.from('invoices').select('*').eq('user_id', user.id),
-    supabase.from('invoice_items').select('*, invoices!inner(user_id)').eq('invoices.user_id', user.id),
-    supabase.from('projects').select('*').eq('user_id', user.id),
-    supabase.from('leads').select('*').eq('user_id', user.id),
-  ]);
-
-  const clientList = clients || [];
-  const invoiceList = invoices || [];
-  const itemList = invoiceItems || [];
-  const projectList = projects || [];
-  const leadList = leads || [];
-
-  // Calculate confidence based on data availability
-  let confidence = 0;
-  if (clientList.length >= 1) confidence += 20;
-  if (clientList.length >= 5) confidence += 10;
-  if (invoiceList.length >= 1) confidence += 20;
-  if (invoiceList.length >= 5) confidence += 10;
-  if (projectList.length >= 1) confidence += 15;
-  if (leadList.length >= 3) confidence += 10;
-  if (itemList.length >= 3) confidence += 15;
-  confidence = Math.min(confidence, 100);
-
-  // --- Analyze industries ---
+  // Aggregate industries from all ICPs
   const industryCounts: Record<string, number> = {};
-  const allTexts: string[] = [];
-
-  for (const client of clientList) {
-    const searchText = [client.name, client.notes, client.email].filter(Boolean).join(' ');
-    allTexts.push(searchText);
-    const industry = classifyIndustry(searchText);
-    if (industry) {
+  for (const icp of profile.idealCustomerProfiles) {
+    for (const industry of icp.industries) {
       industryCounts[industry] = (industryCounts[industry] || 0) + 1;
     }
   }
-
-  // Also check leads for industry data
-  for (const lead of leadList) {
-    if (lead.company_industry) {
-      const industry = classifyIndustry(lead.company_industry) || lead.company_industry;
-      industryCounts[industry] = (industryCounts[industry] || 0) + 1;
-    }
-  }
-
   const totalIndustryCounted = Object.values(industryCounts).reduce((a, b) => a + b, 0) || 1;
   const industries = Object.entries(industryCounts)
     .map(([name, count]) => ({ name, percentage: Math.round((count / totalIndustryCounted) * 100) }))
     .sort((a, b) => b.percentage - a.percentage)
-    .slice(0, 5);
+    .slice(0, 8);
 
-  // --- Analyze company sizes ---
+  // Aggregate company sizes from all ICPs
+  const sizeRanges = profile.idealCustomerProfiles.map(icp => icp.companySize);
   const sizeCounts: Record<string, number> = {};
-
-  for (const lead of leadList) {
-    const range = extractCompanySizeRange(lead.company_size);
-    if (range !== 'Onbekend') {
-      sizeCounts[range] = (sizeCounts[range] || 0) + 1;
-    }
+  for (const range of sizeRanges) {
+    sizeCounts[range] = (sizeCounts[range] || 0) + 1;
   }
-
-  // If no lead data, assume ZZP clients target small businesses
-  if (Object.keys(sizeCounts).length === 0 && clientList.length > 0) {
-    sizeCounts['1-10'] = Math.ceil(clientList.length * 0.4);
-    sizeCounts['11-50'] = Math.ceil(clientList.length * 0.35);
-    sizeCounts['51-200'] = Math.ceil(clientList.length * 0.25);
-  }
-
   const totalSizeCounted = Object.values(sizeCounts).reduce((a, b) => a + b, 0) || 1;
   const companySize = Object.entries(sizeCounts)
     .map(([range, count]) => ({ range, percentage: Math.round((count / totalSizeCounted) * 100) }))
     .sort((a, b) => b.percentage - a.percentage);
 
-  // --- Analyze invoices ---
-  const invoiceAmounts = invoiceList
-    .map((inv: any) => Number(inv.total_amount || inv.amount || 0))
-    .filter((a: number) => a > 0);
-  const avgInvoiceValue = invoiceAmounts.length > 0
-    ? Math.round(invoiceAmounts.reduce((a: number, b: number) => a + b, 0) / invoiceAmounts.length)
-    : 0;
-
-  // Analyze invoice items for services
-  const serviceRevenue: Record<string, number> = {};
-  for (const item of itemList) {
-    const desc = item.description || '';
-    const amount = Number(item.amount || item.total || 0);
-    const service = classifyService(desc) || desc.substring(0, 50);
-    if (service) {
-      serviceRevenue[service] = (serviceRevenue[service] || 0) + amount;
+  // Aggregate job titles
+  const titleSet = new Set<string>();
+  for (const icp of profile.idealCustomerProfiles) {
+    for (const title of icp.jobTitles) {
+      titleSet.add(title);
     }
   }
+  const topJobTitles = Array.from(titleSet).slice(0, 10);
 
-  const highValueServices = Object.entries(serviceRevenue)
-    .map(([description, totalRevenue]) => ({ description, totalRevenue }))
-    .sort((a, b) => b.totalRevenue - a.totalRevenue)
-    .slice(0, 5);
-
-  // --- Analyze deal values ---
-  const dealValues = [
-    ...invoiceAmounts,
-    ...leadList.filter((l: any) => l.value).map((l: any) => Number(l.value)),
-  ];
-  const avgDealValue = dealValues.length > 0
-    ? Math.round(dealValues.reduce((a, b) => a + b, 0) / dealValues.length)
-    : 2500; // Default for ZZP
-
-  // --- Analyze job titles ---
-  const titleCounts: Record<string, number> = {};
-  for (const lead of leadList) {
-    if (lead.job_title) {
-      const title = lead.job_title.toLowerCase().trim();
-      titleCounts[title] = (titleCounts[title] || 0) + 1;
+  // Aggregate locations
+  const locationSet = new Set<string>();
+  for (const icp of profile.idealCustomerProfiles) {
+    for (const loc of icp.locations) {
+      locationSet.add(loc);
     }
   }
+  const locations = Array.from(locationSet);
 
-  // Add common ZZP target titles if no data
-  const topJobTitles = Object.entries(titleCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([title]) => title);
+  // Calculate average deal value from services
+  const avgDealValue = Math.round(
+    profile.services.reduce((sum, s) => sum + s.avgProjectValue, 0) / profile.services.length
+  );
 
-  if (topJobTitles.length === 0) {
-    topJobTitles.push('eigenaar', 'directeur', 'manager', 'cto', 'marketing manager');
-  }
+  // Build high-value services list
+  const highValueServices = profile.services
+    .map(s => ({ description: s.name, totalRevenue: s.avgProjectValue }))
+    .sort((a, b) => b.totalRevenue - a.totalRevenue);
 
-  // --- Analyze locations ---
-  const locationCounts: Record<string, number> = {};
-
-  for (const client of clientList) {
-    if (client.address) {
-      // Try to extract city from address
-      const parts = (client.address as string).split(',').map((s: string) => s.trim());
-      const city = parts.length > 1 ? parts[parts.length - 1] : parts[0];
-      if (city && city.length > 1) {
-        locationCounts[city] = (locationCounts[city] || 0) + 1;
-      }
-    }
-  }
-
-  for (const lead of leadList) {
-    if (lead.company_location) {
-      locationCounts[lead.company_location] = (locationCounts[lead.company_location] || 0) + 1;
-    }
-  }
-
-  const locations = Object.entries(locationCounts)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([loc]) => loc);
-
-  if (locations.length === 0) {
-    locations.push('Nederland');
-  }
-
-  // Build the profile
-  const profile: ICPProfile = {
+  const icpProfile: ICPProfile = {
     industries,
     companySize,
     avgDealValue,
     topJobTitles,
     locations,
     highValueServices,
-    avgInvoiceValue,
+    avgInvoiceValue: avgDealValue,
     suggestedSearches: [],
-    confidence,
-    dataPoints: {
-      clientCount: clientList.length,
-      invoiceCount: invoiceList.length,
-      projectCount: projectList.length,
-      leadCount: leadList.length,
-    },
-  };
-
-  // Generate search suggestions
-  profile.suggestedSearches = generateSearchProfiles(profile);
-
-  return profile;
-}
-
-// ============================================
-// SEARCH PROFILE GENERATION
-// ============================================
-
-export function generateSearchProfiles(icp: ICPProfile): SearchProfile[] {
-  const profiles: SearchProfile[] = [];
-
-  // Profile 1: Based on top industry
-  if (icp.industries.length > 0) {
-    const topIndustry = icp.industries[0];
-    const industryKeywords = INDUSTRY_KEYWORDS[topIndustry.name] || [topIndustry.name.toLowerCase()];
-    profiles.push({
-      name: `${topIndustry.name} bedrijven`,
-      description: `Bedrijven in ${topIndustry.name.toLowerCase()} - je meest voorkomende klanttype (${topIndustry.percentage}% van klanten)`,
-      targetIndustry: topIndustry.name,
-      targetCompanySize: icp.companySize.length > 0 ? icp.companySize[0].range : '11-50',
-      targetJobTitles: icp.topJobTitles.slice(0, 3),
-      targetLocations: icp.locations.slice(0, 2),
-      keywords: industryKeywords.slice(0, 4),
-      minCompanySize: 5,
-      maxCompanySize: 200,
-      estimatedLeadCount: 50,
-    });
-  }
-
-  // Profile 2: Based on top service
-  if (icp.highValueServices.length > 0) {
-    const topService = icp.highValueServices[0];
-    profiles.push({
-      name: `Bedrijven die ${topService.description.toLowerCase()} nodig hebben`,
-      description: `Je meest winstgevende dienst: ${topService.description} (${new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(topService.totalRevenue)} omzet)`,
-      targetIndustry: undefined,
-      targetCompanySize: '11-50',
-      targetJobTitles: ['eigenaar', 'directeur', 'manager'],
-      targetLocations: icp.locations.slice(0, 2),
-      keywords: [topService.description.toLowerCase(), 'groei', 'verbetering'],
-      minCompanySize: 1,
-      maxCompanySize: 100,
-      estimatedLeadCount: 75,
-    });
-  }
-
-  // Profile 3: Location-based
-  if (icp.locations.length > 0 && icp.locations[0] !== 'Nederland') {
-    profiles.push({
-      name: `Lokale bedrijven in ${icp.locations[0]}`,
-      description: `Focus op bedrijven in je directe omgeving voor persoonlijk contact`,
-      targetIndustry: icp.industries.length > 0 ? icp.industries[0].name : undefined,
-      targetCompanySize: '1-50',
-      targetJobTitles: ['eigenaar', 'directeur'],
-      targetLocations: [icp.locations[0]],
-      keywords: ['mkb', 'ondernemer', icp.locations[0].toLowerCase()],
-      minCompanySize: 1,
-      maxCompanySize: 50,
-      estimatedLeadCount: 30,
-    });
-  }
-
-  // Profile 4: High-value targets
-  if (icp.avgDealValue > 0) {
-    profiles.push({
-      name: 'Grote opdrachten',
-      description: `Bedrijven met budget voor projecten boven ${new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(icp.avgDealValue * 1.5)}`,
-      targetIndustry: undefined,
-      targetCompanySize: '51-200',
-      targetJobTitles: ['cto', 'cmo', 'directeur', 'head of'],
-      targetLocations: icp.locations,
-      keywords: ['groei', 'scale-up', 'investering', 'transformatie'],
-      minCompanySize: 50,
-      maxCompanySize: 500,
-      estimatedLeadCount: 25,
-    });
-  }
-
-  // Profile 5: Second industry if available
-  if (icp.industries.length > 1) {
-    const secondIndustry = icp.industries[1];
-    const industryKeywords = INDUSTRY_KEYWORDS[secondIndustry.name] || [secondIndustry.name.toLowerCase()];
-    profiles.push({
-      name: `${secondIndustry.name} sector`,
-      description: `Je op-een-na grootste klantgroep (${secondIndustry.percentage}% van klanten)`,
-      targetIndustry: secondIndustry.name,
-      targetCompanySize: icp.companySize.length > 0 ? icp.companySize[0].range : '11-50',
-      targetJobTitles: icp.topJobTitles.slice(0, 3),
-      targetLocations: icp.locations,
-      keywords: industryKeywords.slice(0, 3),
-      minCompanySize: 5,
-      maxCompanySize: 200,
-      estimatedLeadCount: 40,
-    });
-  }
-
-  // Always provide at least one generic profile
-  if (profiles.length === 0) {
-    profiles.push({
-      name: 'MKB bedrijven in je regio',
-      description: 'Start met het zoeken naar kleine en middelgrote bedrijven in je omgeving',
-      targetIndustry: undefined,
-      targetCompanySize: '11-50',
-      targetJobTitles: ['eigenaar', 'directeur', 'manager'],
-      targetLocations: icp.locations.length > 0 ? icp.locations : ['Nederland'],
-      keywords: ['mkb', 'ondernemer', 'groei'],
-      minCompanySize: 5,
-      maxCompanySize: 100,
-      estimatedLeadCount: 100,
-    });
-  }
-
-  return profiles;
-}
-
-function emptyProfile(): ICPProfile {
-  return {
-    industries: [],
-    companySize: [],
-    avgDealValue: 0,
-    topJobTitles: ['eigenaar', 'directeur', 'manager'],
-    locations: ['Nederland'],
-    highValueServices: [],
-    avgInvoiceValue: 0,
-    suggestedSearches: [
-      {
-        name: 'MKB bedrijven in Nederland',
-        description: 'Voeg eerst klanten en facturen toe om gepersonaliseerde suggesties te krijgen',
-        targetJobTitles: ['eigenaar', 'directeur'],
-        targetLocations: ['Nederland'],
-        keywords: ['mkb', 'ondernemer'],
-        estimatedLeadCount: 100,
-      },
-    ],
-    confidence: 0,
+    confidence: 95, // High confidence: driven by explicit service profile
     dataPoints: {
       clientCount: 0,
       invoiceCount: 0,
@@ -453,4 +155,145 @@ function emptyProfile(): ICPProfile {
       leadCount: 0,
     },
   };
+
+  // Generate search profiles from the service profile ICPs
+  icpProfile.suggestedSearches = generateSearchSuggestions();
+
+  return icpProfile;
+}
+
+// ============================================
+// SEARCH SUGGESTIONS (SERVICE-PROFILE DRIVEN)
+// ============================================
+
+/**
+ * Generate concrete Apollo search suggestions based on each ICP.
+ * Includes example Dutch companies/domains and contact filters.
+ */
+export function generateSearchSuggestions(): SearchProfile[] {
+  const profiles: SearchProfile[] = [];
+
+  for (const icp of SERVICE_PROFILE.idealCustomerProfiles) {
+    const service = SERVICE_PROFILE.services.find(s => s.id === icp.relevantService);
+    const sizeRange = parseSizeRange(icp.companySize);
+
+    // Generate 2-3 Apollo search suggestions per ICP
+    const apolloSuggestions: ApolloSearchSuggestion[] = [];
+
+    // Suggestion 1: Industry + location search
+    apolloSuggestions.push({
+      type: 'company',
+      description: `Zoek ${icp.industries.slice(0, 2).join(' & ')} bedrijven in ${icp.locations[0]}`,
+      searchParams: {
+        industries: icp.industries,
+        locations: icp.locations,
+        companySizeRange: sizeRange,
+        keywords: service?.keywords.slice(0, 3) || [],
+      },
+      exampleCompanies: getExampleCompanies(icp.name),
+    });
+
+    // Suggestion 2: Contact search by job title
+    apolloSuggestions.push({
+      type: 'contacts',
+      description: `Vind ${icp.jobTitles.slice(0, 2).join(' / ')} bij ${icp.industries[0]} bedrijven`,
+      searchParams: {
+        jobTitles: icp.jobTitles,
+        industries: icp.industries,
+        locations: icp.locations,
+        companySizeRange: sizeRange,
+      },
+    });
+
+    // Suggestion 3: Signal-based search (if relevant)
+    if (icp.signals.length > 0) {
+      apolloSuggestions.push({
+        type: 'company',
+        description: `Bedrijven met signaal: ${icp.signals[0]}`,
+        searchParams: {
+          keywords: [...icp.signals, ...(service?.keywords.slice(0, 2) || [])],
+          locations: icp.locations,
+          companySizeRange: sizeRange,
+        },
+      });
+    }
+
+    profiles.push({
+      name: icp.name,
+      description: icp.description,
+      targetIndustry: icp.industries[0],
+      targetCompanySize: icp.companySize,
+      targetJobTitles: icp.jobTitles,
+      targetLocations: icp.locations,
+      keywords: service?.keywords || [],
+      minCompanySize: sizeRange.min,
+      maxCompanySize: sizeRange.max,
+      estimatedLeadCount: estimateLeadCount(icp),
+      relevantService: icp.relevantService,
+      apolloSearchSuggestions: apolloSuggestions,
+    });
+  }
+
+  return profiles;
+}
+
+/**
+ * Legacy compatibility: generateSearchProfiles wraps generateSearchSuggestions.
+ */
+export function generateSearchProfiles(_icp?: ICPProfile): SearchProfile[] {
+  return generateSearchSuggestions();
+}
+
+// ============================================
+// HELPERS
+// ============================================
+
+function parseSizeRange(companySize: string): { min: number; max: number } {
+  const match = companySize.match(/(\d+)\s*-\s*(\d+)/);
+  if (match) {
+    return { min: parseInt(match[1], 10), max: parseInt(match[2], 10) };
+  }
+  if (companySize.includes('500+')) {
+    return { min: 500, max: 10000 };
+  }
+  return { min: 10, max: 200 };
+}
+
+function estimateLeadCount(icp: IdealCustomerProfile): number {
+  // Rough estimates based on ICP scope
+  const industryFactor = icp.industries.length * 15;
+  const locationFactor = icp.locations.includes('Netherlands') ? 2 : icp.locations.length;
+  return Math.min(industryFactor * locationFactor, 200);
+}
+
+function getExampleCompanies(icpName: string): { name: string; domain: string; reason: string }[] {
+  const examples: Record<string, { name: string; domain: string; reason: string }[]> = {
+    'Scale-ups met AI behoefte': [
+      { name: 'Miro', domain: 'miro.com', reason: 'Groeiende SaaS scale-up, actief in AI integratie' },
+      { name: 'Adyen', domain: 'adyen.com', reason: 'FinTech scale-up met complexe data pipelines' },
+      { name: 'Messagebird (Bird)', domain: 'bird.com', reason: 'Communicatie-platform, AI chatbot kansen' },
+    ],
+    'MKB met automatiseringsbehoefte': [
+      { name: 'Bol.com', domain: 'bol.com', reason: 'Groot platform met veel operationele processen' },
+      { name: 'PostNL', domain: 'postnl.nl', reason: 'Logistiek bedrijf, automatisering van processen' },
+      { name: 'DPG Media', domain: 'dpgmedia.nl', reason: 'Mediabedrijf met digitale transformatie' },
+    ],
+    'Digitale bureaus die capaciteit zoeken': [
+      { name: 'Dept Agency', domain: 'deptagency.com', reason: 'Groot digitaal bureau, complex werk' },
+      { name: 'MediaMonks', domain: 'mediamonks.com', reason: 'Creatief tech bureau, zoekt senior devs' },
+      { name: 'Fabrique', domain: 'fabrique.nl', reason: 'Design & development bureau uit Utrecht' },
+    ],
+    'E-commerce bedrijven': [
+      { name: 'Coolblue', domain: 'coolblue.nl', reason: 'Grote e-commerce speler, eigen tech team' },
+      { name: 'Wehkamp', domain: 'wehkamp.nl', reason: 'E-commerce platform, Shopify + custom' },
+      { name: 'Rituals', domain: 'rituals.com', reason: 'Premium retail merk met digitale groei' },
+    ],
+    'Startups die een MVP nodig hebben': [
+      { name: 'Startup Amsterdam', domain: 'startupamsterdam.org', reason: 'Hub voor vroege-fase startups' },
+      { name: 'UtrechtInc', domain: 'utrechtinc.nl', reason: 'Incubator met startups die MVPs bouwen' },
+      { name: 'Rockstart', domain: 'rockstart.com', reason: 'Accelerator met AI/tech startups' },
+    ],
+  };
+
+  return examples[icpName] || [];
 }

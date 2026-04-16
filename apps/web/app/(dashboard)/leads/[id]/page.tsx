@@ -34,7 +34,7 @@ import {
   deleteLead,
   convertLeadToClient,
 } from '@/lib/leads/actions';
-import type { Lead, LeadActivity } from '@/lib/leads/actions';
+import type { Lead, LeadActivity, LeadInput } from '@/lib/leads/actions';
 
 const STAGE_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
   nieuw: { label: 'Nieuw', color: 'text-gray-700', bg: 'bg-gray-100', border: 'border-gray-300' },
@@ -79,7 +79,7 @@ export default function LeadDetailPage() {
 
   // Editing state
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState<Partial<Lead>>({});
+  const [editData, setEditData] = useState<Partial<LeadInput>>({});
 
   // Activity form
   const [activityType, setActivityType] = useState<LeadActivity['type']>('notitie');
