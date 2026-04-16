@@ -29,6 +29,11 @@ import {
   Kanban,
   Search,
   UserPlus,
+  FileCheck,
+  Bell,
+  Sparkles,
+  TrendingUp,
+  ScrollText,
 } from 'lucide-react'
 import { useState } from 'react'
 import { AccountSwitcher } from '@/components/shared/account-switcher'
@@ -49,6 +54,8 @@ const navSections: NavSection[] = [
     accentColor: 'var(--brand-primary)',
     items: [
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { name: 'Financieel Overzicht', href: '/dashboard/financials', icon: TrendingUp },
+      { name: 'AI Assistent', href: '/dashboard/assistant', icon: Sparkles },
     ],
   },
   {
@@ -57,6 +64,8 @@ const navSections: NavSection[] = [
     items: [
       { name: 'Facturen', href: '/factuur', icon: FileText },
       { name: 'Nieuwe Factuur', href: '/factuur/invoices/new', icon: PlusCircle },
+      { name: 'Offertes', href: '/factuur/offertes', icon: FileCheck },
+      { name: 'Herinneringen', href: '/factuur/reminders', icon: Bell },
       { name: 'Klanten', href: '/factuur/clients', icon: Users },
       { name: 'Rapportages', href: '/factuur/reports', icon: FileBarChart },
     ],
@@ -89,6 +98,14 @@ const navSections: NavSection[] = [
       { name: 'Pipeline', href: '/leads/pipeline', icon: Kanban },
       { name: 'Zoek Prospects', href: '/leads/search', icon: Search },
       { name: 'Nieuwe Lead', href: '/leads/new', icon: UserPlus },
+    ],
+  },
+  {
+    title: 'Contracten',
+    accentColor: 'oklch(0.55 0.2 200)',
+    items: [
+      { name: 'Overzicht', href: '/contracts', icon: ScrollText },
+      { name: 'Nieuw Contract', href: '/contracts/new', icon: PlusCircle },
     ],
   },
   {

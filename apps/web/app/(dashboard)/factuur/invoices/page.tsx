@@ -7,10 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Download, Copy, Trash2, FileText, Loader2, RotateCcw } from 'lucide-react';
+import { Plus, Download, Copy, Trash2, FileText, Loader2, RotateCcw, LinkIcon, CheckCircle2 } from 'lucide-react';
 import { formatCurrency, formatDate, getInvoiceTotal } from '@/lib/factuur/invoice-utils';
 import { Invoice, InvoiceStatus } from '@/lib/factuur/types/invoice';
 import { getInvoices, deleteInvoiceAction, duplicateInvoiceAction } from '@/lib/factuur/actions';
+import { getOrCreatePaymentLink, isMollieConfigured } from '@/lib/factuur/payment-actions';
 
 const statusColors: Record<string, string> = {
   concept: 'bg-gray-100 text-gray-800',
@@ -28,9 +29,13 @@ export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<InvoiceStatus | 'all'>('all');
+  const [mollieEnabled, setMollieEnabled] = useState(false);
+  const [creatingLink, setCreatingLink] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState<string | null>(null);
 
   useEffect(() => {
     loadInvoices();
+    isMollieConfigured().then(setMollieEnabled);
   }, []);
 
   async function loadInvoices() {
@@ -57,6 +62,24 @@ export default function InvoicesPage() {
       if (success) {
         setInvoices(invoices.filter(inv => inv.id !== invoice.id));
       }
+    }
+  };
+
+  const handlePaymentLink = async (invoice: Invoice) => {
+    setCreatingLink(invoice.id);
+    try {
+      const result = await getOrCreatePaymentLink(invoice.id);
+      if (result.url) {
+        await navigator.clipboard.writeText(result.url);
+        setLinkCopied(invoice.id);
+        setTimeout(() => setLinkCopied(null), 3000);
+      } else {
+        alert(result.error || 'Kon geen betaallink aanmaken.');
+      }
+    } catch {
+      alert('Er is een fout opgetreden bij het aanmaken van de betaallink.');
+    } finally {
+      setCreatingLink(null);
     }
   };
 
@@ -228,6 +251,9 @@ export default function InvoicesPage() {
                         <TableCell>
                           <div className="flex gap-2">
                             <Badge className={statusColors[invoice.status]}>
+                              {invoice.status === 'betaald' && (
+                                <CheckCircle2 className="h-3 w-3 mr-1 inline" />
+                              )}
                               {statusLabels[invoice.status]}
                             </Badge>
                             {invoice.recurring && (
@@ -241,6 +267,23 @@ export default function InvoicesPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex justify-end gap-2">
+                            {mollieEnabled && invoice.status !== 'betaald' && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handlePaymentLink(invoice)}
+                                disabled={creatingLink === invoice.id}
+                                title={linkCopied === invoice.id ? 'Link gekopieerd!' : 'Betaallink kopiëren'}
+                              >
+                                {creatingLink === invoice.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : linkCopied === invoice.id ? (
+                                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                ) : (
+                                  <LinkIcon className="h-4 w-4" />
+                                )}
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="icon"

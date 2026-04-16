@@ -12,6 +12,9 @@ import {
   PlusCircle,
   CalendarClock,
   Loader2,
+  Sparkles,
+  TrendingUp,
+  ScrollText,
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { getInvoices } from '@/lib/factuur/actions'
@@ -194,10 +197,13 @@ export default function DashboardPage() {
       {/* Quick Actions */}
       <div className="card-premium p-6">
         <h2 className="text-lg font-semibold mb-4">Snelle Acties</h2>
-        <div className="grid sm:grid-cols-3 gap-2">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
           <QuickAction title="Nieuwe Factuur" icon={PlusCircle} href="/factuur/invoices/new" color="oklch(0.65 0.25 250)" />
           <QuickAction title="Start Timer" icon={Play} href="/uren/track" color="oklch(0.65 0.26 300)" />
           <QuickAction title="Uitgave Toevoegen" icon={Receipt} href="/belasting/expenses" color="oklch(0.6 0.18 150)" />
+          <QuickAction title="Financieel Overzicht" icon={TrendingUp} href="/dashboard/financials" color="oklch(0.6 0.18 150)" />
+          <QuickAction title="Nieuw Contract" icon={ScrollText} href="/contracts/new" color="oklch(0.55 0.2 200)" />
+          <QuickAction title="AI Assistent" icon={Sparkles} href="/dashboard/assistant" color="oklch(0.6 0.25 270)" />
         </div>
       </div>
     </div>
