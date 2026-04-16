@@ -294,7 +294,7 @@ export default function FinancialsPage() {
                 tickFormatter={(v) => `\u20AC${(v / 1000).toFixed(0)}k`}
               />
               <Tooltip
-                formatter={(value: number) => formatCurrency(value)}
+                formatter={(value: any) => formatCurrency(Number(value))}
                 labelFormatter={(label) => label}
               />
               <Legend />
@@ -305,9 +305,6 @@ export default function FinancialsPage() {
                 stroke="oklch(0.65 0.25 250)"
                 fill="url(#incomeGrad)"
                 strokeWidth={2}
-                strokeDasharray={(entry: any) =>
-                  entry?.isForecast ? '5 5' : undefined
-                }
               />
               <Area
                 type="monotone"
@@ -348,7 +345,7 @@ export default function FinancialsPage() {
                   tickFormatter={(v) => `\u20AC${(v / 1000).toFixed(0)}k`}
                 />
                 <Tooltip
-                  formatter={(value: number) => formatCurrency(value)}
+                  formatter={(value: any) => formatCurrency(Number(value))}
                 />
                 <Bar dataKey="profit" name="Winst" radius={[4, 4, 0, 0]}>
                   {chartData.map((entry, index) => (
@@ -394,8 +391,8 @@ export default function FinancialsPage() {
                     cx="50%"
                     cy="50%"
                     outerRadius={100}
-                    label={({ category, percent }) =>
-                      `${category} (${(percent * 100).toFixed(0)}%)`
+                    label={({ name, percent }: any) =>
+                      `${name} (${((percent || 0) * 100).toFixed(0)}%)`
                     }
                     labelLine={true}
                   >
@@ -407,7 +404,7 @@ export default function FinancialsPage() {
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value: number) => formatCurrency(value)}
+                    formatter={(value: any) => formatCurrency(Number(value))}
                   />
                 </PieChart>
               </ResponsiveContainer>

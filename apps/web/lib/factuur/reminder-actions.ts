@@ -153,7 +153,7 @@ ${companyName}`;
         address: (invoice.clients as any)?.address || '',
         email: clientEmail,
       },
-      items: [], // Will be fetched by the email API if needed
+      items: [] as { id: string; description: string; quantity: number; unitPrice: number; btwRate: number }[],
       status: invoice.status,
       notes: invoice.notes,
       template: invoice.template,
