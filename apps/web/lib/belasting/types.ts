@@ -53,7 +53,7 @@ export interface BankImport {
   id: string
   user_id: string
   filename: string
-  bank_name: 'ING' | 'Rabobank' | 'ABN AMRO' | 'Overig'
+  bank_name: 'ING' | 'Rabobank' | 'ABN AMRO' | 'Knab' | 'Revolut' | 'Overig'
   import_date: string
   total_transactions: number
   transactions_imported: number

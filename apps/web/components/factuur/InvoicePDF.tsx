@@ -1,5 +1,3 @@
-'use client';
-
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
 import { Invoice } from '@/lib/factuur/types/invoice';
 import { calculateInvoice, formatCurrency, formatDate } from '@/lib/factuur/invoice-utils';

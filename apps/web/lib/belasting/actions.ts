@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import type { Profile, Expense } from '@/lib/belasting/types'
+import type { Profile, Expense, BankImport, BankTransaction } from '@/lib/belasting/types'
 
 // ============================================
 // PROFILE
@@ -241,4 +241,119 @@ export async function calculateQuarterSummary(
     totalIncl: totalIncl.toFixed(2),
     count: data.length,
   }
+}
+
+// ============================================
+// BANK IMPORTS
+// ============================================
+
+export async function importBankTransactions(
+  transactions: BankTransaction[],
+  bankName: string,
+  filename: string
+): Promise<{ success: boolean; importId?: string; imported?: number; error?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { success: false, error: 'Niet ingelogd' }
+
+  if (!transactions.length) {
+    return { success: false, error: 'Geen transacties om te importeren' }
+  }
+
+  // Create bank_import record
+  const { data: importRecord, error: importError } = await supabase
+    .from('bank_imports')
+    .insert({
+      user_id: user.id,
+      filename,
+      bank_name: bankName,
+      import_date: new Date().toISOString().split('T')[0],
+      total_transactions: transactions.length,
+      transactions_imported: 0,
+      status: 'pending',
+    })
+    .select('id')
+    .single()
+
+  if (importError || !importRecord) {
+    return { success: false, error: `Import record aanmaken mislukt: ${importError?.message || 'Onbekende fout'}` }
+  }
+
+  // Insert expenses from parsed transactions
+  const expenses = transactions.map((tx) => {
+    const dateObj = new Date(tx.date)
+    const month = dateObj.getMonth() + 1
+    const quarter = Math.ceil(month / 3)
+    const year = dateObj.getFullYear()
+
+    return {
+      user_id: user.id,
+      description: tx.description,
+      amount_excl: tx.amount,
+      btw_rate: tx.btw_rate ?? 21,
+      category: tx.category || 'Overig',
+      date: tx.date,
+      quarter,
+      year,
+      source: 'bank_import' as const,
+    }
+  })
+
+  const { data: inserted, error: expenseError } = await supabase
+    .from('expenses')
+    .insert(expenses)
+    .select('id')
+
+  if (expenseError) {
+    // Mark import as failed
+    await supabase
+      .from('bank_imports')
+      .update({ status: 'failed' })
+      .eq('id', importRecord.id)
+
+    return { success: false, error: `Transacties importeren mislukt: ${expenseError.message}` }
+  }
+
+  const importedCount = inserted?.length ?? 0
+
+  // Update bank_import record with success
+  await supabase
+    .from('bank_imports')
+    .update({
+      transactions_imported: importedCount,
+      status: 'completed',
+    })
+    .eq('id', importRecord.id)
+
+  return {
+    success: true,
+    importId: importRecord.id,
+    imported: importedCount,
+  }
+}
+
+export async function getBankImports(): Promise<BankImport[]> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const { data, error } = await supabase
+    .from('bank_imports')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+
+  if (error || !data) return []
+
+  return data.map((row) => ({
+    id: row.id,
+    user_id: row.user_id,
+    filename: row.filename,
+    bank_name: row.bank_name,
+    import_date: row.import_date,
+    total_transactions: row.total_transactions,
+    transactions_imported: row.transactions_imported,
+    status: row.status,
+    created_at: row.created_at,
+  }))
 }

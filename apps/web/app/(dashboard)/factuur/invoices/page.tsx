@@ -60,8 +60,36 @@ export default function InvoicesPage() {
     }
   };
 
-  const handleDownload = (invoiceNumber: string) => {
-    alert(`PDF downloaden van factuur ${invoiceNumber}`);
+  const [downloading, setDownloading] = useState<string | null>(null);
+
+  const handleDownload = async (invoice: Invoice) => {
+    setDownloading(invoice.id);
+    try {
+      const response = await fetch('/api/factuur/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(invoice),
+      });
+
+      if (!response.ok) {
+        throw new Error('PDF generatie mislukt');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${invoice.invoiceNumber}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Er is een fout opgetreden bij het downloaden van de PDF.');
+    } finally {
+      setDownloading(null);
+    }
   };
 
   const sentTotal = invoices
@@ -206,10 +234,15 @@ export default function InvoicesPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleDownload(invoice.invoiceNumber)}
+                              onClick={() => handleDownload(invoice)}
+                              disabled={downloading === invoice.id}
                               title="Download PDF"
                             >
-                              <Download className="h-4 w-4" />
+                              {downloading === invoice.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Download className="h-4 w-4" />
+                              )}
                             </Button>
                             <Button
                               variant="ghost"
