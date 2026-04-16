@@ -8,18 +8,16 @@ export async function middleware(request: NextRequest) {
     },
   })
 
+  // Demo mode: allow all routes when Supabase is not configured
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return response
+  }
+
   // Public paths that don't require authentication
   const publicPaths = ['/', '/login', '/signup', '/portal']
   const isPublicPath = publicPaths.some(path =>
     request.nextUrl.pathname === path || request.nextUrl.pathname.startsWith('/portal/')
   )
-
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-    if (!isPublicPath) {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
-    return response
-  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -57,11 +55,6 @@ export async function middleware(request: NextRequest) {
   // Redirect to dashboard if authenticated and on login/signup
   if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup')) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
-
-  // Redirect /dashboard to the unified dashboard
-  if (user && request.nextUrl.pathname === '/dashboard') {
-    return NextResponse.rewrite(new URL('/(dashboard)', request.url))
   }
 
   return response
