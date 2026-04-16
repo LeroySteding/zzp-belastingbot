@@ -1,0 +1,240 @@
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FileText, Download } from 'lucide-react';
+import { mockInvoices } from '@/lib/factuur/mock-data';
+import { formatCurrency, getInvoiceTotal, calculateInvoice } from '@/lib/factuur/invoice-utils';
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
+export default function ReportsPage() {
+  const [selectedYear, setSelectedYear] = useState('2026');
+
+  // Filter invoices by year and paid/sent status
+  const yearInvoices = mockInvoices.filter(inv => {
+    const year = inv.date.split('-')[0];
+    return year === selectedYear && (inv.status === 'betaald' || inv.status === 'verzonden');
+  });
+
+  // Calculate total revenue
+  const totalRevenue = yearInvoices.reduce((sum, inv) => sum + getInvoiceTotal(inv), 0);
+
+  // Revenue per month
+  const monthlyData = Array.from({ length: 12 }, (_, i) => {
+    const month = (i + 1).toString().padStart(2, '0');
+    const monthInvoices = yearInvoices.filter(inv => inv.date.startsWith(`${selectedYear}-${month}`));
+    const revenue = monthInvoices.reduce((sum, inv) => sum + getInvoiceTotal(inv), 0);
+    return {
+      month: ['Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec'][i],
+      omzet: revenue,
+    };
+  });
+
+  // Revenue per client
+  const clientRevenue = new Map<string, number>();
+  yearInvoices.forEach(inv => {
+    const current = clientRevenue.get(inv.client.name) || 0;
+    clientRevenue.set(inv.client.name, current + getInvoiceTotal(inv));
+  });
+  const clientData = Array.from(clientRevenue.entries())
+    .map(([name, omzet]) => ({ name, omzet }))
+    .sort((a, b) => b.omzet - a.omzet);
+
+  // BTW totals per rate
+  const btwTotals = {
+    btw21: 0,
+    btw9: 0,
+    btw0: 0,
+  };
+  yearInvoices.forEach(inv => {
+    const calc = calculateInvoice(inv.items);
+    btwTotals.btw21 += calc.btw21;
+    btwTotals.btw9 += calc.btw9;
+    btwTotals.btw0 += calc.btw0;
+  });
+
+  const btwData = [
+    { name: 'BTW 21%', value: btwTotals.btw21 },
+    { name: 'BTW 9%', value: btwTotals.btw9 },
+    { name: 'BTW 0%', value: btwTotals.btw0 },
+  ].filter(item => item.value > 0);
+
+  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+
+  const handleExportCSV = () => {
+    const headers = ['Factuurnummer', 'Datum', 'Klant', 'Bedrag', 'BTW', 'Totaal', 'Status'];
+    const rows = yearInvoices.map(inv => {
+      const calc = calculateInvoice(inv.items);
+      return [
+        inv.invoiceNumber,
+        inv.date,
+        inv.client.name,
+        calc.subtotal.toFixed(2),
+        calc.totalBtw.toFixed(2),
+        calc.total.toFixed(2),
+        inv.status,
+      ];
+    });
+    
+    const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `omzet-${selectedYear}.csv`;
+    a.click();
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <Link href="/dashboard" className="flex items-center gap-2">
+              <FileText className="h-6 w-6 text-blue-600" />
+              <span className="font-bold text-lg">ZZP Factuur</span>
+            </Link>
+            <span className="text-gray-300">|</span>
+            <h1 className="text-2xl font-bold">Jaaroverzicht</h1>
+          </div>
+          <div className="flex gap-2 items-center">
+            <span className="text-sm text-gray-600">Jaar:</span>
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2026">2026</SelectItem>
+                <SelectItem value="2025">2025</SelectItem>
+                <SelectItem value="2024">2024</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button onClick={handleExportCSV}>
+              <Download className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <div className="container mx-auto px-4 py-8">
+        {/* Summary Cards */}
+        <div className="grid md:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Totale Omzet</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-blue-600">{formatCurrency(totalRevenue)}</div>
+              <p className="text-sm text-gray-600 mt-1">{yearInvoices.length} facturen</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">BTW 21%</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{formatCurrency(btwTotals.btw21)}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">BTW 9%</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{formatCurrency(btwTotals.btw9)}</div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Aantal Klanten</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{clientRevenue.size}</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Charts */}
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Monthly Revenue Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Omzet per Maand</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={monthlyData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis />
+                  <Tooltip 
+                    formatter={(value) => formatCurrency(value as number)}
+                    labelStyle={{ color: '#000' }}
+                  />
+                  <Legend />
+                  <Bar dataKey="omzet" fill="#3b82f6" name="Omzet" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Client Revenue Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Omzet per Klant</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={clientData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} (${((percent || 0) * 100).toFixed(0)}%)`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="omzet"
+                  >
+                    {clientData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => formatCurrency(value as number)} />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* BTW Overview Table */}
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>BTW Overzicht</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {btwData.map((item) => (
+                <div key={item.name} className="flex justify-between items-center py-2 border-b last:border-0">
+                  <span className="font-medium">{item.name}</span>
+                  <span className="text-lg font-bold">{formatCurrency(item.value)}</span>
+                </div>
+              ))}
+              <div className="flex justify-between items-center py-2 pt-4 border-t-2">
+                <span className="font-bold text-lg">Totaal BTW</span>
+                <span className="text-xl font-bold text-blue-600">
+                  {formatCurrency(btwTotals.btw21 + btwTotals.btw9 + btwTotals.btw0)}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

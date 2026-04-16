@@ -1,0 +1,560 @@
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ArrowLeft, Plus, Trash2, Eye, Mail, FileText } from 'lucide-react';
+import { defaultCompanyInfo, mockClients } from '@/lib/factuur/mock-data';
+import { generateInvoiceNumber, getDueDate, calculateInvoice, formatCurrency } from '@/lib/factuur/invoice-utils';
+import { CompanyInfo, ClientInfo, LineItem, RecurringFrequency, InvoiceTemplate } from '@/lib/factuur/types/invoice';
+import InvoicePreview from '@/components/factuur/InvoicePreview';
+
+export default function NewInvoicePage() {
+  const [company, setCompany] = useState<CompanyInfo>(defaultCompanyInfo);
+  const [selectedClientId, setSelectedClientId] = useState<string>('');
+  const [client, setClient] = useState<ClientInfo>({
+    name: '',
+    address: '',
+    email: '',
+  });
+  const [invoiceNumber] = useState(generateInvoiceNumber());
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [dueDate, setDueDate] = useState(getDueDate(new Date().toISOString().split('T')[0]));
+  const [items, setItems] = useState<LineItem[]>([
+    {
+      id: '1',
+      description: '',
+      quantity: 1,
+      unitPrice: 0,
+      btwRate: 21,
+    },
+  ]);
+  const [notes, setNotes] = useState('');
+  const [showPreview, setShowPreview] = useState(false);
+  const [recurring, setRecurring] = useState<RecurringFrequency>(null);
+  const [template, setTemplate] = useState<InvoiceTemplate>('modern');
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+
+  const handleClientSelect = (clientId: string) => {
+    setSelectedClientId(clientId);
+    if (clientId === 'manual') {
+      setClient({
+        name: '',
+        address: '',
+        email: '',
+      });
+    } else {
+      const selectedClient = mockClients.find(c => c.id === clientId);
+      if (selectedClient) {
+        setClient({
+          name: selectedClient.name,
+          address: selectedClient.address,
+          email: selectedClient.email,
+          kvk: selectedClient.kvk,
+          btwNumber: selectedClient.btwNumber,
+        });
+      }
+    }
+  };
+
+  const addItem = () => {
+    setItems([
+      ...items,
+      {
+        id: Date.now().toString(),
+        description: '',
+        quantity: 1,
+        unitPrice: 0,
+        btwRate: 21,
+      },
+    ]);
+  };
+
+  const removeItem = (id: string) => {
+    if (items.length > 1) {
+      setItems(items.filter(item => item.id !== id));
+    }
+  };
+
+  const updateItem = (id: string, field: keyof LineItem, value: any) => {
+    setItems(items.map(item => 
+      item.id === id ? { ...item, [field]: value } : item
+    ));
+  };
+
+  const calculation = calculateInvoice(items);
+
+  const invoice = {
+    id: 'new',
+    invoiceNumber,
+    date,
+    dueDate,
+    company,
+    client,
+    items,
+    status: 'concept' as const,
+    notes,
+    recurring,
+    template,
+  };
+
+  const emailSubject = `Factuur ${invoiceNumber} van ${company.name}`;
+  const emailBody = `Beste ${client.name},
+
+Hierbij ontvangt u factuur ${invoiceNumber} van ${company.name}.
+
+Factuurgegevens:
+- Factuurnummer: ${invoiceNumber}
+- Factuurdatum: ${new Date(date).toLocaleDateString('nl-NL')}
+- Vervaldatum: ${new Date(dueDate).toLocaleDateString('nl-NL')}
+- Totaalbedrag: ${formatCurrency(calculation.total)}
+
+De factuur is als PDF bijgevoegd bij deze email.
+
+Wij verzoeken u vriendelijk het factuurbedrag voor de vervaldatum over te maken naar:
+IBAN: ${company.iban}
+t.n.v. ${company.name}
+
+Bij vragen kunt u contact met ons opnemen via ${company.email || company.phone || 'onze contactgegevens'}.
+
+Met vriendelijke groet,
+${company.name}`;
+
+  const templateDescriptions = {
+    modern: 'Modern - Strak en professioneel design met blauwe accenten',
+    classic: 'Classic - Formeel en traditioneel ontwerp met zwarte accenten',
+    minimal: 'Minimaal - Clean en minimalistisch design met groene accenten',
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b">
+        <div className="container mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-2">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="/invoices">
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+            </Button>
+            <h1 className="text-2xl font-bold">Nieuwe Factuur</h1>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" onClick={() => setShowPreview(!showPreview)}>
+              <Eye className="h-4 w-4 mr-2" />
+              {showPreview ? 'Verberg' : 'Toon'} Preview
+            </Button>
+            <Button variant="outline" onClick={() => setShowEmailDialog(true)}>
+              <Mail className="h-4 w-4 mr-2" />
+              Email Preview
+            </Button>
+            <Button>Opslaan als Concept</Button>
+            <Button variant="default">Genereer PDF</Button>
+          </div>
+        </div>
+      </header>
+
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Form */}
+          <div className="space-y-6">
+            {/* Company Info */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Jouw Bedrijfsgegevens</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="company-name">Bedrijfsnaam</Label>
+                  <Input
+                    id="company-name"
+                    value={company.name}
+                    onChange={(e) => setCompany({ ...company, name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="company-address">Adres</Label>
+                  <Textarea
+                    id="company-address"
+                    value={company.address}
+                    onChange={(e) => setCompany({ ...company, address: e.target.value })}
+                    rows={3}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="kvk">KvK-nummer</Label>
+                    <Input
+                      id="kvk"
+                      value={company.kvk}
+                      onChange={(e) => setCompany({ ...company, kvk: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="btw">BTW-nummer</Label>
+                    <Input
+                      id="btw"
+                      value={company.btwNumber}
+                      onChange={(e) => setCompany({ ...company, btwNumber: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="iban">IBAN</Label>
+                  <Input
+                    id="iban"
+                    value={company.iban}
+                    onChange={(e) => setCompany({ ...company, iban: e.target.value })}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="company-email">Email</Label>
+                    <Input
+                      id="company-email"
+                      type="email"
+                      value={company.email || ''}
+                      onChange={(e) => setCompany({ ...company, email: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="company-phone">Telefoon</Label>
+                    <Input
+                      id="company-phone"
+                      value={company.phone || ''}
+                      onChange={(e) => setCompany({ ...company, phone: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Client Info */}
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Klantgegevens</CardTitle>
+                  <Link href="/clients" target="_blank">
+                    <Button variant="outline" size="sm">Beheer Klanten</Button>
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="client-select">Selecteer Klant</Label>
+                  <Select value={selectedClientId} onValueChange={handleClientSelect}>
+                    <SelectTrigger id="client-select">
+                      <SelectValue placeholder="Kies een klant of voer handmatig in" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="manual">📝 Handmatig invoeren</SelectItem>
+                      {mockClients.map(client => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="client-name">Naam/Bedrijf</Label>
+                  <Input
+                    id="client-name"
+                    value={client.name}
+                    onChange={(e) => setClient({ ...client, name: e.target.value })}
+                    disabled={selectedClientId !== 'manual' && selectedClientId !== ''}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="client-address">Adres</Label>
+                  <Textarea
+                    id="client-address"
+                    value={client.address}
+                    onChange={(e) => setClient({ ...client, address: e.target.value })}
+                    rows={3}
+                    disabled={selectedClientId !== 'manual' && selectedClientId !== ''}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="client-email">Email</Label>
+                  <Input
+                    id="client-email"
+                    type="email"
+                    value={client.email || ''}
+                    onChange={(e) => setClient({ ...client, email: e.target.value })}
+                    disabled={selectedClientId !== 'manual' && selectedClientId !== ''}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Invoice Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Factuurgegevens</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="invoice-number">Factuurnummer</Label>
+                    <Input id="invoice-number" value={invoiceNumber} disabled />
+                  </div>
+                  <div>
+                    <Label htmlFor="date">Datum</Label>
+                    <Input
+                      id="date"
+                      type="date"
+                      value={date}
+                      onChange={(e) => {
+                        setDate(e.target.value);
+                        setDueDate(getDueDate(e.target.value));
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="due-date">Vervaldatum</Label>
+                    <Input
+                      id="due-date"
+                      type="date"
+                      value={dueDate}
+                      onChange={(e) => setDueDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="template">Factuur Template</Label>
+                    <Select value={template} onValueChange={(value) => setTemplate(value as InvoiceTemplate)}>
+                      <SelectTrigger id="template">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="modern">Modern</SelectItem>
+                        <SelectItem value="classic">Classic</SelectItem>
+                        <SelectItem value="minimal">Minimaal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-gray-500 mt-1">{templateDescriptions[template]}</p>
+                  </div>
+                  <div>
+                    <Label htmlFor="recurring">Terugkerende Factuur</Label>
+                    <Select 
+                      value={recurring || 'none'} 
+                      onValueChange={(value) => setRecurring(value === 'none' ? null : value as RecurringFrequency)}
+                    >
+                      <SelectTrigger id="recurring">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Eenmalig</SelectItem>
+                        <SelectItem value="maandelijks">Maandelijks</SelectItem>
+                        <SelectItem value="kwartaal">Per kwartaal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Line Items */}
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle>Regels</CardTitle>
+                  <Button onClick={addItem} size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Regel Toevoegen
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {items.map((item, index) => (
+                  <div key={item.id} className="border rounded-lg p-4 space-y-3">
+                    <div className="flex justify-between items-start">
+                      <span className="text-sm font-medium text-gray-500">Regel {index + 1}</span>
+                      {items.length > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeItem(item.id)}
+                          className="h-8 w-8"
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      )}
+                    </div>
+                    <div>
+                      <Label>Omschrijving</Label>
+                      <Textarea
+                        value={item.description}
+                        onChange={(e) => updateItem(item.id, 'description', e.target.value)}
+                        placeholder="Bijv: Website ontwikkeling"
+                        rows={2}
+                      />
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <Label>Aantal</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={item.quantity}
+                          onChange={(e) => updateItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div>
+                        <Label>Prijs p/st</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={item.unitPrice}
+                          onChange={(e) => updateItem(item.id, 'unitPrice', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+                      <div>
+                        <Label>BTW</Label>
+                        <Select
+                          value={item.btwRate.toString()}
+                          onValueChange={(value) => updateItem(item.id, 'btwRate', parseInt(value))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="21">21%</SelectItem>
+                            <SelectItem value="9">9%</SelectItem>
+                            <SelectItem value="0">0%</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="text-right text-sm">
+                      <span className="text-gray-600">Totaal: </span>
+                      <span className="font-semibold">
+                        {formatCurrency(item.quantity * item.unitPrice)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Totals */}
+                <div className="border-t pt-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Subtotaal</span>
+                    <span className="font-medium">{formatCurrency(calculation.subtotal)}</span>
+                  </div>
+                  {calculation.btw21 > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">BTW 21%</span>
+                      <span className="font-medium">{formatCurrency(calculation.btw21)}</span>
+                    </div>
+                  )}
+                  {calculation.btw9 > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">BTW 9%</span>
+                      <span className="font-medium">{formatCurrency(calculation.btw9)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-lg font-bold pt-2 border-t">
+                    <span>Totaal</span>
+                    <span>{formatCurrency(calculation.total)}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Notes */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Notities (optioneel)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Bijv: Betaling binnen 30 dagen na factuurdatum"
+                  rows={3}
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Preview */}
+          {showPreview && (
+            <div className="lg:sticky lg:top-4 h-fit">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Preview - {template === 'modern' ? 'Modern' : template === 'classic' ? 'Classic' : 'Minimaal'}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <InvoicePreview invoice={invoice} />
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Email Preview Dialog */}
+      <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
+        <DialogContent className="mx-4 max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Email Preview</DialogTitle>
+            <DialogDescription>
+              Zo ziet de email eruit die naar de klant wordt verstuurd
+            </DialogDescription>
+          </DialogHeader>
+          <div className="p-6 space-y-4">
+            <div>
+              <Label className="text-gray-600">Naar:</Label>
+              <div className="mt-1 p-3 bg-gray-50 rounded border">
+                {client.email || 'Geen email adres ingevuld'}
+              </div>
+            </div>
+            <div>
+              <Label className="text-gray-600">Onderwerp:</Label>
+              <div className="mt-1 p-3 bg-gray-50 rounded border font-medium">
+                {emailSubject}
+              </div>
+            </div>
+            <div>
+              <Label className="text-gray-600">Bericht:</Label>
+              <div className="mt-1 p-4 bg-gray-50 rounded border whitespace-pre-wrap text-sm">
+                {emailBody}
+              </div>
+            </div>
+            <div>
+              <Label className="text-gray-600">Bijlage:</Label>
+              <div className="mt-1 p-3 bg-blue-50 rounded border flex items-center gap-2">
+                <div className="bg-blue-100 p-2 rounded">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <div className="font-medium text-sm">{invoiceNumber}.pdf</div>
+                  <div className="text-xs text-gray-500">PDF Factuur</div>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-4 border-t">
+              <Button variant="outline" onClick={() => setShowEmailDialog(false)}>
+                Sluiten
+              </Button>
+              <Button disabled>
+                <Mail className="h-4 w-4 mr-2" />
+                Versturen (Preview Only)
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
