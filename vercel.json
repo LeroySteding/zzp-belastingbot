@@ -1,8 +1,9 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
-  "devCommand": "npm run dev",
-  "installCommand": "npm install",
+  "buildCommand": "cd apps/web && npm run build",
+  "devCommand": "cd apps/web && npm run dev",
+  "installCommand": "cd apps/web && npm install",
+  "outputDirectory": "apps/web/.next",
   "framework": "nextjs",
   "regions": ["cdg1"],
   "headers": [
