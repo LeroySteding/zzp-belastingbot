@@ -23,6 +23,7 @@ import {
   Palette,
   FileBarChart,
   PlusCircle,
+  ScanLine,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -68,6 +69,7 @@ const navSections: NavSection[] = [
     accentColor: 'var(--accent-belasting)',
     items: [
       { name: 'Uitgaven', href: '/belasting/expenses', icon: Receipt },
+      { name: 'Bon Scanner', href: '/belasting/scan', icon: ScanLine },
       { name: 'Importeren', href: '/belasting/import', icon: Upload },
       { name: 'Categorieën', href: '/belasting/categories', icon: Tag },
       { name: 'BTW Rapporten', href: '/belasting/reports', icon: FileText },

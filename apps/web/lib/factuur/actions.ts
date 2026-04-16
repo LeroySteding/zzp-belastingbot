@@ -237,6 +237,18 @@ export async function createInvoiceAction(input: {
     totalBtw += itemTotal * (item.btwRate / 100);
   });
 
+  // Calculate next_recurring_date if recurring
+  let nextRecurringDate: string | null = null;
+  if (input.recurring) {
+    const baseDate = new Date(input.date);
+    if (input.recurring === 'maandelijks') {
+      baseDate.setMonth(baseDate.getMonth() + 1);
+    } else if (input.recurring === 'kwartaal') {
+      baseDate.setMonth(baseDate.getMonth() + 3);
+    }
+    nextRecurringDate = baseDate.toISOString().split('T')[0];
+  }
+
   const { data: invoice, error } = await supabase
     .from('invoices')
     .insert({
@@ -249,6 +261,7 @@ export async function createInvoiceAction(input: {
       notes: input.notes || null,
       template: input.template || 'modern',
       recurring_frequency: input.recurring || null,
+      next_recurring_date: nextRecurringDate,
       subtotal: Math.round(subtotal * 100) / 100,
       total_btw: Math.round(totalBtw * 100) / 100,
       total: Math.round((subtotal + totalBtw) * 100) / 100,
@@ -415,4 +428,252 @@ function generateFallbackNumber(): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
   return `FACT-${year}-${month}${random}`;
+}
+
+// ============================================
+// RECURRING INVOICES
+// ============================================
+
+export interface RecurringInvoiceData {
+  id: string;
+  invoiceNumber: string;
+  clientName: string;
+  clientId: string | null;
+  date: string;
+  dueDate: string;
+  status: string;
+  recurringFrequency: string;
+  nextRecurringDate: string | null;
+  subtotal: number;
+  totalBtw: number;
+  total: number;
+  template: string | null;
+  notes: string | null;
+  generatedInvoices: {
+    id: string;
+    invoiceNumber: string;
+    date: string;
+    status: string;
+    total: number;
+  }[];
+}
+
+export async function getRecurringInvoices(): Promise<RecurringInvoiceData[]> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data: invoices, error } = await supabase
+    .from('invoices')
+    .select(`
+      id, invoice_number, date, due_date, status, client_id,
+      recurring_frequency, next_recurring_date,
+      subtotal, total_btw, total, template, notes,
+      clients (id, name)
+    `)
+    .eq('user_id', user.id)
+    .not('recurring_frequency', 'is', null)
+    .order('next_recurring_date', { ascending: true });
+
+  if (error || !invoices) return [];
+
+  // For each recurring invoice, find generated copies
+  // We match by client_id and notes containing the source invoice number
+  const result: RecurringInvoiceData[] = [];
+
+  for (const inv of invoices) {
+    // Find invoices generated from this recurring one by looking for notes reference
+    const { data: generated } = await supabase
+      .from('invoices')
+      .select('id, invoice_number, date, status, total')
+      .eq('user_id', user.id)
+      .eq('generated_from_recurring_id', inv.id)
+      .order('date', { ascending: false });
+
+    result.push({
+      id: inv.id,
+      invoiceNumber: inv.invoice_number,
+      clientName: (inv.clients as any)?.name || 'Onbekend',
+      clientId: inv.client_id,
+      date: inv.date,
+      dueDate: inv.due_date,
+      status: inv.status,
+      recurringFrequency: inv.recurring_frequency!,
+      nextRecurringDate: inv.next_recurring_date,
+      subtotal: Number(inv.subtotal) || 0,
+      totalBtw: Number(inv.total_btw) || 0,
+      total: Number(inv.total) || 0,
+      template: inv.template,
+      notes: inv.notes,
+      generatedInvoices: (generated || []).map((g: any) => ({
+        id: g.id,
+        invoiceNumber: g.invoice_number,
+        date: g.date,
+        status: g.status,
+        total: Number(g.total) || 0,
+      })),
+    });
+  }
+
+  return result;
+}
+
+export async function processRecurringInvoices(): Promise<{
+  processed: number;
+  errors: string[];
+}> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { processed: 0, errors: ['Niet ingelogd'] };
+
+  const today = new Date().toISOString().split('T')[0];
+
+  // Find all recurring invoices that are due
+  const { data: dueInvoices, error } = await supabase
+    .from('invoices')
+    .select(`
+      *,
+      invoice_items (description, quantity, unit_price, btw_rate, sort_order)
+    `)
+    .eq('user_id', user.id)
+    .not('recurring_frequency', 'is', null)
+    .neq('status', 'concept')
+    .lte('next_recurring_date', today);
+
+  if (error || !dueInvoices) {
+    return { processed: 0, errors: [error?.message || 'Kan facturen niet ophalen'] };
+  }
+
+  let processed = 0;
+  const errors: string[] = [];
+
+  for (const inv of dueInvoices) {
+    try {
+      // Generate new invoice number
+      const nextNumber = await getNextInvoiceNumber();
+
+      const now = new Date();
+      const newDate = now.toISOString().split('T')[0];
+      const newDueDate = new Date(now);
+      newDueDate.setDate(newDueDate.getDate() + 30);
+
+      // Create the new invoice copy
+      const { data: newInvoice, error: insertError } = await supabase
+        .from('invoices')
+        .insert({
+          user_id: user.id,
+          client_id: inv.client_id,
+          invoice_number: nextNumber,
+          date: newDate,
+          due_date: newDueDate.toISOString().split('T')[0],
+          status: 'concept',
+          notes: inv.notes,
+          template: inv.template,
+          subtotal: inv.subtotal,
+          total_btw: inv.total_btw,
+          total: inv.total,
+          generated_from_recurring_id: inv.id,
+        })
+        .select('id')
+        .single();
+
+      if (insertError || !newInvoice) {
+        errors.push(`Fout bij aanmaken factuur voor ${inv.invoice_number}: ${insertError?.message}`);
+        continue;
+      }
+
+      // Copy invoice items
+      if (inv.invoice_items?.length) {
+        const newItems = inv.invoice_items.map((item: any) => ({
+          invoice_id: newInvoice.id,
+          description: item.description,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          btw_rate: item.btw_rate,
+          sort_order: item.sort_order,
+        }));
+
+        const { error: itemsError } = await supabase
+          .from('invoice_items')
+          .insert(newItems);
+
+        if (itemsError) {
+          errors.push(`Fout bij kopiëren regels voor ${inv.invoice_number}: ${itemsError.message}`);
+        }
+      }
+
+      // Calculate next recurring date
+      const currentNext = new Date(inv.next_recurring_date);
+      let nextDate: Date;
+      if (inv.recurring_frequency === 'maandelijks') {
+        nextDate = new Date(currentNext);
+        nextDate.setMonth(nextDate.getMonth() + 1);
+      } else {
+        // kwartaal
+        nextDate = new Date(currentNext);
+        nextDate.setMonth(nextDate.getMonth() + 3);
+      }
+
+      // Update the original invoice's next_recurring_date
+      await supabase
+        .from('invoices')
+        .update({ next_recurring_date: nextDate.toISOString().split('T')[0] })
+        .eq('id', inv.id)
+        .eq('user_id', user.id);
+
+      processed++;
+    } catch (err: any) {
+      errors.push(`Onverwachte fout voor ${inv.invoice_number}: ${err.message}`);
+    }
+  }
+
+  return { processed, errors };
+}
+
+export async function pauseRecurring(id: string): Promise<boolean> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { error } = await supabase
+    .from('invoices')
+    .update({
+      recurring_frequency: null,
+      next_recurring_date: null,
+    })
+    .eq('id', id)
+    .eq('user_id', user.id);
+
+  return !error;
+}
+
+export async function resumeRecurring(
+  id: string,
+  frequency: 'maandelijks' | 'kwartaal'
+): Promise<boolean> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  // Set the next recurring date based on frequency
+  const now = new Date();
+  let nextDate: Date;
+  if (frequency === 'maandelijks') {
+    nextDate = new Date(now);
+    nextDate.setMonth(nextDate.getMonth() + 1);
+  } else {
+    nextDate = new Date(now);
+    nextDate.setMonth(nextDate.getMonth() + 3);
+  }
+
+  const { error } = await supabase
+    .from('invoices')
+    .update({
+      recurring_frequency: frequency,
+      next_recurring_date: nextDate.toISOString().split('T')[0],
+    })
+    .eq('id', id)
+    .eq('user_id', user.id);
+
+  return !error;
 }

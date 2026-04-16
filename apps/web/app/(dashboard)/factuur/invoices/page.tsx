@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Download, Copy, Trash2, FileText, Loader2 } from 'lucide-react';
+import { Plus, Download, Copy, Trash2, FileText, Loader2, RotateCcw } from 'lucide-react';
 import { formatCurrency, formatDate, getInvoiceTotal } from '@/lib/factuur/invoice-utils';
 import { Invoice, InvoiceStatus } from '@/lib/factuur/types/invoice';
 import { getInvoices, deleteInvoiceAction, duplicateInvoiceAction } from '@/lib/factuur/actions';
@@ -115,12 +115,20 @@ export default function InvoicesPage() {
             <span className="text-gray-300">|</span>
             <h1 className="text-2xl font-bold">Facturen</h1>
           </div>
-          <Button asChild>
-            <Link href="/factuur/invoices/new">
-              <Plus className="h-4 w-4 mr-2" />
-              Nieuwe Factuur
-            </Link>
-          </Button>
+          <div className="flex gap-3">
+            <Button variant="outline" asChild>
+              <Link href="/factuur/recurring">
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Terugkerend
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href="/factuur/invoices/new">
+                <Plus className="h-4 w-4 mr-2" />
+                Nieuwe Factuur
+              </Link>
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -223,9 +231,11 @@ export default function InvoicesPage() {
                               {statusLabels[invoice.status]}
                             </Badge>
                             {invoice.recurring && (
-                              <Badge className="bg-purple-100 text-purple-800">
-                                Terugkerend
-                              </Badge>
+                              <Link href="/factuur/recurring">
+                                <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-200 cursor-pointer">
+                                  Terugkerend
+                                </Badge>
+                              </Link>
                             )}
                           </div>
                         </TableCell>

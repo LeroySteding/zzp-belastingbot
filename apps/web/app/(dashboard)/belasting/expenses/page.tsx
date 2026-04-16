@@ -23,7 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Plus, Pencil, Trash2, Receipt, FileText, Download, Loader2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, Receipt, FileText, Download, Loader2, ScanLine } from 'lucide-react'
 import { getExpenses, deleteExpense } from '@/lib/belasting/actions'
 import type { Expense } from '@/lib/belasting/types'
 import { EXPENSE_CATEGORIES } from '@/lib/types/index'
@@ -114,6 +114,12 @@ export default function ExpensesPage() {
               <Download className="mr-2 h-4 w-4" />
               Exporteer CSV
             </Button>
+            <Link href="/belasting/scan">
+              <Button variant="outline">
+                <ScanLine className="mr-2 h-4 w-4" />
+                Bon scannen
+              </Button>
+            </Link>
             <Link href="/expenses/new">
               <Button>
                 <Plus className="mr-2 h-4 w-4" />

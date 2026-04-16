@@ -123,6 +123,9 @@ export default function DashboardPage() {
               <Link href="/factuur/clients">Klanten</Link>
             </Button>
             <Button variant="outline" asChild>
+              <Link href="/factuur/recurring">Terugkerend</Link>
+            </Button>
+            <Button variant="outline" asChild>
               <Link href="/factuur/reports">Rapportages</Link>
             </Button>
             <Button asChild>
