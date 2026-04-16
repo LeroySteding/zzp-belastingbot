@@ -128,6 +128,9 @@ export default function DashboardPage() {
             <Button variant="outline" asChild>
               <Link href="/factuur/reports">Rapportages</Link>
             </Button>
+            <Button variant="outline" asChild>
+              <Link href="/factuur/integrations">Integraties</Link>
+            </Button>
             <Button asChild>
               <Link href="/factuur/invoices/new">
                 <Plus className="h-4 w-4 mr-2" />
