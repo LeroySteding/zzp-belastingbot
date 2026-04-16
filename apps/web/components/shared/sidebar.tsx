@@ -25,6 +25,10 @@ import {
   PlusCircle,
   ScanLine,
   UsersRound,
+  Target,
+  Kanban,
+  Search,
+  UserPlus,
 } from 'lucide-react'
 import { useState } from 'react'
 import { AccountSwitcher } from '@/components/shared/account-switcher'
@@ -75,6 +79,16 @@ const navSections: NavSection[] = [
       { name: 'Importeren', href: '/belasting/import', icon: Upload },
       { name: 'Categorieën', href: '/belasting/categories', icon: Tag },
       { name: 'BTW Rapporten', href: '/belasting/reports', icon: FileText },
+    ],
+  },
+  {
+    title: 'Leads',
+    accentColor: 'oklch(0.65 0.25 30)',
+    items: [
+      { name: 'Dashboard', href: '/leads', icon: Target },
+      { name: 'Pipeline', href: '/leads/pipeline', icon: Kanban },
+      { name: 'Zoek Prospects', href: '/leads/search', icon: Search },
+      { name: 'Nieuwe Lead', href: '/leads/new', icon: UserPlus },
     ],
   },
   {
