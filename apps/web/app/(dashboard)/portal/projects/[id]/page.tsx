@@ -43,22 +43,19 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
   if (!project) {
     return (
-      
-        <div className="text-center py-12">
-          <h2 className="text-2xl font-bold mb-2">Project niet gevonden</h2>
-          <Link href="/projects">
-            <Button variant="outline">Terug naar projecten</Button>
-          </Link>
-        </div>
-      
+      <div className="text-center py-12">
+        <h2 className="text-2xl font-bold mb-2">Project niet gevonden</h2>
+        <Link href="/portal/projects">
+          <Button variant="outline">Terug naar projecten</Button>
+        </Link>
+      </div>
     );
   }
 
   return (
-    
-      <div className="max-w-6xl">
+    <div className="max-w-6xl">
         <div className="mb-6">
-          <Link href="/projects">
+          <Link href="/portal/projects">
             <Button variant="ghost" size="sm" className="mb-4">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Terug naar projecten
@@ -73,7 +70,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               <Badge className={statusColors[project.status]}>
                 {statusLabels[project.status]}
               </Badge>
-              <Link href={`/portal/${project.id}`}>
+              <Link href={`/portal/projects/${project.id}`}>
                 <Button variant="outline" size="sm">
                   <ExternalLink className="h-4 w-4 mr-2" />
                   Klant View

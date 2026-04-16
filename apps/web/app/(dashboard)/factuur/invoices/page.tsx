@@ -59,7 +59,7 @@ export default function InvoicesPage() {
             <h1 className="text-2xl font-bold">Facturen</h1>
           </div>
           <Button asChild>
-            <Link href="/invoices/new">
+            <Link href="/factuur/invoices/new">
               <Plus className="h-4 w-4 mr-2" />
               Nieuwe Factuur
             </Link>

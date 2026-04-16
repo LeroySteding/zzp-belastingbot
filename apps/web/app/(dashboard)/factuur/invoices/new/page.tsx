@@ -139,7 +139,7 @@ ${company.name}`;
         <div className="container mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-2">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" asChild>
-              <Link href="/invoices">
+              <Link href="/factuur/invoices">
                 <ArrowLeft className="h-5 w-5" />
               </Link>
             </Button>
@@ -240,7 +240,7 @@ ${company.name}`;
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle>Klantgegevens</CardTitle>
-                  <Link href="/clients" target="_blank">
+                  <Link href="/factuur/clients" target="_blank">
                     <Button variant="outline" size="sm">Beheer Klanten</Button>
                   </Link>
                 </div>

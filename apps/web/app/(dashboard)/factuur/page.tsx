@@ -99,16 +99,16 @@ export default function DashboardPage() {
           </div>
           <div className="flex gap-3 flex-wrap">
             <Button variant="outline" asChild>
-              <Link href="/invoices">Facturen</Link>
+              <Link href="/factuur/invoices">Facturen</Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link href="/clients">Klanten</Link>
+              <Link href="/factuur/clients">Klanten</Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link href="/reports">Rapportages</Link>
+              <Link href="/factuur/reports">Rapportages</Link>
             </Button>
             <Button asChild>
-              <Link href="/invoices/new">
+              <Link href="/factuur/invoices/new">
                 <Plus className="h-4 w-4 mr-2" />
                 Nieuwe Factuur
               </Link>
@@ -218,7 +218,7 @@ export default function DashboardPage() {
             <div className="flex justify-between items-center">
               <CardTitle>Recente Facturen</CardTitle>
               <Button variant="ghost" asChild>
-                <Link href="/invoices">Bekijk Alle →</Link>
+                <Link href="/factuur/invoices">Bekijk Alle →</Link>
               </Button>
             </div>
           </CardHeader>

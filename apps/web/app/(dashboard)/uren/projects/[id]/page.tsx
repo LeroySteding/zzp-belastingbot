@@ -37,7 +37,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
-          <Link href="/projects">
+          <Link href="/uren/projects">
             <Button variant="ghost" className="gap-2 mb-4">
               <ArrowLeft className="h-4 w-4" />
               Terug naar projecten

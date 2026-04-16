@@ -323,7 +323,7 @@ export default function ReportsPage() {
 
                                 <div className="flex gap-2">
                                   <Link
-                                    href={`/reports/${report.id}`}
+                                    href={`/belasting/reports/${report.id}`}
                                     className="flex-1"
                                   >
                                     <Button variant="outline" className="w-full" size="sm">
@@ -438,7 +438,7 @@ export default function ReportsPage() {
 
               <div className="flex gap-2">
                 <Link
-                  href={`/reports/${previewReport.id}`}
+                  href={`/belasting/reports/${previewReport.id}`}
                   className="flex-1"
                   onClick={() => setPreviewReport(null)}
                 >

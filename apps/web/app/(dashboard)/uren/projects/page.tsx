@@ -129,7 +129,7 @@ export default function ProjectsPage() {
             const isNearBudget = stats && stats.budgetPercentage > 80 && stats.budgetPercentage <= 100;
 
             return (
-              <Link key={project.id} href={`/projects/${project.id}`}>
+              <Link key={project.id} href={`/uren/projects/${project.id}`}>
                 <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
                   <CardHeader>
                     <div className="flex items-start justify-between">

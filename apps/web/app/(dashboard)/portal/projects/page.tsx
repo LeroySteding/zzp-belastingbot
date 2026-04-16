@@ -169,7 +169,7 @@ export default function ProjectsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start gap-3 mb-2">
                       <div className="flex-1">
-                        <Link href={`/projects/${project.id}`}>
+                        <Link href={`/portal/projects/${project.id}`}>
                           <h3 className="text-lg font-semibold hover:text-blue-600 transition-colors">
                             {project.name}
                           </h3>
@@ -197,7 +197,7 @@ export default function ProjectsPage() {
                         year: 'numeric'
                       })}
                     </div>
-                    <Link href={`/projects/${project.id}`}>
+                    <Link href={`/portal/projects/${project.id}`}>
                       <Button variant="outline" size="sm">
                         Details
                       </Button>

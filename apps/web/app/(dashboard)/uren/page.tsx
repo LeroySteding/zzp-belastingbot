@@ -118,7 +118,7 @@ export default function DashboardPage() {
               <h3 className="text-lg font-semibold text-gray-900">Klaar om te beginnen?</h3>
               <p className="text-gray-600 mt-1">Start de timer en vergeet geen uren meer</p>
             </div>
-            <Link href="/track">
+            <Link href="/uren/track">
               <Button size="lg" className="gap-2">
                 <Play className="h-5 w-5" />
                 Start Timer
@@ -175,7 +175,7 @@ export default function DashboardPage() {
                 <CardTitle>Recente registraties</CardTitle>
                 <CardDescription>Je laatste 5 tijd registraties</CardDescription>
               </div>
-              <Link href="/track">
+              <Link href="/uren/track">
                 <Button variant="outline" size="sm">Alle registraties</Button>
               </Link>
             </div>
