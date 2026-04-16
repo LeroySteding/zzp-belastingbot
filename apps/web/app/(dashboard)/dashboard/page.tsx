@@ -1,40 +1,23 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   FileText,
   Clock,
   Receipt,
   Users,
-  TrendingUp,
-  AlertCircle,
   ArrowRight,
   Play,
   PlusCircle,
-  CalendarClock
+  CalendarClock,
+  Loader2,
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
-
-// Mock data - will be replaced with Supabase queries
-const dashboardData = {
-  openInvoices: { count: 3, total: 4250.00 },
-  hoursThisWeek: 32.5,
-  btwThisQuarter: { input: 1245.50, output: 3890.00 },
-  activeProjects: 4,
-  recentActivity: [
-    { id: '1', type: 'invoice', message: 'Factuur FACT-2026-012 verzonden naar TechStart BV', time: '2 uur geleden' },
-    { id: '2', type: 'time', message: '4.5 uur geregistreerd voor Website Redesign', time: '3 uur geleden' },
-    { id: '3', type: 'expense', message: 'Uitgave toegevoegd: Adobe Creative Cloud €54,99', time: '5 uur geleden' },
-    { id: '4', type: 'portal', message: 'Klant heeft milestone goedgekeurd: Design Review', time: '1 dag geleden' },
-    { id: '5', type: 'invoice', message: 'Factuur FACT-2026-011 betaald door WebWinkel Amsterdam', time: '2 dagen geleden' },
-  ],
-  upcomingDeadlines: [
-    { id: '1', title: 'BTW Aangifte Q1 2026', date: '2026-04-30', type: 'belasting' },
-    { id: '2', title: 'Project deadline: E-commerce Platform', date: '2026-05-15', type: 'project' },
-    { id: '3', title: 'Factuur FACT-2026-009 vervalt', date: '2026-04-22', type: 'factuur' },
-  ],
-}
+import { getInvoices } from '@/lib/factuur/actions'
+import { getTimeEntries, getUrenProjects } from '@/lib/uren/actions'
+import { getExpenses } from '@/lib/belasting/actions'
+import { getPortalProjects } from '@/lib/portal/actions'
 
 function StatCard({ title, value, subtitle, icon: Icon, color, href }: {
   title: string
@@ -86,8 +69,85 @@ function QuickAction({ title, icon: Icon, href, color }: {
   )
 }
 
+interface DashboardData {
+  openInvoices: { count: number; total: number }
+  hoursThisWeek: number
+  btwThisQuarter: number
+  activeProjects: number
+  portalProjects: number
+}
+
 export default function DashboardPage() {
-  const data = dashboardData
+  const [loading, setLoading] = useState(true)
+  const [data, setData] = useState<DashboardData>({
+    openInvoices: { count: 0, total: 0 },
+    hoursThisWeek: 0,
+    btwThisQuarter: 0,
+    activeProjects: 0,
+    portalProjects: 0,
+  })
+
+  useEffect(() => {
+    async function load() {
+      const [invoices, timeEntries, expenses, projects, portalProjects] = await Promise.all([
+        getInvoices(),
+        getTimeEntries(),
+        getExpenses(),
+        getUrenProjects(),
+        getPortalProjects(),
+      ])
+
+      // Open invoices (status = verzonden)
+      const openInvs = invoices.filter(inv => inv.status === 'verzonden')
+      const openTotal = openInvs.reduce((sum, inv) => {
+        const itemTotal = inv.items.reduce((s, item) => s + item.quantity * item.unitPrice * (1 + item.btwRate / 100), 0)
+        return sum + itemTotal
+      }, 0)
+
+      // Hours this week
+      const now = new Date()
+      const dayOfWeek = now.getDay() || 7
+      const weekStart = new Date(now)
+      weekStart.setDate(now.getDate() - dayOfWeek + 1)
+      weekStart.setHours(0, 0, 0, 0)
+      const weekStartStr = weekStart.toISOString().split('T')[0]
+      const weekEntries = timeEntries.filter(e => e.date >= weekStartStr)
+      const weekHours = weekEntries.reduce((sum, e) => sum + e.duration / 60, 0)
+
+      // BTW this quarter from expenses
+      const currentYear = now.getFullYear()
+      const currentQuarter = Math.ceil((now.getMonth() + 1) / 3)
+      const quarterExpenses = expenses.filter(
+        e => e.year === currentYear && e.quarter === currentQuarter
+      )
+      const btwTotal = quarterExpenses.reduce((sum, e) => sum + e.btw_amount, 0)
+
+      // Active projects
+      const activeProjectCount = projects.length
+      const portalVisible = portalProjects.filter(
+        (p: any) => p.displayStatus === 'in-uitvoering' || p.displayStatus === 'review'
+      ).length
+
+      setData({
+        openInvoices: { count: openInvs.length, total: Math.round(openTotal * 100) / 100 },
+        hoursThisWeek: Math.round(weekHours * 10) / 10,
+        btwThisQuarter: Math.round(btwTotal * 100) / 100,
+        activeProjects: activeProjectCount,
+        portalProjects: portalVisible,
+      })
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="animate-fade-in flex items-center justify-center py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Dashboard laden...</span>
+      </div>
+    )
+  }
 
   return (
     <div className="animate-fade-in space-y-8">
@@ -109,72 +169,35 @@ export default function DashboardPage() {
         <StatCard
           title="Uren deze week"
           value={`${data.hoursThisWeek}u`}
-          subtitle="van 40u budget"
           icon={Clock}
           color="oklch(0.65 0.26 300)"
           href="/uren/track"
         />
         <StatCard
           title="BTW dit kwartaal"
-          value={formatCurrency(data.btwThisQuarter.output - data.btwThisQuarter.input)}
-          subtitle="Output - Input BTW"
+          value={formatCurrency(data.btwThisQuarter)}
+          subtitle="Voorbelasting uitgaven"
           icon={Receipt}
           color="oklch(0.6 0.18 150)"
-          href="/belasting/reports"
+          href="/belasting"
         />
         <StatCard
           title="Actieve Projecten"
           value={String(data.activeProjects)}
-          subtitle="2 met klantportaal"
+          subtitle={`${data.portalProjects} in klantportaal`}
           icon={Users}
           color="oklch(0.7 0.2 80)"
-          href="/portal/projects"
+          href="/uren/projects"
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Quick Actions */}
-        <div className="card-premium p-6">
-          <h2 className="text-lg font-semibold mb-4">Snelle Acties</h2>
-          <div className="space-y-2">
-            <QuickAction title="Nieuwe Factuur" icon={PlusCircle} href="/factuur/invoices/new" color="oklch(0.65 0.25 250)" />
-            <QuickAction title="Start Timer" icon={Play} href="/uren/track" color="oklch(0.65 0.26 300)" />
-            <QuickAction title="Uitgave Toevoegen" icon={Receipt} href="/belasting/expenses" color="oklch(0.6 0.18 150)" />
-          </div>
-        </div>
-
-        {/* Upcoming Deadlines */}
-        <div className="card-premium p-6">
-          <h2 className="text-lg font-semibold mb-4">Aankomende Deadlines</h2>
-          <div className="space-y-3">
-            {data.upcomingDeadlines.map((deadline) => (
-              <div key={deadline.id} className="flex items-start gap-3">
-                <CalendarClock className="h-4 w-4 mt-0.5 text-warning" />
-                <div>
-                  <p className="text-sm font-medium">{deadline.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(deadline.date).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Recent Activity */}
-        <div className="card-premium p-6">
-          <h2 className="text-lg font-semibold mb-4">Recente Activiteit</h2>
-          <div className="space-y-3">
-            {data.recentActivity.map((activity) => (
-              <div key={activity.id} className="flex items-start gap-3">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
-                <div>
-                  <p className="text-sm">{activity.message}</p>
-                  <p className="text-xs text-muted-foreground">{activity.time}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* Quick Actions */}
+      <div className="card-premium p-6">
+        <h2 className="text-lg font-semibold mb-4">Snelle Acties</h2>
+        <div className="grid sm:grid-cols-3 gap-2">
+          <QuickAction title="Nieuwe Factuur" icon={PlusCircle} href="/factuur/invoices/new" color="oklch(0.65 0.25 250)" />
+          <QuickAction title="Start Timer" icon={Play} href="/uren/track" color="oklch(0.65 0.26 300)" />
+          <QuickAction title="Uitgave Toevoegen" icon={Receipt} href="/belasting/expenses" color="oklch(0.6 0.18 150)" />
         </div>
       </div>
     </div>

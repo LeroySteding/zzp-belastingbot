@@ -4,6 +4,9 @@ export interface Profile {
   btw_number: string | null
   kvk_number: string | null
   iban: string | null
+  phone: string | null
+  email: string | null
+  address: string | null
   kor_enabled: boolean
   kor_threshold: number
   created_at: string

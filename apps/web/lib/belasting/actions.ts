@@ -26,6 +26,9 @@ export async function getProfile(): Promise<Profile | null> {
     btw_number: data.btw_number,
     kvk_number: data.kvk_number,
     iban: data.iban,
+    phone: data.phone ?? null,
+    email: data.email ?? null,
+    address: data.address ?? null,
     kor_enabled: data.kor_enabled ?? false,
     kor_threshold: data.kor_threshold ?? 20000,
     created_at: data.created_at,
@@ -38,6 +41,9 @@ export async function updateProfile(data: {
   btw_number?: string
   kvk_number?: string
   iban?: string
+  email?: string
+  phone?: string
+  address?: string
   kor_enabled?: boolean
 }): Promise<Profile | null> {
   const supabase = await createClient()
@@ -51,6 +57,9 @@ export async function updateProfile(data: {
       btw_number: data.btw_number || null,
       kvk_number: data.kvk_number || null,
       iban: data.iban || null,
+      email: data.email || null,
+      phone: data.phone || null,
+      address: data.address || null,
       kor_enabled: data.kor_enabled ?? false,
       updated_at: new Date().toISOString(),
     })
@@ -66,6 +75,9 @@ export async function updateProfile(data: {
     btw_number: updated.btw_number,
     kvk_number: updated.kvk_number,
     iban: updated.iban,
+    phone: updated.phone ?? null,
+    email: updated.email ?? null,
+    address: updated.address ?? null,
     kor_enabled: updated.kor_enabled ?? false,
     kor_threshold: updated.kor_threshold ?? 20000,
     created_at: updated.created_at,
