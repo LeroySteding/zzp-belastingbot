@@ -1,8 +1,10 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { mockExpenses, calculateQuarterSummary } from '@/lib/belasting/mock-data'
-import { Euro, FileText, Receipt, TrendingUp, CalendarClock } from 'lucide-react'
+import { getExpenses, calculateQuarterSummary } from '@/lib/belasting/actions'
+import type { Expense } from '@/lib/belasting/types'
+import { Euro, FileText, Receipt, TrendingUp, CalendarClock, Loader2 } from 'lucide-react'
 import { KORBanner } from '@/components/belasting/kor-banner'
 import { BTWDeadlineWidget } from '@/components/belasting/btw-deadline-widget'
 import { checkKOReligibility } from '@/lib/belasting/kor-check'
@@ -25,13 +27,45 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#6b7280'
 export default function DashboardPage() {
   const currentYear = new Date().getFullYear()
   const currentQuarter = Math.ceil((new Date().getMonth() + 1) / 3)
-  
-  const summary = calculateQuarterSummary(currentYear, currentQuarter)
+
+  const [loading, setLoading] = useState(true)
+  const [expenses, setExpenses] = useState<Expense[]>([])
+  const [summary, setSummary] = useState({ totalExcl: '0.00', totalBTW: '0.00', totalIncl: '0.00', count: 0 })
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [expensesData, summaryData] = await Promise.all([
+          getExpenses(currentYear),
+          calculateQuarterSummary(currentYear, currentQuarter),
+        ])
+        setExpenses(expensesData)
+        setSummary(summaryData)
+      } catch (error) {
+        console.error('Error loading dashboard data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadData()
+  }, [currentYear, currentQuarter])
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    )
+  }
+
   const btwAmount = parseFloat(summary.totalBTW)
 
   // Calculate expenses by category for pie chart
-  const categoryData = mockExpenses
-    .filter((e) => e.year === currentYear && e.quarter === currentQuarter)
+  const quarterExpenses = expenses.filter(
+    (e) => e.year === currentYear && e.quarter === currentQuarter
+  )
+
+  const categoryData = quarterExpenses
     .reduce((acc, expense) => {
       const existing = acc.find((item) => item.name === expense.category)
       if (existing) {
@@ -53,14 +87,14 @@ export default function DashboardPage() {
     date.setMonth(date.getMonth() - i)
     const month = date.getMonth() + 1
     const year = date.getFullYear()
-    
-    const monthExpenses = mockExpenses.filter((e) => {
+
+    const monthExpenses = expenses.filter((e) => {
       const expenseDate = new Date(e.date)
       return expenseDate.getMonth() + 1 === month && expenseDate.getFullYear() === year
     })
 
     const total = monthExpenses.reduce((sum, e) => sum + e.amount_incl, 0)
-    
+
     monthlyData.push({
       month: date.toLocaleDateString('nl-NL', { month: 'short' }),
       amount: Math.round(total * 100) / 100,
@@ -73,20 +107,20 @@ export default function DashboardPage() {
   const btwPercentage = Math.min((btwAmount / btwTarget) * 100, 100)
 
   // Calculate yearly expenses for KOR check
-  const yearlyExpenses = mockExpenses
+  const yearlyExpenses = expenses
     .filter((e) => e.year === currentYear)
     .reduce((sum, e) => sum + e.amount_incl, 0)
-  
+
   const korStatus = checkKOReligibility(yearlyExpenses)
 
   // Calculate recurring expenses forecast for next month
-  const recurringExpenses = mockExpenses.filter((e) => e.is_recurring)
+  const recurringExpenses = expenses.filter((e) => e.is_recurring)
   const nextMonthForecast = recurringExpenses
     .filter((e) => e.recurring_frequency === 'monthly')
     .reduce((sum, e) => sum + e.amount_incl, 0)
 
   return (<>
-    
+
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
@@ -101,7 +135,7 @@ export default function DashboardPage() {
         {/* BTW Deadline & Recurring Expenses Row */}
         <div className="grid gap-4 md:grid-cols-2">
           <BTWDeadlineWidget />
-          
+
           {/* Recurring Expenses Forecast */}
           {nextMonthForecast > 0 && (
             <Card>
@@ -216,7 +250,7 @@ export default function DashboardPage() {
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
                     {btwAmount > btwTarget
-                      ? 'Doel bereikt! 🎉'
+                      ? 'Doel bereikt!'
                       : `Nog € ${(btwTarget - btwAmount).toFixed(2)} te gaan`}
                   </p>
                 </div>
@@ -319,7 +353,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-    
+
   </>
   )
 }

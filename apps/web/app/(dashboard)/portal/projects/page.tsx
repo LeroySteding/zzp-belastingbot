@@ -8,10 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { mockProjects, mockClients } from '@/lib/portal/mock-data';
-import { Plus, Filter, Search } from 'lucide-react';
+import { getPortalProjects, getPortalClients } from '@/lib/portal/actions';
+import type { PortalProject, PortalClient } from '@/lib/portal/actions';
+import { Plus, Filter, Search, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Progress } from '@/components/ui/progress';
 
 const statusColors: Record<string, string> = {
@@ -32,16 +33,43 @@ export default function ProjectsPage() {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [projects, setProjects] = useState<PortalProject[]>([]);
+  const [clients, setClients] = useState<PortalClient[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredProjects = mockProjects.filter(project => {
-    const matchesStatus = filterStatus === 'all' || project.status === filterStatus;
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [projectsData, clientsData] = await Promise.all([
+          getPortalProjects(),
+          getPortalClients(),
+        ]);
+        setProjects(projectsData);
+        setClients(clientsData);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  const filteredProjects = projects.filter(project => {
+    const matchesStatus = filterStatus === 'all' || project.displayStatus === filterStatus;
     const matchesSearch = project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           project.clientName.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
   return (
-    
+
       <div className="max-w-7xl">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
@@ -74,7 +102,7 @@ export default function ProjectsPage() {
                       <SelectValue placeholder="Selecteer een klant" />
                     </SelectTrigger>
                     <SelectContent>
-                      {mockClients.map(client => (
+                      {clients.map(client => (
                         <SelectItem key={client.id} value={client.id}>
                           {client.name} - {client.company}
                         </SelectItem>
@@ -84,8 +112,8 @@ export default function ProjectsPage() {
                 </div>
                 <div>
                   <Label htmlFor="description">Beschrijving</Label>
-                  <Textarea 
-                    id="description" 
+                  <Textarea
+                    id="description"
                     placeholder="Korte beschrijving van het project..."
                     rows={3}
                   />
@@ -133,8 +161,8 @@ export default function ProjectsPage() {
               <div className="flex-1">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input 
-                    placeholder="Zoek projecten..." 
+                  <Input
+                    placeholder="Zoek projecten..."
                     className="pl-10"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -176,8 +204,8 @@ export default function ProjectsPage() {
                         </Link>
                         <p className="text-sm text-gray-600">{project.clientName}</p>
                       </div>
-                      <Badge className={statusColors[project.status]}>
-                        {statusLabels[project.status]}
+                      <Badge className={statusColors[project.displayStatus] ?? 'bg-gray-100 text-gray-800'}>
+                        {statusLabels[project.displayStatus] ?? project.displayStatus}
                       </Badge>
                     </div>
                     <p className="text-sm text-gray-600 mb-3">{project.description}</p>
@@ -190,13 +218,15 @@ export default function ProjectsPage() {
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2">
-                    <div className="text-sm text-gray-600">
-                      Deadline: {new Date(project.deadline).toLocaleDateString('nl-NL', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric'
-                      })}
-                    </div>
+                    {project.deadline && (
+                      <div className="text-sm text-gray-600">
+                        Deadline: {new Date(project.deadline).toLocaleDateString('nl-NL', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric'
+                        })}
+                      </div>
+                    )}
                     <Link href={`/portal/projects/${project.id}`}>
                       <Button variant="outline" size="sm">
                         Details
@@ -221,6 +251,6 @@ export default function ProjectsPage() {
           </Card>
         )}
       </div>
-    
+
   );
 }

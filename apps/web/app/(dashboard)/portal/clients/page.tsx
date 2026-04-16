@@ -6,16 +6,36 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { mockClients, mockProjects } from '@/lib/portal/mock-data';
-import { Plus, Mail, Building, User, Link as LinkIcon, Copy, Check } from 'lucide-react';
+import { getPortalClients, getPortalProjects } from '@/lib/portal/actions';
+import type { PortalClient, PortalProject } from '@/lib/portal/actions';
+import { Plus, Mail, Building, User, Link as LinkIcon, Copy, Check, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function ClientsPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [clients, setClients] = useState<PortalClient[]>([]);
+  const [projects, setProjects] = useState<PortalProject[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [clientsData, projectsData] = await Promise.all([
+          getPortalClients(),
+          getPortalProjects(),
+        ]);
+        setClients(clientsData);
+        setProjects(projectsData);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
 
   const handleCopyInviteLink = () => {
     const link = `https://portal.mijnbureau.nl/invite/${selectedClient}`;
@@ -24,8 +44,16 @@ export default function ClientsPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
   return (
-    
+
       <div className="max-w-7xl">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
@@ -50,13 +78,13 @@ export default function ClientsPage() {
                 <div className="space-y-4 mt-4">
                   <div>
                     <Label>Selecteer Klant</Label>
-                    <select 
+                    <select
                       className="w-full mt-2 p-2 border rounded-md"
                       value={selectedClient || ''}
                       onChange={(e) => setSelectedClient(e.target.value)}
                     >
                       <option value="">Kies een klant...</option>
-                      {mockClients.map(client => (
+                      {clients.map(client => (
                         <option key={client.id} value={client.id}>
                           {client.name} - {client.company}
                         </option>
@@ -67,13 +95,13 @@ export default function ClientsPage() {
                     <div>
                       <Label>Uitnodigingslink</Label>
                       <div className="flex gap-2 mt-2">
-                        <Input 
-                          readOnly 
+                        <Input
+                          readOnly
                           value={`https://portal.mijnbureau.nl/invite/${selectedClient}`}
                           className="font-mono text-sm"
                         />
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           onClick={handleCopyInviteLink}
                           className="flex-shrink-0"
                         >
@@ -117,8 +145,8 @@ export default function ClientsPage() {
                     <Input id="email" type="email" placeholder="jan@devries.nl" />
                   </div>
                   <div className="flex justify-end gap-2 pt-4">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       type="button"
                       onClick={() => setIsAddDialogOpen(false)}
                     >
@@ -139,9 +167,9 @@ export default function ClientsPage() {
 
         {/* Client Cards */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {mockClients.map((client) => {
-            const clientProjects = mockProjects.filter(p => p.clientId === client.id);
-            const activeProjects = clientProjects.filter(p => p.status !== 'afgerond');
+          {clients.map((client) => {
+            const clientProjects = projects.filter(p => p.client_id === client.id);
+            const activeClientProjects = clientProjects.filter(p => p.displayStatus !== 'afgerond' && p.displayStatus !== 'archived');
 
             return (
               <Card key={client.id} className="hover:shadow-lg transition-shadow">
@@ -167,24 +195,24 @@ export default function ClientsPage() {
                       <Mail className="h-4 w-4" />
                       <span className="truncate">{client.email}</span>
                     </div>
-                    
+
                     <div className="pt-3 border-t">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium">Projecten</span>
                         <Badge variant="secondary">
-                          {activeProjects.length} actief
+                          {activeClientProjects.length} actief
                         </Badge>
                       </div>
-                      
+
                       {clientProjects.length > 0 ? (
                         <div className="space-y-2">
                           {clientProjects.slice(0, 2).map(project => (
-                            <Link 
-                              key={project.id} 
-                              href={`/projects/${project.id}`}
+                            <Link
+                              key={project.id}
+                              href={`/portal/projects/${project.id}`}
                               className="block text-sm text-gray-600 hover:text-blue-600 truncate"
                             >
-                              • {project.name}
+                              &bull; {project.name}
                             </Link>
                           ))}
                           {clientProjects.length > 2 && (
@@ -199,9 +227,9 @@ export default function ClientsPage() {
                     </div>
 
                     <div className="pt-3 border-t flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         className="flex-1"
                         onClick={() => {
                           setSelectedClient(client.id);
@@ -211,7 +239,7 @@ export default function ClientsPage() {
                         <LinkIcon className="h-4 w-4 mr-2" />
                         Uitnodigen
                       </Button>
-                      <Link href={`/projects?client=${client.id}`} className="flex-1">
+                      <Link href={`/portal/projects?client=${client.id}`} className="flex-1">
                         <Button variant="default" size="sm" className="w-full">
                           Bekijk
                         </Button>
@@ -224,7 +252,7 @@ export default function ClientsPage() {
           })}
         </div>
 
-        {mockClients.length === 0 && (
+        {clients.length === 0 && (
           <Card>
             <CardContent className="py-12 text-center">
               <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -238,6 +266,6 @@ export default function ClientsPage() {
           </Card>
         )}
       </div>
-    
+
   );
 }

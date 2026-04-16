@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,21 +9,71 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Clock, Euro, TrendingUp, AlertCircle } from 'lucide-react';
-import { projects, clients, getClientById, calculateProjectStats, getEntriesByProject } from '@/lib/uren/mock-data';
+import { Plus, Clock, Euro, TrendingUp, AlertCircle, Loader2 } from 'lucide-react';
+import { getUrenProjects, getUrenClients, getTimeEntries, calculateProjectStats, createProject } from '@/lib/uren/actions';
+import type { UrenProject, UrenClient, UrenTimeEntry, UrenProjectStats } from '@/lib/uren/actions';
 import Link from 'next/link';
 
 export default function ProjectsPage() {
+  const [projectsData, setProjectsData] = useState<UrenProject[]>([]);
+  const [clientsData, setClientsData] = useState<UrenClient[]>([]);
+  const [entriesData, setEntriesData] = useState<UrenTimeEntry[]>([]);
+  const [statsMap, setStatsMap] = useState<Record<string, UrenProjectStats>>({});
+  const [loading, setLoading] = useState(true);
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectClient, setNewProjectClient] = useState('');
   const [newProjectRate, setNewProjectRate] = useState('85');
   const [newProjectBudget, setNewProjectBudget] = useState('100');
 
-  const handleCreateProject = (e: React.FormEvent) => {
+  useEffect(() => {
+    async function load() {
+      const [projects, clients, entries] = await Promise.all([
+        getUrenProjects(),
+        getUrenClients(),
+        getTimeEntries(),
+      ]);
+      setProjectsData(projects);
+      setClientsData(clients);
+      setEntriesData(entries);
+
+      // Load stats for all projects
+      const stats: Record<string, UrenProjectStats> = {};
+      await Promise.all(
+        projects.map(async (p) => {
+          const s = await calculateProjectStats(p.id);
+          if (s) stats[p.id] = s;
+        })
+      );
+      setStatsMap(stats);
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  const getEntriesByProject = (projectId: string) =>
+    entriesData.filter(e => e.projectId === projectId);
+
+  const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In real app, create project in database
-    alert(`Project "${newProjectName}" aangemaakt!`);
+    if (!newProjectName || !newProjectClient) return;
+
+    const created = await createProject({
+      name: newProjectName,
+      clientId: newProjectClient,
+      hourlyRate: parseFloat(newProjectRate) || 85,
+      budgetHours: parseFloat(newProjectBudget) || 100,
+    });
+
+    if (created) {
+      setProjectsData(prev => [created, ...prev]);
+      setStatsMap(prev => ({
+        ...prev,
+        [created.id]: { totalHours: 0, revenue: 0, budgetPercentage: 0 },
+      }));
+    }
+
     setDialogOpen(false);
     setNewProjectName('');
     setNewProjectClient('');
@@ -31,17 +81,25 @@ export default function ProjectsPage() {
     setNewProjectBudget('100');
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      
-      
+
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Projecten</h1>
             <p className="text-gray-600 mt-2">Beheer je projecten en budgetten</p>
           </div>
-          
+
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2">
@@ -57,7 +115,7 @@ export default function ProjectsPage() {
                     Voeg een nieuw project toe voor urenregistratie
                   </DialogDescription>
                 </DialogHeader>
-                
+
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
                     <Label>Projectnaam *</Label>
@@ -76,7 +134,7 @@ export default function ProjectsPage() {
                         <SelectValue placeholder="Selecteer klant" />
                       </SelectTrigger>
                       <SelectContent>
-                        {clients.map((client) => (
+                        {clientsData.map((client) => (
                           <SelectItem key={client.id} value={client.id}>
                             {client.name}
                           </SelectItem>
@@ -87,7 +145,7 @@ export default function ProjectsPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Uurtarief (€) *</Label>
+                      <Label>Uurtarief ({'\u20AC'}) *</Label>
                       <Input
                         type="number"
                         placeholder="85"
@@ -121,9 +179,8 @@ export default function ProjectsPage() {
 
         {/* Projects Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project) => {
-            const client = getClientById(project.clientId);
-            const stats = calculateProjectStats(project.id);
+          {projectsData.map((project) => {
+            const stats = statsMap[project.id];
             const entries = getEntriesByProject(project.id);
             const isOverBudget = stats && stats.budgetPercentage > 100;
             const isNearBudget = stats && stats.budgetPercentage > 80 && stats.budgetPercentage <= 100;
@@ -148,7 +205,7 @@ export default function ProjectsPage() {
                       )}
                     </div>
                     <CardTitle className="mt-2">{project.name}</CardTitle>
-                    <CardDescription>{client?.name}</CardDescription>
+                    <CardDescription>{project.clientName}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     {stats && (
@@ -161,8 +218,8 @@ export default function ProjectsPage() {
                               {Math.round(stats.budgetPercentage)}%
                             </span>
                           </div>
-                          <Progress 
-                            value={Math.min(stats.budgetPercentage, 100)} 
+                          <Progress
+                            value={Math.min(stats.budgetPercentage, 100)}
                             className={isOverBudget ? "bg-red-100" : ""}
                           />
                           <div className="flex justify-between text-xs text-gray-600">
@@ -188,7 +245,7 @@ export default function ProjectsPage() {
                               Omzet
                             </div>
                             <div className="font-bold text-sm">
-                              €{Math.round(stats.revenue)}
+                              {'\u20AC'}{Math.round(stats.revenue)}
                             </div>
                           </div>
                           <div>
@@ -204,7 +261,7 @@ export default function ProjectsPage() {
 
                         {/* Rate */}
                         <div className="text-sm text-gray-600 pt-3 border-t">
-                          Uurtarief: <span className="font-medium text-gray-900">€{project.hourlyRate}</span>
+                          Uurtarief: <span className="font-medium text-gray-900">{'\u20AC'}{project.hourlyRate}</span>
                         </div>
                       </div>
                     )}
@@ -222,7 +279,7 @@ export default function ProjectsPage() {
               <CardTitle className="text-sm font-medium text-gray-600">Totaal Projecten</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{projects.length}</div>
+              <div className="text-3xl font-bold">{projectsData.length}</div>
             </CardContent>
           </Card>
 
@@ -233,10 +290,7 @@ export default function ProjectsPage() {
             <CardContent>
               <div className="text-3xl font-bold">
                 {Math.round(
-                  projects.reduce((sum, p) => {
-                    const stats = calculateProjectStats(p.id);
-                    return sum + (stats?.totalHours || 0);
-                  }, 0) * 10
+                  Object.values(statsMap).reduce((sum, s) => sum + s.totalHours, 0) * 10
                 ) / 10}h
               </div>
             </CardContent>
@@ -248,11 +302,8 @@ export default function ProjectsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
-                €{Math.round(
-                  projects.reduce((sum, p) => {
-                    const stats = calculateProjectStats(p.id);
-                    return sum + (stats?.revenue || 0);
-                  }, 0)
+                {'\u20AC'}{Math.round(
+                  Object.values(statsMap).reduce((sum, s) => sum + s.revenue, 0)
                 )}
               </div>
             </CardContent>
@@ -264,9 +315,11 @@ export default function ProjectsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
-                €{Math.round(
-                  projects.reduce((sum, p) => sum + p.hourlyRate, 0) / projects.length
-                )}
+                {'\u20AC'}{projectsData.length > 0
+                  ? Math.round(
+                      projectsData.reduce((sum, p) => sum + p.hourlyRate, 0) / projectsData.length
+                    )
+                  : 0}
               </div>
             </CardContent>
           </Card>

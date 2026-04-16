@@ -1,17 +1,52 @@
+'use client';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { mockProjects, mockActivities } from '@/lib/portal/mock-data';
-import { FolderKanban, AlertCircle, Plus, UserPlus, Clock } from 'lucide-react';
+import { getPortalProjects, getPortalActivities } from '@/lib/portal/actions';
+import type { PortalProject, PortalActivity } from '@/lib/portal/actions';
+import { FolderKanban, AlertCircle, Plus, UserPlus, Clock, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 export default function DashboardPage() {
-  const activeProjects = mockProjects.filter(p => p.status !== 'afgerond');
-  const pendingApprovals = mockProjects.filter(p => p.needsApproval);
-  const recentActivities = mockActivities.slice(0, 5);
+  const [projects, setProjects] = useState<PortalProject[]>([]);
+  const [activities, setActivities] = useState<PortalActivity[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [projectsData, activitiesData] = await Promise.all([
+          getPortalProjects(),
+          getPortalActivities(),
+        ]);
+        setProjects(projectsData);
+        setActivities(activitiesData);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  const activeProjects = projects.filter(p => p.displayStatus !== 'afgerond' && p.displayStatus !== 'archived');
+  const pendingApprovals = projects.filter(p => p.needsApproval);
+  const recentActivities = activities.slice(0, 5);
+  const avgProgress = activeProjects.length > 0
+    ? Math.round(activeProjects.reduce((acc, p) => acc + p.progress, 0) / activeProjects.length)
+    : 0;
 
   return (
-    
+
       <div className="max-w-7xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
@@ -28,7 +63,7 @@ export default function DashboardPage() {
             <CardContent>
               <div className="text-3xl font-bold">{activeProjects.length}</div>
               <p className="text-xs text-gray-600 mt-1">
-                {mockProjects.filter(p => p.status === 'in-uitvoering').length} in uitvoering
+                {projects.filter(p => p.displayStatus === 'in-uitvoering').length} in uitvoering
               </p>
             </CardContent>
           </Card>
@@ -53,7 +88,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
-                {Math.round(activeProjects.reduce((acc, p) => acc + p.progress, 0) / activeProjects.length)}%
+                {avgProgress}%
               </div>
               <p className="text-xs text-gray-600 mt-1">Over alle actieve projecten</p>
             </CardContent>
@@ -69,7 +104,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {recentActivities.map((activity) => (
+                {recentActivities.length > 0 ? recentActivities.map((activity) => (
                   <div key={activity.id} className="flex items-start gap-3 pb-4 border-b last:border-0">
                     <div className={`p-2 rounded-lg ${
                       activity.type === 'approval' ? 'bg-orange-100' :
@@ -92,11 +127,13 @@ export default function DashboardPage() {
                         })}
                       </p>
                     </div>
-                    <Link href={`/projects/${activity.projectId}`}>
+                    <Link href={`/portal/projects/${activity.projectId}`}>
                       <Button variant="ghost" size="sm">Bekijk</Button>
                     </Link>
                   </div>
-                ))}
+                )) : (
+                  <p className="text-sm text-gray-500 text-center py-4">Nog geen activiteit</p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -108,19 +145,19 @@ export default function DashboardPage() {
               <CardDescription>Veelgebruikte functies</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Link href="/projects?action=new">
+              <Link href="/portal/projects?action=new">
                 <Button className="w-full justify-start" variant="outline">
                   <Plus className="h-4 w-4 mr-2" />
                   Nieuw Project
                 </Button>
               </Link>
-              <Link href="/clients?action=invite">
+              <Link href="/portal/clients?action=invite">
                 <Button className="w-full justify-start" variant="outline">
                   <UserPlus className="h-4 w-4 mr-2" />
                   Klant Uitnodigen
                 </Button>
               </Link>
-              <Link href="/projects">
+              <Link href="/portal/projects">
                 <Button className="w-full justify-start" variant="outline">
                   <FolderKanban className="h-4 w-4 mr-2" />
                   Alle Projecten
@@ -147,7 +184,7 @@ export default function DashboardPage() {
                       <p className="font-medium">{project.name}</p>
                       <p className="text-sm text-gray-600">{project.clientName}</p>
                     </div>
-                    <Link href={`/projects/${project.id}`}>
+                    <Link href={`/portal/projects/${project.id}`}>
                       <Button size="sm">Bekijk</Button>
                     </Link>
                   </div>
@@ -157,6 +194,6 @@ export default function DashboardPage() {
           </Card>
         )}
       </div>
-    
+
   );
 }

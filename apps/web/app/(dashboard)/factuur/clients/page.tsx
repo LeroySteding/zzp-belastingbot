@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,13 +8,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Edit, Trash2, FileText, Search } from 'lucide-react';
-import { mockClients } from '@/lib/factuur/mock-data';
+import { Plus, Edit, Trash2, FileText, Search, Loader2 } from 'lucide-react';
 import { Client } from '@/lib/factuur/types/invoice';
 import { formatDate } from '@/lib/factuur/invoice-utils';
+import { getClients, createClientAction, updateClientAction, deleteClientAction } from '@/lib/factuur/actions';
 
 export default function ClientsPage() {
-  const [clients, setClients] = useState<Client[]>(mockClients);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showDialog, setShowDialog] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
@@ -25,6 +27,17 @@ export default function ClientsPage() {
     kvk: '',
     btwNumber: '',
   });
+
+  useEffect(() => {
+    loadClients();
+  }, []);
+
+  async function loadClients() {
+    setLoading(true);
+    const data = await getClients();
+    setClients(data);
+    setLoading(false);
+  }
 
   const filteredClients = clients.filter(client =>
     client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -54,29 +67,29 @@ export default function ClientsPage() {
     setShowDialog(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    setSaving(true);
     if (editingClient) {
-      // Update existing client
-      setClients(clients.map(c => 
-        c.id === editingClient.id 
-          ? { ...c, ...formData }
-          : c
-      ));
+      const updated = await updateClientAction(editingClient.id, formData);
+      if (updated) {
+        setClients(clients.map(c => c.id === editingClient.id ? updated : c));
+      }
     } else {
-      // Add new client
-      const newClient: Client = {
-        id: `client-${Date.now()}`,
-        ...formData,
-        createdAt: new Date().toISOString().split('T')[0],
-      };
-      setClients([...clients, newClient]);
+      const created = await createClientAction(formData);
+      if (created) {
+        setClients([created, ...clients]);
+      }
     }
+    setSaving(false);
     setShowDialog(false);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm('Weet je zeker dat je deze klant wilt verwijderen?')) {
-      setClients(clients.filter(c => c.id !== id));
+      const success = await deleteClientAction(id);
+      if (success) {
+        setClients(clients.filter(c => c.id !== id));
+      }
     }
   };
 
@@ -132,58 +145,65 @@ export default function ClientsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Naam</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>KvK</TableHead>
-                  <TableHead>BTW-nummer</TableHead>
-                  <TableHead>Aangemaakt</TableHead>
-                  <TableHead className="text-right">Acties</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredClients.length === 0 ? (
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                <span className="ml-2 text-gray-500">Klanten laden...</span>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                      Geen klanten gevonden
-                    </TableCell>
+                    <TableHead>Naam</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>KvK</TableHead>
+                    <TableHead>BTW-nummer</TableHead>
+                    <TableHead>Aangemaakt</TableHead>
+                    <TableHead className="text-right">Acties</TableHead>
                   </TableRow>
-                ) : (
-                  filteredClients.map((client) => (
-                    <TableRow key={client.id}>
-                      <TableCell className="font-medium">{client.name}</TableCell>
-                      <TableCell>{client.email}</TableCell>
-                      <TableCell className="text-gray-600">{client.kvk || '-'}</TableCell>
-                      <TableCell className="text-gray-600">{client.btwNumber || '-'}</TableCell>
-                      <TableCell className="text-gray-600">{formatDate(client.createdAt)}</TableCell>
-                      <TableCell>
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleOpenDialog(client)}
-                            title="Bewerken"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(client.id)}
-                            title="Verwijderen"
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                </TableHeader>
+                <TableBody>
+                  {filteredClients.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                        {searchQuery ? 'Geen klanten gevonden' : 'Nog geen klanten. Voeg je eerste klant toe!'}
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  ) : (
+                    filteredClients.map((client) => (
+                      <TableRow key={client.id}>
+                        <TableCell className="font-medium">{client.name}</TableCell>
+                        <TableCell>{client.email}</TableCell>
+                        <TableCell className="text-gray-600">{client.kvk || '-'}</TableCell>
+                        <TableCell className="text-gray-600">{client.btwNumber || '-'}</TableCell>
+                        <TableCell className="text-gray-600">{formatDate(client.createdAt)}</TableCell>
+                        <TableCell>
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleOpenDialog(client)}
+                              title="Bewerken"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(client.id)}
+                              title="Verwijderen"
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -249,10 +269,11 @@ export default function ClientsPage() {
               <Button variant="outline" onClick={() => setShowDialog(false)}>
                 Annuleren
               </Button>
-              <Button 
+              <Button
                 onClick={handleSave}
-                disabled={!formData.name || !formData.email || !formData.address}
+                disabled={!formData.name || !formData.email || !formData.address || saving}
               >
+                {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 {editingClient ? 'Opslaan' : 'Toevoegen'}
               </Button>
             </div>

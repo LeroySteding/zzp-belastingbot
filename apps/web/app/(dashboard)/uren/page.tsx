@@ -1,30 +1,59 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Clock, Euro, TrendingUp, Play } from 'lucide-react';
-import { timeEntries, projects, getProjectById } from '@/lib/uren/mock-data';
+import { Clock, Euro, TrendingUp, Play, Loader2 } from 'lucide-react';
+import { getTimeEntries, getUrenProjects } from '@/lib/uren/actions';
+import type { UrenTimeEntry, UrenProject } from '@/lib/uren/actions';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import Link from 'next/link';
 
 export default function DashboardPage() {
+  const [timeEntriesData, setTimeEntriesData] = useState<UrenTimeEntry[]>([]);
+  const [projectsData, setProjectsData] = useState<UrenProject[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      const [entries, projects] = await Promise.all([
+        getTimeEntries(),
+        getUrenProjects(),
+      ]);
+      setTimeEntriesData(entries);
+      setProjectsData(projects);
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
   const now = new Date();
   const weekStart = startOfWeek(now, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
 
+  const getProjectById = (id: string) => projectsData.find(p => p.id === id);
+
   // Calculate this week's hours
-  const thisWeekEntries = timeEntries.filter(entry => {
+  const thisWeekEntries = timeEntriesData.filter(entry => {
     const entryDate = new Date(entry.date);
     return isWithinInterval(entryDate, { start: weekStart, end: weekEnd });
   });
   const thisWeekHours = thisWeekEntries.reduce((sum, e) => sum + e.duration, 0) / 60;
 
   // Calculate this month's hours and revenue
-  const thisMonthEntries = timeEntries.filter(entry => {
+  const thisMonthEntries = timeEntriesData.filter(entry => {
     const entryDate = new Date(entry.date);
     return isWithinInterval(entryDate, { start: monthStart, end: monthEnd });
   });
@@ -35,7 +64,7 @@ export default function DashboardPage() {
   }, 0);
 
   // Hours per project this month
-  const projectHoursData = projects.map(project => {
+  const projectHoursData = projectsData.map(project => {
     const projectEntries = thisMonthEntries.filter(e => e.projectId === project.id);
     const hours = projectEntries.reduce((sum, e) => sum + e.duration, 0) / 60;
     return {
@@ -48,7 +77,7 @@ export default function DashboardPage() {
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
   const dailyHoursData = weekDays.map(day => {
     const dayStr = format(day, 'yyyy-MM-dd');
-    const dayEntries = timeEntries.filter(e => e.date === dayStr);
+    const dayEntries = timeEntriesData.filter(e => e.date === dayStr);
     const hours = dayEntries.reduce((sum, e) => sum + e.duration, 0) / 60;
     return {
       dag: format(day, 'EEE', { locale: nl }),
@@ -57,12 +86,12 @@ export default function DashboardPage() {
   });
 
   // Recent entries (last 5)
-  const recentEntries = timeEntries.slice(0, 5);
+  const recentEntries = timeEntriesData.slice(0, 5);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      
-      
+
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
@@ -103,7 +132,7 @@ export default function DashboardPage() {
               <Euro className="h-4 w-4 text-purple-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">€{Math.round(thisMonthRevenue)}</div>
+              <div className="text-3xl font-bold">{'\u20AC'}{Math.round(thisMonthRevenue)}</div>
               <p className="text-xs text-gray-600 mt-1">
                 Gebaseerd op uurtarieven
               </p>

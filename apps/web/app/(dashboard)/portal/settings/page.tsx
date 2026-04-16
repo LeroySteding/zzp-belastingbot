@@ -6,17 +6,97 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { mockBranding } from '@/lib/portal/mock-data';
-import { Upload, Save, Eye } from 'lucide-react';
-import { useState } from 'react';
+import { getPortalSettings, updatePortalSettings } from '@/lib/portal/actions';
+import type { PortalSettings } from '@/lib/types';
+import { Upload, Save, Eye, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 export default function SettingsPage() {
-  const [companyName, setCompanyName] = useState(mockBranding.companyName);
-  const [primaryColor, setPrimaryColor] = useState(mockBranding.primaryColor);
-  const [portalUrl, setPortalUrl] = useState(mockBranding.portalUrl);
+  const [settings, setSettings] = useState<PortalSettings | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const [companyName, setCompanyName] = useState('');
+  const [primaryColor, setPrimaryColor] = useState('#3b82f6');
+  const [portalSlug, setPortalSlug] = useState('');
+  const [welcomeSubject, setWelcomeSubject] = useState('');
+  const [welcomeBody, setWelcomeBody] = useState('');
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await getPortalSettings();
+        setSettings(data);
+        if (data) {
+          setCompanyName(data.company_name ?? '');
+          setPrimaryColor(data.primary_color ?? '#3b82f6');
+          setPortalSlug(data.portal_slug ?? '');
+          setWelcomeSubject(data.welcome_email_subject ?? 'Welkom bij {BEDRIJFSNAAM} - Toegang tot je project portal');
+          setWelcomeBody(data.welcome_email_body ?? `Beste {KLANT_NAAM},
+
+Welkom! Ik heb een persoonlijk portaal voor je aangemaakt waar je:
+\u2022 De voortgang van je project kunt volgen
+\u2022 Bestanden kunt downloaden
+\u2022 Direct met mij kunt communiceren
+
+Klik op de onderstaande link om in te loggen:
+{PORTAL_LINK}
+
+Groet,
+{BEDRIJFSNAAM}`);
+        }
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const handleSaveBranding = async () => {
+    setSaving(true);
+    try {
+      await updatePortalSettings({
+        company_name: companyName,
+        primary_color: primaryColor,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSavePortalUrl = async () => {
+    setSaving(true);
+    try {
+      await updatePortalSettings({
+        portal_slug: portalSlug,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveEmailTemplate = async () => {
+    setSaving(true);
+    try {
+      await updatePortalSettings({
+        welcome_email_subject: welcomeSubject,
+        welcome_email_body: welcomeBody,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   return (
-    
+
       <div className="max-w-4xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Instellingen</h1>
@@ -42,8 +122,8 @@ export default function SettingsPage() {
               <CardContent className="space-y-6">
                 <div>
                   <Label htmlFor="company-name">Bedrijfsnaam</Label>
-                  <Input 
-                    id="company-name" 
+                  <Input
+                    id="company-name"
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
                     placeholder="Mijn Creatieve Bureau"
@@ -61,7 +141,7 @@ export default function SettingsPage() {
                       <Upload className="h-8 w-8 text-gray-400" />
                     </div>
                     <p className="text-sm font-medium mb-1">Klik om logo te uploaden</p>
-                    <p className="text-xs text-gray-500">PNG, JPG of SVG • Max 2MB</p>
+                    <p className="text-xs text-gray-500">PNG, JPG of SVG &bull; Max 2MB</p>
                   </div>
                   <p className="text-sm text-gray-500 mt-2">
                     Aanbevolen: vierkant formaat, minimaal 200x200px
@@ -71,14 +151,14 @@ export default function SettingsPage() {
                 <div>
                   <Label htmlFor="primary-color">Primaire Kleur</Label>
                   <div className="flex gap-3 items-center mt-2">
-                    <Input 
-                      id="primary-color" 
+                    <Input
+                      id="primary-color"
                       type="color"
                       value={primaryColor}
                       onChange={(e) => setPrimaryColor(e.target.value)}
                       className="w-20 h-12 cursor-pointer"
                     />
-                    <Input 
+                    <Input
                       value={primaryColor}
                       onChange={(e) => setPrimaryColor(e.target.value)}
                       placeholder="#3b82f6"
@@ -95,13 +175,13 @@ export default function SettingsPage() {
                   <div className="border rounded-lg p-6 bg-gradient-to-b from-blue-50 to-white">
                     <div className="bg-white rounded-lg p-4 shadow-sm">
                       <div className="flex items-center gap-3 mb-4">
-                        <div 
+                        <div
                           className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold"
                           style={{ backgroundColor: primaryColor }}
                         >
-                          {companyName.charAt(0)}
+                          {(companyName || 'M').charAt(0)}
                         </div>
-                        <span className="font-bold">{companyName}</span>
+                        <span className="font-bold">{companyName || 'Mijn Bureau'}</span>
                       </div>
                       <Button style={{ backgroundColor: primaryColor }} className="w-full">
                         Voorbeeld Knop
@@ -115,8 +195,8 @@ export default function SettingsPage() {
                     <Eye className="h-4 w-4 mr-2" />
                     Preview Portal
                   </Button>
-                  <Button style={{ backgroundColor: primaryColor }}>
-                    <Save className="h-4 w-4 mr-2" />
+                  <Button style={{ backgroundColor: primaryColor }} onClick={handleSaveBranding} disabled={saving}>
+                    {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                     Opslaan
                   </Button>
                 </div>
@@ -137,30 +217,21 @@ export default function SettingsPage() {
                 <CardContent className="space-y-4">
                   <div>
                     <Label htmlFor="welcome-subject">Onderwerp</Label>
-                    <Input 
+                    <Input
                       id="welcome-subject"
-                      defaultValue="Welkom bij {BEDRIJFSNAAM} - Toegang tot je project portal"
+                      value={welcomeSubject}
+                      onChange={(e) => setWelcomeSubject(e.target.value)}
                       className="mt-2"
                     />
                   </div>
                   <div>
                     <Label htmlFor="welcome-body">Bericht</Label>
-                    <Textarea 
+                    <Textarea
                       id="welcome-body"
                       rows={8}
                       className="mt-2 font-mono text-sm"
-                      defaultValue={`Beste {KLANT_NAAM},
-
-Welkom! Ik heb een persoonlijk portaal voor je aangemaakt waar je:
-• De voortgang van je project kunt volgen
-• Bestanden kunt downloaden
-• Direct met mij kunt communiceren
-
-Klik op de onderstaande link om in te loggen:
-{PORTAL_LINK}
-
-Groet,
-{BEDRIJFSNAAM}`}
+                      value={welcomeBody}
+                      onChange={(e) => setWelcomeBody(e.target.value)}
                     />
                   </div>
                   <div className="bg-blue-50 p-3 rounded-lg">
@@ -170,8 +241,8 @@ Groet,
                     </p>
                   </div>
                   <div className="flex justify-end">
-                    <Button>
-                      <Save className="h-4 w-4 mr-2" />
+                    <Button onClick={handleSaveEmailTemplate} disabled={saving}>
+                      {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                       Template Opslaan
                     </Button>
                   </div>
@@ -188,7 +259,7 @@ Groet,
                 <CardContent className="space-y-4">
                   <div>
                     <Label htmlFor="update-subject">Onderwerp</Label>
-                    <Input 
+                    <Input
                       id="update-subject"
                       defaultValue="Nieuwe update voor {PROJECT_NAAM}"
                       className="mt-2"
@@ -196,7 +267,7 @@ Groet,
                   </div>
                   <div>
                     <Label htmlFor="update-body">Bericht</Label>
-                    <Textarea 
+                    <Textarea
                       id="update-body"
                       rows={6}
                       className="mt-2 font-mono text-sm"
@@ -232,7 +303,7 @@ Groet,
                 <CardContent className="space-y-4">
                   <div>
                     <Label htmlFor="approval-subject">Onderwerp</Label>
-                    <Input 
+                    <Input
                       id="approval-subject"
                       defaultValue="{PROJECT_NAAM} is klaar voor jouw goedkeuring"
                       className="mt-2"
@@ -240,7 +311,7 @@ Groet,
                   </div>
                   <div>
                     <Label htmlFor="approval-body">Bericht</Label>
-                    <Textarea 
+                    <Textarea
                       id="approval-body"
                       rows={6}
                       className="mt-2 font-mono text-sm"
@@ -281,10 +352,10 @@ Groet,
                 <div>
                   <Label htmlFor="portal-url">Standaard Portal URL</Label>
                   <div className="flex items-center gap-2 mt-2">
-                    <Input 
+                    <Input
                       id="portal-url"
-                      value={portalUrl}
-                      onChange={(e) => setPortalUrl(e.target.value)}
+                      value={portalSlug}
+                      onChange={(e) => setPortalSlug(e.target.value)}
                       className="font-mono"
                     />
                     <Button variant="outline" size="sm">
@@ -308,10 +379,10 @@ Groet,
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="bg-gray-50 p-4 rounded-lg mb-4">
                     <Label htmlFor="custom-domain" className="text-gray-400">Custom Domein</Label>
-                    <Input 
+                    <Input
                       id="custom-domain"
                       placeholder="portal.jouwbedrijf.nl"
                       className="mt-2 font-mono"
@@ -337,8 +408,8 @@ Groet,
                 </div>
 
                 <div className="flex justify-end pt-4 border-t">
-                  <Button>
-                    <Save className="h-4 w-4 mr-2" />
+                  <Button onClick={handleSavePortalUrl} disabled={saving}>
+                    {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
                     Opslaan
                   </Button>
                 </div>
@@ -347,6 +418,6 @@ Groet,
           </TabsContent>
         </Tabs>
       </div>
-    
+
   );
 }

@@ -1,27 +1,60 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, Clock, Euro, AlertCircle } from 'lucide-react';
-import { getProjectById, getClientById, calculateProjectStats, getEntriesByProject } from '@/lib/uren/mock-data';
+import { ArrowLeft, Clock, Euro, AlertCircle, Loader2 } from 'lucide-react';
+import { getUrenProjects, getUrenClients, getTimeEntries, calculateProjectStats } from '@/lib/uren/actions';
+import type { UrenProject, UrenClient, UrenTimeEntry, UrenProjectStats } from '@/lib/uren/actions';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import Link from 'next/link';
 
 export default function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const project = getProjectById(id);
-  const client = project ? getClientById(project.clientId) : null;
-  const stats = project ? calculateProjectStats(project.id) : null;
-  const entries = project ? getEntriesByProject(project.id) : [];
+  const [project, setProject] = useState<UrenProject | null>(null);
+  const [client, setClient] = useState<UrenClient | null>(null);
+  const [stats, setStats] = useState<UrenProjectStats | null>(null);
+  const [entries, setEntries] = useState<UrenTimeEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      const [projects, clients, projectEntries, projectStats] = await Promise.all([
+        getUrenProjects(),
+        getUrenClients(),
+        getTimeEntries(id),
+        calculateProjectStats(id),
+      ]);
+
+      const foundProject = projects.find(p => p.id === id) || null;
+      setProject(foundProject);
+
+      if (foundProject) {
+        const foundClient = clients.find(c => c.id === foundProject.clientId) || null;
+        setClient(foundClient);
+      }
+
+      setStats(projectStats);
+      setEntries(projectEntries);
+      setLoading(false);
+    }
+    load();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   if (!project) {
     return (
       <div className="min-h-screen bg-gray-50">
-        
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <p>Project niet gevonden</p>
         </div>
@@ -33,8 +66,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="min-h-screen bg-gray-50">
-      
-      
+
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
           <Link href="/uren/projects">
@@ -43,17 +76,17 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               Terug naar projecten
             </Button>
           </Link>
-          
+
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <div className={`w-4 h-4 rounded-full ${project.color}`} />
                 <h1 className="text-3xl font-bold text-gray-900">{project.name}</h1>
               </div>
-              <p className="text-gray-600">Klant: {client?.name}</p>
+              <p className="text-gray-600">Klant: {client?.name || project.clientName}</p>
               <p className="text-sm text-gray-500">{client?.email}</p>
             </div>
-            
+
             {isOverBudget && (
               <Badge variant="destructive" className="gap-1">
                 <AlertCircle className="h-3 w-3" />
@@ -85,10 +118,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
-                €{Math.round(stats?.revenue || 0)}
+                {'\u20AC'}{Math.round(stats?.revenue || 0)}
               </div>
               <p className="text-sm text-gray-600 mt-1">
-                @ €{project.hourlyRate}/uur
+                @ {'\u20AC'}{project.hourlyRate}/uur
               </p>
             </CardContent>
           </Card>
@@ -101,8 +134,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               <div className="text-3xl font-bold">
                 {Math.round(stats?.budgetPercentage || 0)}%
               </div>
-              <Progress 
-                value={Math.min(stats?.budgetPercentage || 0, 100)} 
+              <Progress
+                value={Math.min(stats?.budgetPercentage || 0, 100)}
                 className="mt-2"
               />
             </CardContent>
@@ -149,7 +182,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                         {Math.round(entry.duration / 60 * 10) / 10}h
                       </div>
                       <div className="text-sm text-gray-600">
-                        €{Math.round((entry.duration / 60) * project.hourlyRate)}
+                        {'\u20AC'}{Math.round((entry.duration / 60) * project.hourlyRate)}
                       </div>
                     </div>
                   </div>
@@ -168,7 +201,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             <CardContent className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-gray-600">Uurtarief:</span>
-                <span className="font-medium">€{project.hourlyRate}</span>
+                <span className="font-medium">{'\u20AC'}{project.hourlyRate}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Budget (uren):</span>
@@ -176,7 +209,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Budget (euro):</span>
-                <span className="font-medium">€{project.budgetHours * project.hourlyRate}</span>
+                <span className="font-medium">{'\u20AC'}{project.budgetHours * project.hourlyRate}</span>
               </div>
               <div className="flex justify-between border-t pt-3">
                 <span className="text-gray-600">Resterende uren:</span>
@@ -194,18 +227,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             <CardContent className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-gray-600">Naam:</span>
-                <span className="font-medium">{client?.name}</span>
+                <span className="font-medium">{client?.name || project.clientName}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Email:</span>
                 <span className="font-medium">{client?.email}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Aantal projecten:</span>
-                <span className="font-medium">
-                  {/* In real app, count projects for this client */}
-                  2
-                </span>
               </div>
             </CardContent>
           </Card>

@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Download, FileText, Printer, Calendar } from 'lucide-react';
-import { timeEntries, projects, clients, getProjectById, getClientById } from '@/lib/uren/mock-data';
+import { Download, FileText, Printer, Calendar, Loader2 } from 'lucide-react';
+import { getTimeEntriesByDateRange, getUrenProjects, getUrenClients } from '@/lib/uren/actions';
+import type { UrenTimeEntry, UrenProject, UrenClient } from '@/lib/uren/actions';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { nl } from 'date-fns/locale';
 
@@ -21,9 +22,14 @@ export default function TimesheetsPage() {
   const [groupBy, setGroupBy] = useState<GroupBy>('project');
   const [status, setStatus] = useState<Status>('concept');
 
-  const getPeriodDates = (period: Period) => {
+  const [projectsData, setProjectsData] = useState<UrenProject[]>([]);
+  const [clientsData, setClientsData] = useState<UrenClient[]>([]);
+  const [filteredEntries, setFilteredEntries] = useState<UrenTimeEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const getPeriodDates = (p: Period) => {
     const now = new Date();
-    switch (period) {
+    switch (p) {
       case 'thisWeek':
         return {
           start: startOfWeek(now, { weekStartsOn: 1 }),
@@ -51,23 +57,45 @@ export default function TimesheetsPage() {
     }
   };
 
-  const { start, end } = getPeriodDates(period);
-  
-  const filteredEntries = timeEntries.filter(entry => {
-    const entryDate = new Date(entry.date);
-    return entryDate >= start && entryDate <= end;
-  });
+  useEffect(() => {
+    async function load() {
+      const [projects, clients] = await Promise.all([
+        getUrenProjects(),
+        getUrenClients(),
+      ]);
+      setProjectsData(projects);
+      setClientsData(clients);
+    }
+    load();
+  }, []);
 
-  const groupedData = groupBy === 'project' 
-    ? projects.map(project => ({
+  useEffect(() => {
+    async function loadEntries() {
+      setLoading(true);
+      const { start, end } = getPeriodDates(period);
+      const startStr = format(start, 'yyyy-MM-dd');
+      const endStr = format(end, 'yyyy-MM-dd');
+      const entries = await getTimeEntriesByDateRange(startStr, endStr);
+      setFilteredEntries(entries);
+      setLoading(false);
+    }
+    loadEntries();
+  }, [period]);
+
+  const getProjectById = (id: string) => projectsData.find(p => p.id === id);
+
+  const { start, end } = getPeriodDates(period);
+
+  const groupedData = groupBy === 'project'
+    ? projectsData.map(project => ({
         id: project.id,
         name: project.name,
-        subtitle: getClientById(project.clientId)?.name || '',
+        subtitle: project.clientName,
         entries: filteredEntries.filter(e => e.projectId === project.id),
         color: project.color,
         rate: project.hourlyRate,
       })).filter(g => g.entries.length > 0)
-    : clients.map(client => ({
+    : clientsData.map(client => ({
         id: client.id,
         name: client.name,
         subtitle: client.email,
@@ -89,14 +117,13 @@ export default function TimesheetsPage() {
     const headers = ['Datum', 'Project', 'Klant', 'Beschrijving', 'Start', 'Eind', 'Uren', 'Tarief', 'Bedrag'];
     const rows = filteredEntries.map(entry => {
       const project = getProjectById(entry.projectId);
-      const client = getClientById(project?.clientId || '');
       const hours = entry.duration / 60;
       const amount = hours * (project?.hourlyRate || 0);
-      
+
       return [
         entry.date,
         project?.name || '',
-        client?.name || '',
+        project?.clientName || '',
         entry.description,
         entry.startTime,
         entry.endTime,
@@ -125,10 +152,18 @@ export default function TimesheetsPage() {
     gefactureerd: 'bg-blue-100 text-blue-800',
   };
 
+  if (loading && projectsData.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      
-      
+
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 print:px-0">
         <div className="mb-8 print:mb-4">
           <h1 className="text-3xl font-bold text-gray-900 print:text-2xl">Urenstaten</h1>
@@ -231,7 +266,7 @@ export default function TimesheetsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold print:text-2xl">
-                €{Math.round(totalRevenue)}
+                {'\u20AC'}{Math.round(totalRevenue)}
               </div>
               <Badge className={statusColors[status]} variant="secondary">
                 {status}
@@ -253,7 +288,11 @@ export default function TimesheetsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            {groupedData.length === 0 ? (
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+              </div>
+            ) : groupedData.length === 0 ? (
               <p className="text-gray-500 text-center py-8">
                 Geen uren gevonden voor deze periode
               </p>
@@ -281,7 +320,7 @@ export default function TimesheetsPage() {
                             {Math.round(groupHours * 10) / 10}h
                           </div>
                           <div className="text-sm text-gray-600 print:text-xs">
-                            €{Math.round(groupRevenue)}
+                            {'\u20AC'}{Math.round(groupRevenue)}
                           </div>
                         </div>
                       </div>
