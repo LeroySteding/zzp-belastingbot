@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Building2, User, CreditCard, Bell, Loader2 } from 'lucide-react'
+import { Building2, User, CreditCard, Bell, Loader2, UsersRound } from 'lucide-react'
 import { getProfile, updateProfile } from '@/lib/belasting/actions'
 
 export default function SettingsPage() {

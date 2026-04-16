@@ -24,8 +24,10 @@ import {
   FileBarChart,
   PlusCircle,
   ScanLine,
+  UsersRound,
 } from 'lucide-react'
 import { useState } from 'react'
+import { AccountSwitcher } from '@/components/shared/account-switcher'
 
 interface NavSection {
   title: string
@@ -134,6 +136,9 @@ export function Sidebar() {
             <p className="text-xs text-sidebar-foreground/50 mt-1">
               Alles-in-één voor ZZP&apos;ers
             </p>
+            <div className="mt-3">
+              <AccountSwitcher />
+            </div>
           </div>
 
           {/* Navigation */}
@@ -173,8 +178,21 @@ export function Sidebar() {
           {/* Footer */}
           <div className="p-3 border-t border-sidebar-border">
             <Link
+              href="/settings/team"
+              className={cn(
+                'sidebar-nav-item text-sm mb-1',
+                pathname === '/settings/team' && 'active'
+              )}
+            >
+              <UsersRound className="h-4 w-4" />
+              Team
+            </Link>
+            <Link
               href="/settings"
-              className="sidebar-nav-item text-sm mb-1"
+              className={cn(
+                'sidebar-nav-item text-sm mb-1',
+                pathname === '/settings' && 'active'
+              )}
             >
               <Settings className="h-4 w-4" />
               Instellingen
