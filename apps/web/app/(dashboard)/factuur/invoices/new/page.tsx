@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,21 +10,34 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { ArrowLeft, Plus, Trash2, Eye, Mail, FileText } from 'lucide-react';
-import { defaultCompanyInfo, mockClients } from '@/lib/factuur/mock-data';
-import { generateInvoiceNumber, getDueDate, calculateInvoice, formatCurrency } from '@/lib/factuur/invoice-utils';
-import { CompanyInfo, ClientInfo, LineItem, RecurringFrequency, InvoiceTemplate } from '@/lib/factuur/types/invoice';
+import { ArrowLeft, Plus, Trash2, Eye, Mail, FileText, Loader2 } from 'lucide-react';
+import { getDueDate, calculateInvoice, formatCurrency } from '@/lib/factuur/invoice-utils';
+import { CompanyInfo, ClientInfo, Client, LineItem, RecurringFrequency, InvoiceTemplate } from '@/lib/factuur/types/invoice';
 import InvoicePreview from '@/components/factuur/InvoicePreview';
+import { getClients, getCompanyInfo, getNextInvoiceNumber, createInvoiceAction } from '@/lib/factuur/actions';
 
 export default function NewInvoicePage() {
-  const [company, setCompany] = useState<CompanyInfo>(defaultCompanyInfo);
+  const router = useRouter();
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const [company, setCompany] = useState<CompanyInfo>({
+    name: '',
+    address: '',
+    kvk: '',
+    btwNumber: '',
+    iban: '',
+    email: '',
+    phone: '',
+  });
   const [selectedClientId, setSelectedClientId] = useState<string>('');
   const [client, setClient] = useState<ClientInfo>({
     name: '',
     address: '',
     email: '',
   });
-  const [invoiceNumber] = useState(generateInvoiceNumber());
+  const [invoiceNumber, setInvoiceNumber] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [dueDate, setDueDate] = useState(getDueDate(new Date().toISOString().split('T')[0]));
   const [items, setItems] = useState<LineItem[]>([
@@ -41,6 +55,23 @@ export default function NewInvoicePage() {
   const [template, setTemplate] = useState<InvoiceTemplate>('modern');
   const [showEmailDialog, setShowEmailDialog] = useState(false);
 
+  useEffect(() => {
+    async function loadData() {
+      const [clientsData, companyData, nextNumber] = await Promise.all([
+        getClients(),
+        getCompanyInfo(),
+        getNextInvoiceNumber(),
+      ]);
+      setClients(clientsData);
+      if (companyData) {
+        setCompany(companyData);
+      }
+      setInvoiceNumber(nextNumber);
+      setLoading(false);
+    }
+    loadData();
+  }, []);
+
   const handleClientSelect = (clientId: string) => {
     setSelectedClientId(clientId);
     if (clientId === 'manual') {
@@ -50,7 +81,7 @@ export default function NewInvoicePage() {
         email: '',
       });
     } else {
-      const selectedClient = mockClients.find(c => c.id === clientId);
+      const selectedClient = clients.find(c => c.id === clientId);
       if (selectedClient) {
         setClient({
           name: selectedClient.name,
@@ -83,7 +114,7 @@ export default function NewInvoicePage() {
   };
 
   const updateItem = (id: string, field: keyof LineItem, value: any) => {
-    setItems(items.map(item => 
+    setItems(items.map(item =>
       item.id === id ? { ...item, [field]: value } : item
     ));
   };
@@ -102,6 +133,27 @@ export default function NewInvoicePage() {
     notes,
     recurring,
     template,
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    const id = await createInvoiceAction({
+      invoiceNumber,
+      date,
+      dueDate,
+      clientId: selectedClientId && selectedClientId !== 'manual' ? selectedClientId : undefined,
+      notes: notes || undefined,
+      template,
+      recurring,
+      items,
+    });
+    setSaving(false);
+
+    if (id) {
+      router.push('/factuur/invoices');
+    } else {
+      alert('Er is een fout opgetreden bij het opslaan van de factuur.');
+    }
   };
 
   const emailSubject = `Factuur ${invoiceNumber} van ${company.name}`;
@@ -132,6 +184,17 @@ ${company.name}`;
     minimal: 'Minimaal - Clean en minimalistisch design met groene accenten',
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+          <span className="text-gray-600">Factuur voorbereiden...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -154,8 +217,11 @@ ${company.name}`;
               <Mail className="h-4 w-4 mr-2" />
               Email Preview
             </Button>
-            <Button>Opslaan als Concept</Button>
-            <Button variant="default">Genereer PDF</Button>
+            <Button onClick={handleSave} disabled={saving}>
+              {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Opslaan als Concept
+            </Button>
+            <Button variant="default" disabled>Genereer PDF</Button>
           </div>
         </div>
       </header>
@@ -253,10 +319,10 @@ ${company.name}`;
                       <SelectValue placeholder="Kies een klant of voer handmatig in" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="manual">📝 Handmatig invoeren</SelectItem>
-                      {mockClients.map(client => (
-                        <SelectItem key={client.id} value={client.id}>
-                          {client.name}
+                      <SelectItem value="manual">Handmatig invoeren</SelectItem>
+                      {clients.map(c => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -344,8 +410,8 @@ ${company.name}`;
                   </div>
                   <div>
                     <Label htmlFor="recurring">Terugkerende Factuur</Label>
-                    <Select 
-                      value={recurring || 'none'} 
+                    <Select
+                      value={recurring || 'none'}
                       onValueChange={(value) => setRecurring(value === 'none' ? null : value as RecurringFrequency)}
                     >
                       <SelectTrigger id="recurring">

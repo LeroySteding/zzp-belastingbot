@@ -1,12 +1,14 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Plus, TrendingUp, Clock, CheckCircle } from 'lucide-react';
-import { mockInvoices } from '@/lib/factuur/mock-data';
+import { FileText, Plus, TrendingUp, Clock, CheckCircle, Loader2 } from 'lucide-react';
 import { formatCurrency, formatDate, getInvoiceTotal } from '@/lib/factuur/invoice-utils';
+import { Invoice } from '@/lib/factuur/types/invoice';
+import { getInvoices } from '@/lib/factuur/actions';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const statusColors: Record<string, string> = {
@@ -22,30 +24,40 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function DashboardPage() {
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      const data = await getInvoices();
+      setInvoices(data);
+      setLoading(false);
+    }
+    load();
+  }, []);
+
   // Calculate statistics
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth();
   const currentYear = currentDate.getFullYear();
-  
-  // Filter invoices by time period
-  const thisMonthInvoices = mockInvoices.filter(inv => {
+
+  const thisMonthInvoices = invoices.filter(inv => {
     const invDate = new Date(inv.date);
     return invDate.getMonth() === currentMonth && invDate.getFullYear() === currentYear;
   });
 
-  const thisQuarterInvoices = mockInvoices.filter(inv => {
+  const thisQuarterInvoices = invoices.filter(inv => {
     const invDate = new Date(inv.date);
     const quarter = Math.floor(currentMonth / 3);
     const invQuarter = Math.floor(invDate.getMonth() / 3);
     return invQuarter === quarter && invDate.getFullYear() === currentYear;
   });
 
-  const thisYearInvoices = mockInvoices.filter(inv => {
+  const thisYearInvoices = invoices.filter(inv => {
     const invDate = new Date(inv.date);
     return invDate.getFullYear() === currentYear;
   });
 
-  // Calculate totals
   const monthlyRevenue = thisMonthInvoices
     .filter(inv => inv.status === 'betaald')
     .reduce((sum, inv) => sum + getInvoiceTotal(inv), 0);
@@ -58,31 +70,37 @@ export default function DashboardPage() {
     .filter(inv => inv.status === 'betaald')
     .reduce((sum, inv) => sum + getInvoiceTotal(inv), 0);
 
-  const outstandingAmount = mockInvoices
+  const outstandingAmount = invoices
     .filter(inv => inv.status === 'verzonden')
     .reduce((sum, inv) => sum + getInvoiceTotal(inv), 0);
 
-  // Recent invoices (last 5)
-  const recentInvoices = [...mockInvoices]
+  const recentInvoices = [...invoices]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 5);
 
-  // Chart data - monthly revenue for the year
   const monthlyData = Array.from({ length: 12 }, (_, i) => {
     const month = new Date(currentYear, i, 1);
     const monthName = month.toLocaleDateString('nl-NL', { month: 'short' });
-    const revenue = mockInvoices
+    const revenue = invoices
       .filter(inv => {
         const invDate = new Date(inv.date);
         return invDate.getMonth() === i && invDate.getFullYear() === currentYear && inv.status === 'betaald';
       })
       .reduce((sum, inv) => sum + getInvoiceTotal(inv), 0);
-    
-    return {
-      month: monthName,
-      revenue: revenue,
-    };
+
+    return { month: monthName, revenue };
   });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+          <span className="text-gray-600">Dashboard laden...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -118,9 +136,8 @@ export default function DashboardPage() {
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Welcome Section */}
         <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">Welkom terug! 👋</h2>
+          <h2 className="text-3xl font-bold mb-2">Welkom terug!</h2>
           <p className="text-gray-600">Hier is een overzicht van je facturatie</p>
         </div>
 
@@ -181,7 +198,7 @@ export default function DashboardPage() {
             <CardContent>
               <div className="text-3xl font-bold text-blue-600">{formatCurrency(outstandingAmount)}</div>
               <p className="text-sm text-gray-600 mt-1">
-                {mockInvoices.filter(inv => inv.status === 'verzonden').length} verzonden facturen
+                {invoices.filter(inv => inv.status === 'verzonden').length} verzonden facturen
               </p>
             </CardContent>
           </Card>
@@ -198,10 +215,8 @@ export default function DashboardPage() {
                 <BarChart data={monthlyData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
-                  <YAxis 
-                    tickFormatter={(value) => `€${value}`}
-                  />
-                  <Tooltip 
+                  <YAxis tickFormatter={(value) => `\u20AC${value}`} />
+                  <Tooltip
                     formatter={(value) => formatCurrency(value as number)}
                     labelFormatter={(label) => `Maand: ${label}`}
                   />
@@ -218,40 +233,46 @@ export default function DashboardPage() {
             <div className="flex justify-between items-center">
               <CardTitle>Recente Facturen</CardTitle>
               <Button variant="ghost" asChild>
-                <Link href="/factuur/invoices">Bekijk Alle →</Link>
+                <Link href="/factuur/invoices">Bekijk Alle</Link>
               </Button>
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentInvoices.map((invoice) => (
-                <div
-                  key={invoice.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <FileText className="h-5 w-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <div className="font-medium">{invoice.invoiceNumber}</div>
-                        <div className="text-sm text-gray-600">{invoice.client.name}</div>
+            {recentInvoices.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                Nog geen facturen. <Link href="/factuur/invoices/new" className="text-blue-600 hover:underline">Maak je eerste factuur</Link>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {recentInvoices.map((invoice) => (
+                  <div
+                    key={invoice.id}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                          <FileText className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <div className="font-medium">{invoice.invoiceNumber}</div>
+                          <div className="text-sm text-gray-600">{invoice.client.name}</div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-6">
-                    <div className="text-right">
-                      <div className="font-medium">{formatCurrency(getInvoiceTotal(invoice))}</div>
-                      <div className="text-sm text-gray-600">{formatDate(invoice.date)}</div>
+                    <div className="flex items-center gap-6">
+                      <div className="text-right">
+                        <div className="font-medium">{formatCurrency(getInvoiceTotal(invoice))}</div>
+                        <div className="text-sm text-gray-600">{formatDate(invoice.date)}</div>
+                      </div>
+                      <Badge className={statusColors[invoice.status]}>
+                        {statusLabels[invoice.status]}
+                      </Badge>
                     </div>
-                    <Badge className={statusColors[invoice.status]}>
-                      {statusLabels[invoice.status]}
-                    </Badge>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

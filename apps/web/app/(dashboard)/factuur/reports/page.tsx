@@ -1,28 +1,44 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileText, Download } from 'lucide-react';
-import { mockInvoices } from '@/lib/factuur/mock-data';
+import { FileText, Download, Loader2 } from 'lucide-react';
 import { formatCurrency, getInvoiceTotal, calculateInvoice } from '@/lib/factuur/invoice-utils';
+import { Invoice } from '@/lib/factuur/types/invoice';
+import { getInvoices } from '@/lib/factuur/actions';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 export default function ReportsPage() {
-  const [selectedYear, setSelectedYear] = useState('2026');
+  const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+
+  useEffect(() => {
+    async function load() {
+      const data = await getInvoices();
+      setAllInvoices(data);
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  // Get available years from invoices
+  const availableYears = [...new Set(allInvoices.map(inv => inv.date.split('-')[0]))].sort().reverse();
+  if (availableYears.length === 0) {
+    availableYears.push(new Date().getFullYear().toString());
+  }
 
   // Filter invoices by year and paid/sent status
-  const yearInvoices = mockInvoices.filter(inv => {
+  const yearInvoices = allInvoices.filter(inv => {
     const year = inv.date.split('-')[0];
     return year === selectedYear && (inv.status === 'betaald' || inv.status === 'verzonden');
   });
 
-  // Calculate total revenue
   const totalRevenue = yearInvoices.reduce((sum, inv) => sum + getInvoiceTotal(inv), 0);
 
-  // Revenue per month
   const monthlyData = Array.from({ length: 12 }, (_, i) => {
     const month = (i + 1).toString().padStart(2, '0');
     const monthInvoices = yearInvoices.filter(inv => inv.date.startsWith(`${selectedYear}-${month}`));
@@ -33,7 +49,6 @@ export default function ReportsPage() {
     };
   });
 
-  // Revenue per client
   const clientRevenue = new Map<string, number>();
   yearInvoices.forEach(inv => {
     const current = clientRevenue.get(inv.client.name) || 0;
@@ -43,12 +58,7 @@ export default function ReportsPage() {
     .map(([name, omzet]) => ({ name, omzet }))
     .sort((a, b) => b.omzet - a.omzet);
 
-  // BTW totals per rate
-  const btwTotals = {
-    btw21: 0,
-    btw9: 0,
-    btw0: 0,
-  };
+  const btwTotals = { btw21: 0, btw9: 0, btw0: 0 };
   yearInvoices.forEach(inv => {
     const calc = calculateInvoice(inv.items);
     btwTotals.btw21 += calc.btw21;
@@ -78,7 +88,7 @@ export default function ReportsPage() {
         inv.status,
       ];
     });
-    
+
     const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -87,6 +97,17 @@ export default function ReportsPage() {
     a.download = `omzet-${selectedYear}.csv`;
     a.click();
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+          <span className="text-gray-600">Rapportages laden...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -108,9 +129,9 @@ export default function ReportsPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="2026">2026</SelectItem>
-                <SelectItem value="2025">2025</SelectItem>
-                <SelectItem value="2024">2024</SelectItem>
+                {availableYears.map(year => (
+                  <SelectItem key={year} value={year}>{year}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Button onClick={handleExportCSV}>
@@ -159,81 +180,89 @@ export default function ReportsPage() {
           </Card>
         </div>
 
-        {/* Charts */}
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Monthly Revenue Chart */}
+        {yearInvoices.length === 0 ? (
           <Card>
-            <CardHeader>
-              <CardTitle>Omzet per Maand</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip 
-                    formatter={(value) => formatCurrency(value as number)}
-                    labelStyle={{ color: '#000' }}
-                  />
-                  <Legend />
-                  <Bar dataKey="omzet" fill="#3b82f6" name="Omzet" />
-                </BarChart>
-              </ResponsiveContainer>
+            <CardContent className="py-12 text-center text-gray-500">
+              Geen facturen gevonden voor {selectedYear}.
             </CardContent>
           </Card>
+        ) : (
+          <>
+            {/* Charts */}
+            <div className="grid lg:grid-cols-2 gap-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Omzet per Maand</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={monthlyData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip
+                        formatter={(value) => formatCurrency(value as number)}
+                        labelStyle={{ color: '#000' }}
+                      />
+                      <Legend />
+                      <Bar dataKey="omzet" fill="#3b82f6" name="Omzet" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
 
-          {/* Client Revenue Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Omzet per Klant</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={clientData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} (${((percent || 0) * 100).toFixed(0)}%)`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="omzet"
-                  >
-                    {clientData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => formatCurrency(value as number)} />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* BTW Overview Table */}
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>BTW Overzicht</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {btwData.map((item) => (
-                <div key={item.name} className="flex justify-between items-center py-2 border-b last:border-0">
-                  <span className="font-medium">{item.name}</span>
-                  <span className="text-lg font-bold">{formatCurrency(item.value)}</span>
-                </div>
-              ))}
-              <div className="flex justify-between items-center py-2 pt-4 border-t-2">
-                <span className="font-bold text-lg">Totaal BTW</span>
-                <span className="text-xl font-bold text-blue-600">
-                  {formatCurrency(btwTotals.btw21 + btwTotals.btw9 + btwTotals.btw0)}
-                </span>
-              </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Omzet per Klant</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={clientData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} (${((percent || 0) * 100).toFixed(0)}%)`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="omzet"
+                      >
+                        {clientData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value) => formatCurrency(value as number)} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
+
+            {/* BTW Overview Table */}
+            <Card className="mt-8">
+              <CardHeader>
+                <CardTitle>BTW Overzicht</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {btwData.map((item) => (
+                    <div key={item.name} className="flex justify-between items-center py-2 border-b last:border-0">
+                      <span className="font-medium">{item.name}</span>
+                      <span className="text-lg font-bold">{formatCurrency(item.value)}</span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between items-center py-2 pt-4 border-t-2">
+                    <span className="font-bold text-lg">Totaal BTW</span>
+                    <span className="text-xl font-bold text-blue-600">
+                      {formatCurrency(btwTotals.btw21 + btwTotals.btw9 + btwTotals.btw0)}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
     </div>
   );
