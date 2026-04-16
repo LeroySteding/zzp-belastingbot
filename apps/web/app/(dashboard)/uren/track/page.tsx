@@ -8,23 +8,43 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Play, Square, Clock, Plus } from 'lucide-react';
-import { projects, clients, timeEntries, getProjectById, getClientById } from '@/lib/uren/mock-data';
+import { Play, Square, Clock, Plus, Loader2 } from 'lucide-react';
+import { getUrenProjects, getTimeEntries, createTimeEntry } from '@/lib/uren/actions';
+import type { UrenProject, UrenTimeEntry } from '@/lib/uren/actions';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 
 export default function TrackPage() {
+  const [projectsData, setProjectsData] = useState<UrenProject[]>([]);
+  const [todayEntries, setTodayEntries] = useState<UrenTimeEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [isRunning, setIsRunning] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [selectedProject, setSelectedProject] = useState('');
   const [description, setDescription] = useState('');
-  
+  const [timerStartTime, setTimerStartTime] = useState('');
+
   // Manual entry form
   const [manualDate, setManualDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [manualStartTime, setManualStartTime] = useState('09:00');
   const [manualEndTime, setManualEndTime] = useState('17:00');
   const [manualProject, setManualProject] = useState('');
   const [manualDescription, setManualDescription] = useState('');
+
+  useEffect(() => {
+    async function load() {
+      const [projects, entries] = await Promise.all([
+        getUrenProjects(),
+        getTimeEntries(),
+      ]);
+      setProjectsData(projects);
+      const today = format(new Date(), 'yyyy-MM-dd');
+      setTodayEntries(entries.filter(e => e.date === today));
+      setLoading(false);
+    }
+    load();
+  }, []);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -36,6 +56,8 @@ export default function TrackPage() {
     return () => clearInterval(interval);
   }, [isRunning]);
 
+  const getProjectById = (id: string) => projectsData.find(p => p.id === id);
+
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
@@ -43,15 +65,33 @@ export default function TrackPage() {
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const handleStartStop = () => {
+  const handleStartStop = async () => {
     if (isRunning) {
-      // Stop timer - in real app, save entry
+      // Stop timer - save entry
       setIsRunning(false);
       if (selectedProject && elapsedSeconds > 0) {
-        alert(`Tijd opgeslagen: ${formatTime(elapsedSeconds)} voor ${getProjectById(selectedProject)?.name}`);
+        const now = new Date();
+        const endTimeStr = format(now, 'HH:mm');
+        const durationMinutes = Math.round(elapsedSeconds / 60);
+
+        const saved = await createTimeEntry({
+          projectId: selectedProject,
+          date: format(now, 'yyyy-MM-dd'),
+          startTime: timerStartTime,
+          endTime: endTimeStr,
+          durationMinutes,
+          description: description || undefined,
+          billable: true,
+        });
+
+        if (saved) {
+          setTodayEntries(prev => [saved, ...prev]);
+        }
+
         setElapsedSeconds(0);
         setDescription('');
         setSelectedProject('');
+        setTimerStartTime('');
       }
     } else {
       // Start timer
@@ -59,26 +99,58 @@ export default function TrackPage() {
         alert('Selecteer eerst een project');
         return;
       }
+      setTimerStartTime(format(new Date(), 'HH:mm'));
       setIsRunning(true);
     }
   };
 
-  const handleManualSubmit = (e: React.FormEvent) => {
+  const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In real app, save manual entry
-    alert(`Handmatige registratie opgeslagen voor ${getProjectById(manualProject)?.name}`);
-    setManualDescription('');
+    if (!manualProject) return;
+
+    // Calculate duration in minutes from start/end time
+    const [startH, startM] = manualStartTime.split(':').map(Number);
+    const [endH, endM] = manualEndTime.split(':').map(Number);
+    const durationMinutes = (endH * 60 + endM) - (startH * 60 + startM);
+
+    if (durationMinutes <= 0) {
+      alert('Eindtijd moet na starttijd zijn');
+      return;
+    }
+
+    const saved = await createTimeEntry({
+      projectId: manualProject,
+      date: manualDate,
+      startTime: manualStartTime,
+      endTime: manualEndTime,
+      durationMinutes,
+      description: manualDescription || undefined,
+      billable: true,
+    });
+
+    if (saved) {
+      const today = format(new Date(), 'yyyy-MM-dd');
+      if (manualDate === today) {
+        setTodayEntries(prev => [saved, ...prev]);
+      }
+      setManualDescription('');
+    }
   };
 
-  // Today's entries
-  const today = format(new Date(), 'yyyy-MM-dd');
-  const todayEntries = timeEntries.filter(e => e.date === today);
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
   const todayHours = todayEntries.reduce((sum, e) => sum + e.duration, 0) / 60;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      
-      
+
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Tijd registreren</h1>
@@ -106,8 +178,8 @@ export default function TrackPage() {
                       <div className="text-6xl font-mono font-bold text-gray-900 mb-4">
                         {formatTime(elapsedSeconds)}
                       </div>
-                      <Button 
-                        size="lg" 
+                      <Button
+                        size="lg"
                         onClick={handleStartStop}
                         className={isRunning ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}
                       >
@@ -133,14 +205,11 @@ export default function TrackPage() {
                           <SelectValue placeholder="Selecteer een project" />
                         </SelectTrigger>
                         <SelectContent>
-                          {projects.map((project) => {
-                            const client = getClientById(project.clientId);
-                            return (
-                              <SelectItem key={project.id} value={project.id}>
-                                {project.name} - {client?.name}
-                              </SelectItem>
-                            );
-                          })}
+                          {projectsData.map((project) => (
+                            <SelectItem key={project.id} value={project.id}>
+                              {project.name} - {project.clientName}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -186,7 +255,7 @@ export default function TrackPage() {
                               <SelectValue placeholder="Selecteer project" />
                             </SelectTrigger>
                             <SelectContent>
-                              {projects.map((project) => (
+                              {projectsData.map((project) => (
                                 <SelectItem key={project.id} value={project.id}>
                                   {project.name}
                                 </SelectItem>
@@ -320,9 +389,9 @@ export default function TrackPage() {
                 <CardTitle>Tips</CardTitle>
               </CardHeader>
               <CardContent className="text-sm text-gray-600 space-y-2">
-                <p>💡 Vergeet niet een beschrijving toe te voegen voor later</p>
-                <p>⏰ Zet de timer aan zodra je begint met werken</p>
-                <p>📊 Check je dashboard voor een overzicht</p>
+                <p>Vergeet niet een beschrijving toe te voegen voor later</p>
+                <p>Zet de timer aan zodra je begint met werken</p>
+                <p>Check je dashboard voor een overzicht</p>
               </CardContent>
             </Card>
           </div>

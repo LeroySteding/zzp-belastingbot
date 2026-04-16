@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
@@ -9,39 +9,70 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { profileSchema, type ProfileFormValues } from '@/lib/validations'
-import { mockProfile } from '@/lib/belasting/mock-data'
+import { getProfile, updateProfile } from '@/lib/belasting/actions'
 import { getKORBenefits, getKORRequirements } from '@/lib/belasting/kor-check'
+import { Loader2 } from 'lucide-react'
 
 export default function SettingsPage() {
+  const [pageLoading, setPageLoading] = useState(true)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
-  const [korEnabled, setKorEnabled] = useState(mockProfile.kor_enabled || false)
+  const [korEnabled, setKorEnabled] = useState(false)
 
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      company_name: mockProfile.company_name || '',
-      btw_number: mockProfile.btw_number || '',
-      kvk_number: mockProfile.kvk_number || '',
-      iban: mockProfile.iban || '',
+      company_name: '',
+      btw_number: '',
+      kvk_number: '',
+      iban: '',
     },
   })
+
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const profile = await getProfile()
+        if (profile) {
+          reset({
+            company_name: profile.company_name || '',
+            btw_number: profile.btw_number || '',
+            kvk_number: profile.kvk_number || '',
+            iban: profile.iban || '',
+          })
+          setKorEnabled(profile.kor_enabled || false)
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error)
+      } finally {
+        setPageLoading(false)
+      }
+    }
+    loadProfile()
+  }, [reset])
 
   const onSubmit = async (data: ProfileFormValues) => {
     setLoading(true)
     setSuccess(false)
 
     try {
-      // In a real app, this would update in Supabase
-      await new Promise((resolve) => setTimeout(resolve, 500))
-      console.log('Profile data:', data)
-      setSuccess(true)
-      
-      setTimeout(() => setSuccess(false), 3000)
+      const updated = await updateProfile({
+        company_name: data.company_name,
+        btw_number: data.btw_number || undefined,
+        kvk_number: data.kvk_number || undefined,
+        iban: data.iban || undefined,
+        kor_enabled: korEnabled,
+      })
+
+      if (updated) {
+        setSuccess(true)
+        setTimeout(() => setSuccess(false), 3000)
+      }
     } catch (error) {
       console.error('Error updating profile:', error)
     } finally {
@@ -49,8 +80,16 @@ export default function SettingsPage() {
     }
   }
 
+  if (pageLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    )
+  }
+
   return (<>
-    
+
       <div className="max-w-2xl mx-auto space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Instellingen</h1>
@@ -133,7 +172,14 @@ export default function SettingsPage() {
 
               <div className="pt-4">
                 <Button type="submit" disabled={loading}>
-                  {loading ? 'Opslaan...' : 'Opslaan'}
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Opslaan...
+                    </>
+                  ) : (
+                    'Opslaan'
+                  )}
                 </Button>
               </div>
             </form>
@@ -214,7 +260,7 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
-    
+
   </>
   )
 }

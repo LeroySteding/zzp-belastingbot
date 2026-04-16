@@ -8,19 +8,21 @@ import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { mockProjects } from '@/lib/portal/mock-data';
-import { 
-  ArrowLeft, 
-  Check, 
-  Upload, 
-  FileText, 
-  MessageSquare, 
+import { getPortalProject, addComment, toggleMilestone } from '@/lib/portal/actions';
+import type { PortalProject } from '@/lib/portal/actions';
+import {
+  ArrowLeft,
+  Check,
+  Upload,
+  FileText,
+  MessageSquare,
   Calendar,
   GripVertical,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const statusColors: Record<string, string> = {
   'offerte': 'bg-gray-100 text-gray-800',
@@ -38,8 +40,55 @@ const statusLabels: Record<string, string> = {
 
 export default function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = React.use(params);
-  const project = mockProjects.find(p => p.id === id);
+  const [project, setProject] = useState<PortalProject | null>(null);
+  const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await getPortalProject(id);
+        setProject(data);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, [id]);
+
+  const handleAddComment = async () => {
+    if (!newComment.trim() || !project) return;
+    setSubmitting(true);
+    try {
+      const result = await addComment(project.id, newComment);
+      if (result.success) {
+        setNewComment('');
+        // Reload project to get updated comments
+        const data = await getPortalProject(id);
+        setProject(data);
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleToggleMilestone = async (milestoneId: string, completed: boolean) => {
+    const result = await toggleMilestone(milestoneId, !completed);
+    if (result.success) {
+      // Reload project to get updated milestones/progress
+      const data = await getPortalProject(id);
+      setProject(data);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   if (!project) {
     return (
@@ -67,8 +116,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               <p className="text-gray-600">{project.clientName}</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Badge className={statusColors[project.status]}>
-                {statusLabels[project.status]}
+              <Badge className={statusColors[project.displayStatus] ?? 'bg-gray-100 text-gray-800'}>
+                {statusLabels[project.displayStatus] ?? project.displayStatus}
               </Badge>
               <Link href={`/portal/projects/${project.id}`}>
                 <Button variant="outline" size="sm">
@@ -96,17 +145,19 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                   </div>
                   <Progress value={project.progress} />
                 </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="h-4 w-4 text-gray-400" />
-                  <span className="text-gray-600">Deadline:</span>
-                  <span className="font-medium">
-                    {new Date(project.deadline).toLocaleDateString('nl-NL', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric'
-                    })}
-                  </span>
-                </div>
+                {project.deadline && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Calendar className="h-4 w-4 text-gray-400" />
+                    <span className="text-gray-600">Deadline:</span>
+                    <span className="font-medium">
+                      {new Date(project.deadline).toLocaleDateString('nl-NL', {
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                      })}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
@@ -129,9 +180,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               <CardContent>
                 <div className="space-y-3">
                   {project.milestones
-                    .sort((a, b) => a.order - b.order)
+                    .sort((a, b) => a.sort_order - b.sort_order)
                     .map((milestone, index) => (
-                    <div 
+                    <div
                       key={milestone.id}
                       className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-move"
                     >
@@ -149,16 +200,19 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                         <p className={`font-medium ${milestone.completed ? 'text-gray-500 line-through' : ''}`}>
                           {milestone.title}
                         </p>
-                        <p className="text-sm text-gray-500">
-                          {new Date(milestone.dueDate).toLocaleDateString('nl-NL', {
-                            day: 'numeric',
-                            month: 'short'
-                          })}
-                        </p>
+                        {milestone.due_date && (
+                          <p className="text-sm text-gray-500">
+                            {new Date(milestone.due_date).toLocaleDateString('nl-NL', {
+                              day: 'numeric',
+                              month: 'short'
+                            })}
+                          </p>
+                        )}
                       </div>
-                      <Button 
+                      <Button
                         variant={milestone.completed ? "outline" : "default"}
                         size="sm"
+                        onClick={() => handleToggleMilestone(milestone.id, milestone.completed)}
                       >
                         {milestone.completed ? 'Ongedaan maken' : 'Markeer compleet'}
                       </Button>
@@ -186,11 +240,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                   <p className="text-sm font-medium mb-1">Klik om bestanden te uploaden</p>
                   <p className="text-xs text-gray-500">of sleep bestanden hierheen</p>
                 </div>
-                
+
                 {project.files.length > 0 ? (
                   <div className="space-y-2">
                     {project.files.map((file) => (
-                      <div 
+                      <div
                         key={file.id}
                         className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
                       >
@@ -201,7 +255,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                           <div>
                             <p className="font-medium text-sm">{file.name}</p>
                             <p className="text-xs text-gray-500">
-                              {file.size} • Geüpload op {new Date(file.uploadedAt).toLocaleDateString('nl-NL')}
+                              {file.size} &bull; Geüpload op {new Date(file.uploadedAt).toLocaleDateString('nl-NL')}
                             </p>
                           </div>
                         </div>
@@ -257,19 +311,23 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     <p className="text-center text-gray-500 text-sm py-8">Nog geen reacties</p>
                   )}
                 </div>
-                
+
                 <Separator className="my-6" />
-                
+
                 <div className="space-y-3">
-                  <Textarea 
+                  <Textarea
                     placeholder="Schrijf een update of reactie..."
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     rows={3}
                   />
                   <div className="flex justify-end">
-                    <Button onClick={() => setNewComment('')}>
-                      <MessageSquare className="h-4 w-4 mr-2" />
+                    <Button onClick={handleAddComment} disabled={submitting || !newComment.trim()}>
+                      {submitting ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                      )}
                       Plaats Reactie
                     </Button>
                   </div>
@@ -279,6 +337,6 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           </TabsContent>
         </Tabs>
       </div>
-    
+
   );
 }

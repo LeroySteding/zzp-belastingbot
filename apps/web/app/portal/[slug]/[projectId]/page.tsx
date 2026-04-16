@@ -7,24 +7,65 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { mockProjects, mockBranding } from '@/lib/portal/mock-data';
-import { 
-  Check, 
-  FileText, 
-  MessageSquare, 
+import { getPublicPortalProject, addPublicComment } from '@/lib/portal/actions';
+import type { PortalProject } from '@/lib/portal/actions';
+import {
+  Check,
+  FileText,
+  MessageSquare,
   Calendar,
   Download,
-  Sparkles,
-  CheckCircle2
+  CheckCircle2,
+  Loader2
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function ClientPortalPage({ params }: { params: Promise<{ slug: string; projectId: string }> }) {
-  const { projectId } = React.use(params);
-  const project = mockProjects.find(p => p.id === projectId);
+  const { slug, projectId } = React.use(params);
+  const [project, setProject] = useState<PortalProject | null>(null);
+  const [branding, setBranding] = useState<{ companyName: string; primaryColor: string; portalUrl: string } | null>(null);
+  const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  if (!project) {
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await getPublicPortalProject(slug, projectId);
+        setProject(data.project);
+        setBranding(data.branding);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, [slug, projectId]);
+
+  const handleSendComment = async () => {
+    if (!newComment.trim() || !project) return;
+    setSubmitting(true);
+    try {
+      const result = await addPublicComment(slug, projectId, project.clientName, newComment);
+      if (result.success) {
+        setNewComment('');
+        // Reload project to get updated comments
+        const data = await getPublicPortalProject(slug, projectId);
+        setProject(data.project);
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (!project || !branding) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -45,14 +86,14 @@ export default function ClientPortalPage({ params }: { params: Promise<{ slug: s
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div 
+              <div
                 className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold"
-                style={{ backgroundColor: mockBranding.primaryColor }}
+                style={{ backgroundColor: branding.primaryColor }}
               >
-                {mockBranding.companyName.charAt(0)}
+                {branding.companyName.charAt(0)}
               </div>
               <div>
-                <h1 className="font-bold text-lg">{mockBranding.companyName}</h1>
+                <h1 className="font-bold text-lg">{branding.companyName}</h1>
                 <p className="text-xs text-gray-600">Project Portal</p>
               </div>
             </div>
@@ -68,19 +109,21 @@ export default function ClientPortalPage({ params }: { params: Promise<{ slug: s
         <div className="mb-8">
           <h2 className="text-3xl font-bold mb-2">{project.name}</h2>
           <p className="text-gray-600 mb-4">{project.description}</p>
-          
+
           <div className="flex flex-wrap gap-4">
-            <div className="flex items-center gap-2 text-sm">
-              <Calendar className="h-4 w-4 text-gray-400" />
-              <span className="text-gray-600">Deadline:</span>
-              <span className="font-medium">
-                {new Date(project.deadline).toLocaleDateString('nl-NL', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric'
-                })}
-              </span>
-            </div>
+            {project.deadline && (
+              <div className="flex items-center gap-2 text-sm">
+                <Calendar className="h-4 w-4 text-gray-400" />
+                <span className="text-gray-600">Deadline:</span>
+                <span className="font-medium">
+                  {new Date(project.deadline).toLocaleDateString('nl-NL', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                  })}
+                </span>
+              </div>
+            )}
             <div className="flex items-center gap-2 text-sm">
               <CheckCircle2 className="h-4 w-4 text-gray-400" />
               <span className="text-gray-600">Mijlpalen:</span>
@@ -90,11 +133,11 @@ export default function ClientPortalPage({ params }: { params: Promise<{ slug: s
         </div>
 
         {/* Progress Overview */}
-        <Card className="mb-6 border-2" style={{ borderColor: mockBranding.primaryColor + '40' }}>
+        <Card className="mb-6 border-2" style={{ borderColor: branding.primaryColor + '40' }}>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold">Totale Voortgang</h3>
-              <span className="text-2xl font-bold" style={{ color: mockBranding.primaryColor }}>
+              <span className="text-2xl font-bold" style={{ color: branding.primaryColor }}>
                 {project.progress}%
               </span>
             </div>
@@ -113,11 +156,11 @@ export default function ClientPortalPage({ params }: { params: Promise<{ slug: s
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {project.milestones.sort((a, b) => a.order - b.order).map((milestone, index) => (
+              {project.milestones.sort((a, b) => a.sort_order - b.sort_order).map((milestone, index) => (
                 <div key={milestone.id} className="flex items-start gap-4">
                   <div className={`flex items-center justify-center w-10 h-10 rounded-full flex-shrink-0 ${
-                    milestone.completed 
-                      ? 'bg-green-100 text-green-600' 
+                    milestone.completed
+                      ? 'bg-green-100 text-green-600'
                       : 'bg-gray-100 text-gray-400'
                   }`}>
                     {milestone.completed ? (
@@ -130,16 +173,18 @@ export default function ClientPortalPage({ params }: { params: Promise<{ slug: s
                     <p className={`font-medium ${milestone.completed ? 'text-gray-500' : 'text-gray-900'}`}>
                       {milestone.title}
                       {milestone.completed && (
-                        <span className="ml-2 text-green-600 text-sm">✓ Voltooid</span>
+                        <span className="ml-2 text-green-600 text-sm">Voltooid</span>
                       )}
                     </p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Verwachte datum: {new Date(milestone.dueDate).toLocaleDateString('nl-NL', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric'
-                      })}
-                    </p>
+                    {milestone.due_date && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        Verwachte datum: {new Date(milestone.due_date).toLocaleDateString('nl-NL', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric'
+                        })}
+                      </p>
+                    )}
                   </div>
                 </div>
               ))}
@@ -157,25 +202,25 @@ export default function ClientPortalPage({ params }: { params: Promise<{ slug: s
             {project.files.length > 0 ? (
               <div className="space-y-3">
                 {project.files.map((file) => (
-                  <div 
+                  <div
                     key={file.id}
                     className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                   >
                     <div className="flex items-center gap-3">
-                      <div 
+                      <div
                         className="p-2 rounded"
-                        style={{ backgroundColor: mockBranding.primaryColor + '20' }}
+                        style={{ backgroundColor: branding.primaryColor + '20' }}
                       >
-                        <FileText className="h-5 w-5" style={{ color: mockBranding.primaryColor }} />
+                        <FileText className="h-5 w-5" style={{ color: branding.primaryColor }} />
                       </div>
                       <div>
                         <p className="font-medium">{file.name}</p>
                         <p className="text-sm text-gray-500">
-                          {file.size} • {new Date(file.uploadedAt).toLocaleDateString('nl-NL')}
+                          {file.size} &bull; {new Date(file.uploadedAt).toLocaleDateString('nl-NL')}
                         </p>
                       </div>
                     </div>
-                    <Button style={{ backgroundColor: mockBranding.primaryColor }}>
+                    <Button style={{ backgroundColor: branding.primaryColor }}>
                       <Download className="h-4 w-4 mr-2" />
                       Download
                     </Button>
@@ -202,10 +247,10 @@ export default function ClientPortalPage({ params }: { params: Promise<{ slug: s
                 project.comments.map((comment) => (
                   <div key={comment.id} className="flex gap-3">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium flex-shrink-0 ${
-                      comment.isClient 
-                        ? 'bg-purple-100 text-purple-600' 
+                      comment.isClient
+                        ? 'bg-purple-100 text-purple-600'
                         : 'text-white'
-                    }`} style={!comment.isClient ? { backgroundColor: mockBranding.primaryColor } : {}}>
+                    }`} style={!comment.isClient ? { backgroundColor: branding.primaryColor } : {}}>
                       {comment.author.charAt(0)}
                     </div>
                     <div className="flex-1">
@@ -230,22 +275,27 @@ export default function ClientPortalPage({ params }: { params: Promise<{ slug: s
                 <p className="text-center text-gray-500 py-8">Nog geen berichten</p>
               )}
             </div>
-            
+
             <Separator className="my-6" />
-            
+
             <div className="space-y-3">
-              <Textarea 
+              <Textarea
                 placeholder="Stel een vraag of plaats een reactie..."
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
                 rows={3}
               />
               <div className="flex justify-end">
-                <Button 
-                  style={{ backgroundColor: mockBranding.primaryColor }}
-                  onClick={() => setNewComment('')}
+                <Button
+                  style={{ backgroundColor: branding.primaryColor }}
+                  onClick={handleSendComment}
+                  disabled={submitting || !newComment.trim()}
                 >
-                  <MessageSquare className="h-4 w-4 mr-2" />
+                  {submitting ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                  )}
                   Verstuur Bericht
                 </Button>
               </div>
@@ -267,7 +317,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ slug: s
                     <p className="text-sm text-green-700">Dit project is klaar voor jouw review en goedkeuring</p>
                   </div>
                 </div>
-                <Button 
+                <Button
                   size="lg"
                   className="bg-green-600 hover:bg-green-700"
                 >
@@ -283,7 +333,7 @@ export default function ClientPortalPage({ params }: { params: Promise<{ slug: s
       {/* Footer */}
       <footer className="border-t mt-12 py-8 bg-white">
         <div className="container mx-auto px-4 text-center text-sm text-gray-600">
-          <p>Powered by {mockBranding.companyName}</p>
+          <p>Powered by {branding.companyName}</p>
         </div>
       </footer>
     </div>
