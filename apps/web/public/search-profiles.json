@@ -1,0 +1,108 @@
+[
+  {
+    "name": "Zaandam/Zaanstad lokaal",
+    "description": "Grote bedrijven in de Zaanstreek - korte reistijd, lokaal netwerk",
+    "search_type": "contacts",
+    "search_params": {
+      "companies": ["aholddelhaize.com"],
+      "job_titles": ["CTO", "CDO", "Head of Tech", "Director Technology", "Head of Data"],
+      "locations": ["Zaandam", "Zaanstad"],
+      "industries": ["Retail", "FMCG", "Food"]
+    },
+    "result_count": 6,
+    "notes": "Ahold Delhaize HQ in Zaandam - 82K medewerkers, €10B+ omzet. Grootste lokale prospect."
+  },
+  {
+    "name": "Amsterdam Enterprise Tech",
+    "description": "Grote tech bedrijven in Amsterdam die AI/automatisering nodig hebben",
+    "search_type": "contacts",
+    "search_params": {
+      "companies": ["booking.com", "adyen.com", "picnic.app", "rituals.com", "catawiki.com", "mollie.com"],
+      "job_titles": ["CTO", "VP Engineering", "Director of Engineering", "Head of AI", "Director Technology"],
+      "locations": ["Amsterdam", "North Holland"],
+      "industries": ["Technology", "Financial Services", "Retail", "E-commerce"]
+    },
+    "result_count": 15,
+    "notes": "Focus op AI/data teams bij grote Amsterdam bedrijven"
+  },
+  {
+    "name": "Nederlandse Scale-ups SaaS",
+    "description": "Groeiende SaaS bedrijven met $25M+ funding die custom software nodig hebben",
+    "search_type": "contacts",
+    "search_params": {
+      "companies": ["sendcloud.com", "trengo.com", "bynder.com", "sana-commerce.com", "tiqets.com"],
+      "job_titles": ["CTO", "VP Engineering", "Co-founder", "CEO", "Head of Product"],
+      "locations": ["Netherlands"],
+      "industries": ["SaaS", "Software", "Technology"],
+      "funding_min": "25M"
+    },
+    "result_count": 8,
+    "notes": "Scale-ups met budget voor custom development en AI integraties"
+  },
+  {
+    "name": "E-commerce & Retail NL",
+    "description": "Online retailers en retail-tech bedrijven in Nederland",
+    "search_type": "contacts",
+    "search_params": {
+      "companies": ["bol.com", "coolblue.nl", "fonq.nl", "helloprint.com", "bloomon.nl", "bruna.nl"],
+      "job_titles": ["CTO", "Head of Technology", "Director Engineering", "E-commerce Manager", "Head of Digital"],
+      "locations": ["Netherlands"],
+      "industries": ["E-commerce", "Retail", "Consumer Goods"]
+    },
+    "result_count": 7,
+    "notes": "E-commerce bedrijven voor Shopify/custom development + automatisering"
+  },
+  {
+    "name": "Bouw & Vastgoed",
+    "description": "Bouwbedrijven die digitaliseren - groot automatiseringspotentieel",
+    "search_type": "contacts",
+    "search_params": {
+      "companies": ["heijmans.nl", "bam.com", "volkerwessels.com", "dura-vermeer.nl"],
+      "job_titles": ["CDO", "CIO", "Director IT", "Head of Digital", "Director Innovation"],
+      "locations": ["Netherlands"],
+      "industries": ["Construction", "Real Estate"]
+    },
+    "result_count": 1,
+    "notes": "Bouwsector loopt achter in digitalisering - groot potentieel voor AI en automatisering"
+  },
+  {
+    "name": "Beauty & Wellness SaaS",
+    "description": "Kappers, salons en beauty-tech platforms",
+    "search_type": "contacts",
+    "search_params": {
+      "companies": ["treatwell.com", "salonkee.com"],
+      "job_titles": ["CTO", "VP Engineering", "Head of Product", "CEO"],
+      "locations": ["Netherlands", "Amsterdam"],
+      "industries": ["Beauty", "SaaS", "Wellness"]
+    },
+    "result_count": 3,
+    "notes": "Beauty-tech sector groeit snel, behoefte aan automatisering en AI chatbots"
+  },
+  {
+    "name": "MKB startups & kleine tech",
+    "description": "Kleinere bedrijven (10-200 man) die een MVP of AI integratie nodig hebben",
+    "search_type": "contacts",
+    "search_params": {
+      "companies": ["flitsmeister.nl", "pricewise.nl", "elastique.nl", "yoast.com"],
+      "job_titles": ["CEO", "CTO", "Founder", "Managing Director"],
+      "locations": ["Netherlands", "North Holland"],
+      "industries": ["Technology", "Mobile", "SaaS", "Digital Agency"],
+      "company_size_max": 200
+    },
+    "result_count": 5,
+    "notes": "Kleinere bedrijven - korte sales cycle, directe beslisser, MVP/prototype in 2-4 weken"
+  },
+  {
+    "name": "Noord-Holland Digital Agencies",
+    "description": "Digitale bureaus in Noord-Holland die senior developer capaciteit zoeken",
+    "search_type": "contacts",
+    "search_params": {
+      "companies": ["deptagency.com", "elastique.nl", "labela.nl"],
+      "job_titles": ["Technical Director", "CTO", "Head of Development", "Managing Partner"],
+      "locations": ["Amsterdam", "Hilversum", "Haarlem", "North Holland"],
+      "industries": ["Digital Agency", "Marketing", "Advertising", "Creative"]
+    },
+    "result_count": 3,
+    "notes": "Agencies als channel partner - zij brengen klanten, jij levert de development"
+  }
+]
