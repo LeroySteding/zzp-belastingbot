@@ -86,6 +86,7 @@ export default function HomePage() {
           <div className="flex items-center gap-6">
             <Link href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block">Features</Link>
             <Link href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block">Prijzen</Link>
+            <Link href="/demo" className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block">Demo</Link>
             <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Inloggen</Link>
             <Link href="/signup" className="text-sm font-medium bg-foreground text-background px-4 py-2 rounded-lg hover:bg-foreground/90 transition-colors">
               Gratis starten
@@ -114,7 +115,7 @@ export default function HomePage() {
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
-              href="/dashboard"
+              href="/demo"
               className="inline-flex items-center justify-center gap-2 border border-border font-medium px-6 py-3 rounded-lg hover:bg-secondary transition-colors text-base"
             >
               Bekijk demo
@@ -202,7 +203,10 @@ export default function HomePage() {
         <div className="text-center mb-14">
           <p className="text-sm font-medium text-muted-foreground mb-2 tracking-wide uppercase">Eerlijke prijzen</p>
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-3">Betaal alleen voor wat je gebruikt</h2>
-          <p className="text-muted-foreground">Geen verborgen kosten. Geen jaarcontract. Maandelijks opzegbaar.</p>
+          <p className="text-muted-foreground">
+            Geen verborgen kosten. Geen jaarcontract. Maandelijks opzegbaar.{' '}
+            <Link href="/demo" className="underline underline-offset-4 hover:text-foreground transition-colors">Bekijk demo</Link>
+          </p>
         </div>
 
         <div className="grid sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
@@ -275,7 +279,7 @@ export default function HomePage() {
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <Link href="/login" className="hover:text-foreground transition-colors">Inloggen</Link>
             <Link href="/signup" className="hover:text-foreground transition-colors">Registreren</Link>
-            <Link href="/dashboard" className="hover:text-foreground transition-colors">Demo</Link>
+            <Link href="/demo" className="hover:text-foreground transition-colors">Demo</Link>
           </div>
         </div>
       </footer>

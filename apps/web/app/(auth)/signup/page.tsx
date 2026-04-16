@@ -84,6 +84,12 @@ export default function SignupPage() {
               Heb je al een account?{' '}
               <Link href="/login" className="text-primary hover:underline">Inloggen</Link>
             </p>
+            <Link
+              href="/demo"
+              className="text-sm text-center text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Of bekijk eerst de demo &rarr;
+            </Link>
           </CardFooter>
         </form>
       </Card>
