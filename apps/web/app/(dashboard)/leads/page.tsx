@@ -70,25 +70,25 @@ export default function LeadsDashboardPage() {
   return (
     <div className="animate-fade-in space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Lead Pipeline</h1>
           <p className="text-muted-foreground mt-1">Beheer je prospects en leads</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Link
             href="/leads/search"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border hover:bg-card-hover transition-colors text-sm font-medium"
+            className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg border border-border hover:bg-card-hover transition-colors text-sm font-medium"
           >
             <Search className="h-4 w-4" />
-            Zoek Prospects
+            <span className="hidden sm:inline">Zoek</span> Prospects
           </Link>
           <Link
             href="/leads/new"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm font-medium"
+            className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm font-medium"
           >
             <Plus className="h-4 w-4" />
-            Lead Toevoegen
+            <span className="hidden sm:inline">Lead</span> Toevoegen
           </Link>
         </div>
       </div>
@@ -155,7 +155,7 @@ export default function LeadsDashboardPage() {
               Kanban Board <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
-          <div className="grid grid-cols-6 gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
             {Object.entries(STAGE_CONFIG).map(([key, config]) => (
               <Link
                 key={key}

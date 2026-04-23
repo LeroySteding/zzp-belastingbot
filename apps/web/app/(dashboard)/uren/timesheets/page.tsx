@@ -173,7 +173,7 @@ export default function TimesheetsPage() {
         {/* Filters */}
         <Card className="mb-8 print:hidden">
           <CardContent className="pt-6">
-            <div className="grid md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               <div>
                 <label className="text-sm font-medium mb-2 block">Periode</label>
                 <Select value={period} onValueChange={(v) => setPeriod(v as Period)}>
@@ -231,7 +231,7 @@ export default function TimesheetsPage() {
         </Card>
 
         {/* Summary Stats */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8 print:mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8 print:mb-4">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">

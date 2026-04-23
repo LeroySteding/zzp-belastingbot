@@ -318,7 +318,7 @@ ${company.name}`;
                     rows={3}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="kvk">KvK-nummer</Label>
                     <Input
@@ -344,7 +344,7 @@ ${company.name}`;
                     onChange={(e) => setCompany({ ...company, iban: e.target.value })}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="company-email">Email</Label>
                     <Input
@@ -431,7 +431,7 @@ ${company.name}`;
                 <CardTitle>Factuurgegevens</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="invoice-number">Factuurnummer</Label>
                     <Input id="invoice-number" value={invoiceNumber} disabled />
@@ -458,7 +458,7 @@ ${company.name}`;
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="template">Factuur Template</Label>
                     <Select value={template} onValueChange={(value) => setTemplate(value as InvoiceTemplate)}>
@@ -529,7 +529,7 @@ ${company.name}`;
                         rows={2}
                       />
                     </div>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-3 gap-2 sm:gap-3">
                       <div>
                         <Label>Aantal</Label>
                         <Input

@@ -258,7 +258,7 @@ export default function NewOffertePage() {
                     rows={3}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="kvk">KvK-nummer</Label>
                     <Input
@@ -284,7 +284,7 @@ export default function NewOffertePage() {
                     onChange={(e) => setCompany({ ...company, iban: e.target.value })}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="company-email">Email</Label>
                     <Input
@@ -371,7 +371,7 @@ export default function NewOffertePage() {
                 <CardTitle>Offertegegevens</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="offerte-number">Offertenummer</Label>
                     <Input id="offerte-number" value={offerteNumber} disabled />
@@ -451,7 +451,7 @@ export default function NewOffertePage() {
                         rows={2}
                       />
                     </div>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-3 gap-2 sm:gap-3">
                       <div>
                         <Label>Aantal</Label>
                         <Input

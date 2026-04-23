@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import {
   FileText,
@@ -22,19 +23,21 @@ import {
   BarChart3,
   Check,
 } from 'lucide-react'
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts'
 import { formatCurrency } from '@/lib/utils'
+
+// Lazy-load heavy recharts components (recharts is ~200KB)
+const DashboardRevenueChart = dynamic(
+  () => import('@/components/charts/dashboard-revenue-chart'),
+  { loading: () => <div className="h-72 animate-pulse rounded-md bg-muted" />, ssr: false }
+)
+const DashboardPieCharts = dynamic(
+  () => import('@/components/charts/dashboard-pie-charts').then(mod => ({ default: mod.InvoiceAgingChart })),
+  { loading: () => <div className="h-48 animate-pulse rounded-md bg-muted" />, ssr: false }
+)
+const ExpenseCategoriesChart = dynamic(
+  () => import('@/components/charts/dashboard-pie-charts').then(mod => ({ default: mod.ExpenseCategoriesChart })),
+  { loading: () => <div className="h-48 w-48 animate-pulse rounded-md bg-muted" />, ssr: false }
+)
 import { Skeleton, DashboardSkeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { getInvoices } from '@/lib/factuur/actions'
@@ -94,6 +97,7 @@ function StatCard({ title, value, subtitle, icon: Icon, color, href }: {
         <div
           className="p-3 rounded-xl"
           style={{ backgroundColor: `${color}15`, color }}
+          aria-hidden="true"
         >
           <Icon className="h-5 w-5" />
         </div>
@@ -116,11 +120,12 @@ function QuickAction({ title, icon: Icon, href, color }: {
       <div
         className="p-2 rounded-lg"
         style={{ backgroundColor: `${color}15`, color }}
+        aria-hidden="true"
       >
         <Icon className="h-4 w-4" />
       </div>
       <span className="text-sm font-medium">{title}</span>
-      <ArrowRight className="h-4 w-4 ml-auto text-muted-foreground group-hover:translate-x-1 transition-transform" />
+      <ArrowRight className="h-4 w-4 ml-auto text-muted-foreground group-hover:translate-x-1 transition-transform" aria-hidden="true" />
     </Link>
   )
 }
@@ -221,14 +226,14 @@ export default function DashboardPage() {
   const CATEGORY_COLORS = ['#3b82f6', '#8b5cf6', '#f97316', '#10b981', '#ef4444', '#eab308']
 
   return (
-    <div className="animate-fade-in space-y-8">
+    <div className="animate-fade-in space-y-4 md:space-y-8">
       <div>
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <p className="text-muted-foreground mt-1">Overzicht van je ZZP administratie</p>
       </div>
 
       {/* Row 1: 5 Stat Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
         <StatCard
           title="Open Facturen"
           value={formatCurrency(data.openInvoices.total)}
@@ -295,9 +300,9 @@ export default function DashboardPage() {
 
       {/* Row 2: Revenue Chart + Invoice Aging */}
       {summary && (
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid gap-4 md:gap-4 lg:grid-cols-3">
           {/* Revenue Chart */}
-          <div className="card-premium p-6 lg:col-span-2">
+          <div className="card-premium p-4 md:p-6 lg:col-span-2" role="img" aria-label="Grafiek: Omzet versus kosten per maand">
             <h2 className="text-lg font-semibold mb-4">Omzet vs Kosten</h2>
             {summary.revenueByMonth.length === 0 || summary.revenueByMonth.every((m: any) => (m.income === 0 || !m.income) && (m.expenses === 0 || !m.expenses)) ? (
               <EmptyState
@@ -308,61 +313,21 @@ export default function DashboardPage() {
                 actionHref="/dashboard/invoices/new"
               />
             ) : (
-              <div className="h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={summary.revenueByMonth} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
-                    <Tooltip
-                      formatter={(value) => formatCurrency(Number(value))}
-                      labelStyle={{ fontWeight: 600 }}
-                      contentStyle={{ borderRadius: '8px', border: '1px solid var(--border)' }}
-                    />
-                    <Bar dataKey="income" name="Omzet" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="expenses" name="Kosten" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              <DashboardRevenueChart data={summary.revenueByMonth} />
             )}
           </div>
 
           {/* Invoice Aging Pie */}
-          <div className="card-premium p-6 lg:col-span-1">
+          <div className="card-premium p-4 md:p-6 lg:col-span-1" role="img" aria-label="Grafiek: Verdeling factuurstatus">
             <h2 className="text-lg font-semibold mb-4">Factuur Status</h2>
             {summary.invoiceAging.some(a => a.count > 0) ? (
               <>
-                <div className="h-48">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={summary.invoiceAging.filter(a => a.count > 0)}
-                        dataKey="count"
-                        nameKey="label"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={70}
-                        innerRadius={40}
-                      >
-                        {summary.invoiceAging.filter(a => a.count > 0).map((entry, idx) => (
-                          <Cell key={idx} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        formatter={(value, name, props) => [
-                          `${value} facturen (${formatCurrency(props.payload.total)})`,
-                          name,
-                        ]}
-                        contentStyle={{ borderRadius: '8px', border: '1px solid var(--border)' }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
+                <DashboardPieCharts data={summary.invoiceAging} />
                 <div className="space-y-2 mt-2">
                   {summary.invoiceAging.map((item) => (
                     <div key={item.label} className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} aria-hidden="true" />
                         <span>{item.label}</span>
                       </div>
                       <span className="font-medium">{item.count}</span>
@@ -383,9 +348,9 @@ export default function DashboardPage() {
 
       {/* Row 3: Activity + Deadlines + Cash Flow */}
       {summary && (
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid gap-4 md:gap-4 lg:grid-cols-3">
           {/* Recente Activiteit */}
-          <div className="card-premium p-6">
+          <div className="card-premium p-4 md:p-6">
             <h2 className="text-lg font-semibold mb-4">Recente Activiteit</h2>
             <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
               {activity.length > 0 ? activity.map((item) => {
@@ -426,7 +391,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Aankomende Deadlines */}
-          <div className="card-premium p-6">
+          <div className="card-premium p-4 md:p-6">
             <h2 className="text-lg font-semibold mb-4">Aankomende Deadlines</h2>
             <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
               {summary.deadlines.length > 0 ? summary.deadlines.map((dl, idx) => {
@@ -472,7 +437,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Cashflow */}
-          <div className="card-premium p-6">
+          <div className="card-premium p-4 md:p-6">
             <h2 className="text-lg font-semibold mb-4">Cashflow</h2>
             <div className="space-y-4">
               {/* Income bar */}
@@ -519,9 +484,9 @@ export default function DashboardPage() {
                     <span className={`text-lg font-bold ${summary.cashFlow.net >= 0 ? 'text-green-600' : 'text-red-500'}`}>
                       {formatCurrency(summary.cashFlow.net)}
                     </span>
-                    {summary.cashFlow.trend === 'up' && <ArrowUpRight className="h-4 w-4 text-green-600" />}
-                    {summary.cashFlow.trend === 'down' && <ArrowDownRight className="h-4 w-4 text-red-500" />}
-                    {summary.cashFlow.trend === 'neutral' && <Minus className="h-4 w-4 text-muted-foreground" />}
+                    {summary.cashFlow.trend === 'up' && <ArrowUpRight className="h-4 w-4 text-green-600" aria-hidden="true" />}
+                    {summary.cashFlow.trend === 'down' && <ArrowDownRight className="h-4 w-4 text-red-500" aria-hidden="true" />}
+                    {summary.cashFlow.trend === 'neutral' && <Minus className="h-4 w-4 text-muted-foreground" aria-hidden="true" />}
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -537,18 +502,19 @@ export default function DashboardPage() {
 
       {/* Row 4: Top Clients + Expenses */}
       {summary && (
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-4 md:gap-4 lg:grid-cols-2">
           {/* Top Klanten */}
-          <div className="card-premium p-6">
+          <div className="card-premium p-4 md:p-6">
             <h2 className="text-lg font-semibold mb-4">Top Klanten</h2>
             {summary.topClients.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
+                  <caption className="sr-only">Overzicht top klanten op basis van omzet</caption>
                   <thead>
                     <tr className="border-b border-border">
-                      <th className="text-left py-2 font-medium text-muted-foreground">Klant</th>
-                      <th className="text-right py-2 font-medium text-muted-foreground">Omzet</th>
-                      <th className="text-right py-2 font-medium text-muted-foreground">Facturen</th>
+                      <th scope="col" className="text-left py-2 font-medium text-muted-foreground">Klant</th>
+                      <th scope="col" className="text-right py-2 font-medium text-muted-foreground">Omzet</th>
+                      <th scope="col" className="text-right py-2 font-medium text-muted-foreground">Facturen</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -574,33 +540,11 @@ export default function DashboardPage() {
           </div>
 
           {/* Uitgaven per Categorie */}
-          <div className="card-premium p-6">
+          <div className="card-premium p-4 md:p-6" role="img" aria-label="Grafiek: Verdeling uitgaven per categorie">
             <h2 className="text-lg font-semibold mb-4">Uitgaven per Categorie</h2>
             {summary.expenseCategories.length > 0 ? (
-              <div className="flex items-center gap-6">
-                <div className="h-48 w-48 shrink-0">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={summary.expenseCategories}
-                        dataKey="amount"
-                        nameKey="category"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={70}
-                        innerRadius={35}
-                      >
-                        {summary.expenseCategories.map((_, idx) => (
-                          <Cell key={idx} fill={CATEGORY_COLORS[idx % CATEGORY_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        formatter={(value) => formatCurrency(Number(value))}
-                        contentStyle={{ borderRadius: '8px', border: '1px solid var(--border)' }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
+              <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+                <ExpenseCategoriesChart data={summary.expenseCategories} colors={CATEGORY_COLORS} />
                 <div className="space-y-2 flex-1 min-w-0">
                   {summary.expenseCategories.map((cat, idx) => (
                     <div key={cat.category} className="flex items-center justify-between text-sm">
@@ -630,7 +574,7 @@ export default function DashboardPage() {
       )}
 
       {/* Row 5: Quick Actions */}
-      <div className="card-premium p-6">
+      <div className="card-premium p-4 md:p-6">
         <h2 className="text-lg font-semibold mb-4">Snelle Acties</h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
           <QuickAction title="Nieuwe Factuur" icon={PlusCircle} href="/factuur/invoices/new" color="oklch(0.65 0.25 250)" />

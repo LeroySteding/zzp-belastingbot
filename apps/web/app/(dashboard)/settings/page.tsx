@@ -213,22 +213,22 @@ export default function SettingsPage() {
       </div>
 
       <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList>
+        <TabsList className="flex flex-wrap gap-1">
           <TabsTrigger value="profile" className="gap-2">
             <Building2 className="h-4 w-4" />
-            Profiel
+            <span className="hidden sm:inline">Profiel</span>
           </TabsTrigger>
           <TabsTrigger value="invoicing" className="gap-2">
             <FileText className="h-4 w-4" />
-            Facturatie
+            <span className="hidden sm:inline">Facturatie</span>
           </TabsTrigger>
           <TabsTrigger value="notifications" className="gap-2">
             <Bell className="h-4 w-4" />
-            Notificaties
+            <span className="hidden sm:inline">Notificaties</span>
           </TabsTrigger>
           <TabsTrigger value="account" className="gap-2">
             <User className="h-4 w-4" />
-            Account
+            <span className="hidden sm:inline">Account</span>
           </TabsTrigger>
         </TabsList>
 
@@ -245,13 +245,13 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               {profileSuccess && (
-                <div className="flex items-center gap-2 p-3 text-sm text-green-600 bg-green-50 rounded-md">
-                  <CheckCircle className="h-4 w-4" />
+                <div role="status" className="flex items-center gap-2 p-3 text-sm text-green-600 bg-green-50 rounded-md">
+                  <CheckCircle className="h-4 w-4" aria-hidden="true" />
                   Gegevens succesvol opgeslagen!
                 </div>
               )}
               {profileError && (
-                <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">
+                <div role="alert" className="p-3 text-sm text-red-600 bg-red-50 rounded-md">
                   {profileError}
                 </div>
               )}
@@ -278,88 +278,95 @@ export default function SettingsPage() {
 
               <Separator />
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="kvk">KvK-nummer</Label>
-                  <Input
-                    id="kvk"
-                    placeholder="12345678"
-                    value={kvk}
-                    onChange={(e) => setKvk(e.target.value)}
-                  />
+              <fieldset className="space-y-4">
+                <legend className="text-sm font-medium">Bedrijfsregistratie</legend>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="kvk">KvK-nummer</Label>
+                    <Input
+                      id="kvk"
+                      placeholder="12345678"
+                      value={kvk}
+                      onChange={(e) => setKvk(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="btw">BTW-nummer</Label>
+                    <Input
+                      id="btw"
+                      placeholder="NL123456789B01"
+                      value={btw}
+                      onChange={(e) => setBtw(e.target.value)}
+                      aria-describedby="btw-format-hint"
+                    />
+                    <p id="btw-format-hint" className="text-xs text-muted-foreground">
+                      Format: NL + 9 cijfers + B + 2 cijfers
+                    </p>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="btw">BTW-nummer</Label>
-                  <Input
-                    id="btw"
-                    placeholder="NL123456789B01"
-                    value={btw}
-                    onChange={(e) => setBtw(e.target.value)}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Format: NL + 9 cijfers + B + 2 cijfers
-                  </p>
-                </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="iban">IBAN</Label>
-                <Input
-                  id="iban"
-                  placeholder="NL91ABNA0417164300"
-                  value={iban}
-                  onChange={(e) => setIban(e.target.value)}
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="iban">IBAN</Label>
+                  <Input
+                    id="iban"
+                    placeholder="NL91ABNA0417164300"
+                    value={iban}
+                    onChange={(e) => setIban(e.target.value)}
+                  />
+                </div>
+              </fieldset>
 
               <Separator />
 
-              <div className="space-y-2">
-                <Label htmlFor="address">Adres</Label>
-                <Input
-                  id="address"
-                  placeholder="Straatnaam 1"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                />
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
+              <fieldset className="space-y-4">
+                <legend className="text-sm font-medium">Adresgegevens</legend>
                 <div className="space-y-2">
-                  <Label htmlFor="postalCode">Postcode</Label>
+                  <Label htmlFor="address">Adres</Label>
                   <Input
-                    id="postalCode"
-                    placeholder="1234 AB"
-                    value={postalCode}
-                    onChange={(e) => setPostalCode(e.target.value)}
+                    id="address"
+                    placeholder="Straatnaam 1"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
                   />
                 </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="postalCode">Postcode</Label>
+                    <Input
+                      id="postalCode"
+                      placeholder="1234 AB"
+                      value={postalCode}
+                      onChange={(e) => setPostalCode(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="city">Stad</Label>
+                    <Input
+                      id="city"
+                      placeholder="Amsterdam"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="city">Stad</Label>
+                  <Label htmlFor="phone">Telefoon</Label>
                   <Input
-                    id="city"
-                    placeholder="Amsterdam"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
+                    id="phone"
+                    placeholder="06-12345678"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
                   />
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone">Telefoon</Label>
-                <Input
-                  id="phone"
-                  placeholder="06-12345678"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                />
-              </div>
+              </fieldset>
 
               <Button onClick={handleProfileSave} disabled={profileSaving} className="gap-2">
                 {profileSaving ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                 ) : (
-                  <Save className="h-4 w-4" />
+                  <Save className="h-4 w-4" aria-hidden="true" />
                 )}
                 Opslaan
               </Button>
@@ -380,13 +387,13 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               {invoiceSuccess && (
-                <div className="flex items-center gap-2 p-3 text-sm text-green-600 bg-green-50 rounded-md">
-                  <CheckCircle className="h-4 w-4" />
+                <div role="status" className="flex items-center gap-2 p-3 text-sm text-green-600 bg-green-50 rounded-md">
+                  <CheckCircle className="h-4 w-4" aria-hidden="true" />
                   Facturatie-instellingen opgeslagen!
                 </div>
               )}
               {invoiceError && (
-                <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">
+                <div role="alert" className="p-3 text-sm text-red-600 bg-red-50 rounded-md">
                   {invoiceError}
                 </div>
               )}
@@ -450,9 +457,9 @@ export default function SettingsPage() {
 
               <Button onClick={handleInvoiceSettingsSave} disabled={invoiceSaving} className="gap-2">
                 {invoiceSaving ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                 ) : (
-                  <Save className="h-4 w-4" />
+                  <Save className="h-4 w-4" aria-hidden="true" />
                 )}
                 Opslaan
               </Button>
@@ -634,7 +641,7 @@ export default function SettingsPage() {
                 <div>
                   <Label className="mb-3 block">Abonnement</Label>
                   <div className="p-4 rounded-lg border-2 border-primary/20 bg-primary/5">
-                    <div className="flex justify-between items-center">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                       <div>
                         <p className="font-semibold text-lg">
                           {planLabels[subscription.plan] || 'Gratis'} Plan
@@ -687,9 +694,9 @@ export default function SettingsPage() {
                   className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
                 >
                   {signingOut ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                   ) : (
-                    <LogOut className="h-4 w-4" />
+                    <LogOut className="h-4 w-4" aria-hidden="true" />
                   )}
                   Uitloggen
                 </Button>

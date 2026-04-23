@@ -102,13 +102,13 @@ export default function ProjectsPage() {
 
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8 flex justify-between items-center">
+        <div className="mb-6 md:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Projecten</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Projecten</h1>
             <p className="text-gray-600 mt-2">Beheer je projecten en budgetten</p>
           </div>
 
-          <div className="flex gap-3 items-center">
+          <div className="flex gap-2 sm:gap-3 items-center flex-wrap">
             <a href="/api/export/time-entries" download className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-secondary transition-colors">
               <Download className="w-4 h-4" />
               Exporteer CSV
@@ -203,7 +203,7 @@ export default function ProjectsPage() {
             />
           </div>
         ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {projectsData.map((project) => {
             const stats = statsMap[project.id];
             const entries = getEntriesByProject(project.id);
@@ -299,7 +299,7 @@ export default function ProjectsPage() {
         )}
 
         {/* Summary Stats */}
-        <div className="grid md:grid-cols-4 gap-6 mt-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mt-6 md:mt-8">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-gray-600">Totaal Projecten</CardTitle>

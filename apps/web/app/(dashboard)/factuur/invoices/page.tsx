@@ -131,30 +131,30 @@ export default function InvoicesPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+        <div className="container mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div className="flex items-center gap-4">
             <Link href="/dashboard" className="flex items-center gap-2">
               <FileText className="h-6 w-6 text-blue-600" />
               <span className="font-bold text-lg">ZZP Factuur</span>
             </Link>
-            <span className="text-gray-300">|</span>
-            <h1 className="text-2xl font-bold">Facturen</h1>
+            <span className="text-gray-300 hidden sm:inline">|</span>
+            <h1 className="text-xl sm:text-2xl font-bold">Facturen</h1>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-2 flex-wrap">
             <a href="/api/export/invoices" download className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-secondary transition-colors">
               <Download className="w-4 h-4" />
-              Exporteer CSV
+              <span className="hidden sm:inline">Exporteer</span> CSV
             </a>
-            <Button variant="outline" asChild>
+            <Button variant="outline" size="sm" asChild>
               <Link href="/factuur/recurring">
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Terugkerend
+                <RotateCcw className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Terugkerend</span>
               </Link>
             </Button>
-            <Button asChild>
+            <Button size="sm" asChild>
               <Link href="/factuur/invoices/new">
-                <Plus className="h-4 w-4 mr-2" />
-                Nieuwe Factuur
+                <Plus className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Nieuwe Factuur</span>
               </Link>
             </Button>
           </div>
@@ -163,7 +163,7 @@ export default function InvoicesPage() {
 
       <div className="container mx-auto px-4 py-8">
         {/* Stats Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">Totaal Verzonden</CardTitle>
@@ -200,12 +200,12 @@ export default function InvoicesPage() {
         {/* Filters */}
         <Card className="mb-6">
           <CardHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <CardTitle>Alle Facturen</CardTitle>
-              <div className="flex gap-4 items-center">
-                <span className="text-sm text-gray-600">Filter op status:</span>
+              <div className="flex gap-2 sm:gap-4 items-center">
+                <span className="text-sm text-gray-600 hidden sm:inline">Filter op status:</span>
                 <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as any)}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-36 sm:w-40">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -224,13 +224,14 @@ export default function InvoicesPage() {
                 <TableSkeleton rows={5} />
               </div>
             ) : (
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Factuurnummer</TableHead>
                     <TableHead>Klant</TableHead>
-                    <TableHead>Datum</TableHead>
-                    <TableHead>Vervaldatum</TableHead>
+                    <TableHead className="hidden md:table-cell">Datum</TableHead>
+                    <TableHead className="hidden md:table-cell">Vervaldatum</TableHead>
                     <TableHead className="text-right">Bedrag</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Acties</TableHead>
@@ -257,9 +258,9 @@ export default function InvoicesPage() {
                     filteredInvoices.map((invoice) => (
                       <TableRow key={invoice.id}>
                         <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
-                        <TableCell>{invoice.client.name}</TableCell>
-                        <TableCell>{formatDate(invoice.date)}</TableCell>
-                        <TableCell>{formatDate(invoice.dueDate)}</TableCell>
+                        <TableCell className="max-w-[120px] truncate">{invoice.client.name}</TableCell>
+                        <TableCell className="hidden md:table-cell">{formatDate(invoice.date)}</TableCell>
+                        <TableCell className="hidden md:table-cell">{formatDate(invoice.dueDate)}</TableCell>
                         <TableCell className="text-right font-medium">
                           {formatCurrency(getInvoiceTotal(invoice))}
                         </TableCell>
@@ -288,14 +289,14 @@ export default function InvoicesPage() {
                                 size="icon"
                                 onClick={() => handlePaymentLink(invoice)}
                                 disabled={creatingLink === invoice.id}
-                                title={linkCopied === invoice.id ? 'Link gekopieerd!' : 'Betaallink kopiëren'}
+                                aria-label={linkCopied === invoice.id ? 'Link gekopieerd!' : 'Betaallink kopiëren'}
                               >
                                 {creatingLink === invoice.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                                 ) : linkCopied === invoice.id ? (
-                                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                  <CheckCircle2 className="h-4 w-4 text-green-600" aria-hidden="true" />
                                 ) : (
-                                  <LinkIcon className="h-4 w-4" />
+                                  <LinkIcon className="h-4 w-4" aria-hidden="true" />
                                 )}
                               </Button>
                             )}
@@ -304,30 +305,30 @@ export default function InvoicesPage() {
                               size="icon"
                               onClick={() => handleDownload(invoice)}
                               disabled={downloading === invoice.id}
-                              title="Download PDF"
+                              aria-label="Download PDF"
                             >
                               {downloading === invoice.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                               ) : (
-                                <Download className="h-4 w-4" />
+                                <Download className="h-4 w-4" aria-hidden="true" />
                               )}
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => handleDuplicate(invoice)}
-                              title="Dupliceren"
+                              aria-label="Dupliceren"
                             >
-                              <Copy className="h-4 w-4" />
+                              <Copy className="h-4 w-4" aria-hidden="true" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => handleDelete(invoice)}
-                              title="Verwijderen"
+                              aria-label="Verwijderen"
                               className="text-red-500 hover:text-red-700 hover:bg-red-50"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-4 w-4" aria-hidden="true" />
                             </Button>
                           </div>
                         </TableCell>
@@ -336,6 +337,7 @@ export default function InvoicesPage() {
                   )}
                 </TableBody>
               </Table>
+              </div>
             )}
           </CardContent>
         </Card>

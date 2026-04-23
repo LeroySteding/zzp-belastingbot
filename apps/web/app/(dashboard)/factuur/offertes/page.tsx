@@ -70,23 +70,23 @@ export default function OffertesPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+        <div className="container mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div className="flex items-center gap-4">
             <Link href="/factuur" className="flex items-center gap-2">
               <FileText className="h-6 w-6 text-blue-600" />
               <span className="font-bold text-lg">ZZP Factuur</span>
             </Link>
-            <span className="text-gray-300">|</span>
-            <h1 className="text-2xl font-bold">Offertes</h1>
+            <span className="text-gray-300 hidden sm:inline">|</span>
+            <h1 className="text-xl sm:text-2xl font-bold">Offertes</h1>
           </div>
-          <div className="flex gap-3">
-            <Button variant="outline" asChild>
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" size="sm" asChild>
               <Link href="/factuur/invoices">Facturen</Link>
             </Button>
-            <Button asChild>
+            <Button size="sm" asChild>
               <Link href="/factuur/offertes/new">
-                <Plus className="h-4 w-4 mr-2" />
-                Nieuwe Offerte
+                <Plus className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Nieuwe Offerte</span>
               </Link>
             </Button>
           </div>
@@ -95,7 +95,7 @@ export default function OffertesPage() {
 
       <div className="container mx-auto px-4 py-8">
         {/* Stats Cards */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
@@ -153,12 +153,12 @@ export default function OffertesPage() {
         {/* Offertes Table */}
         <Card>
           <CardHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <CardTitle>Alle Offertes</CardTitle>
-              <div className="flex gap-4 items-center">
-                <span className="text-sm text-gray-600">Filter op status:</span>
+              <div className="flex gap-2 sm:gap-4 items-center">
+                <span className="text-sm text-gray-600 hidden sm:inline">Filter op status:</span>
                 <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as any)}>
-                  <SelectTrigger className="w-44">
+                  <SelectTrigger className="w-36 sm:w-44">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -180,13 +180,14 @@ export default function OffertesPage() {
                 <span className="ml-2 text-gray-500">Offertes laden...</span>
               </div>
             ) : (
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Offertenummer</TableHead>
                     <TableHead>Klant</TableHead>
-                    <TableHead>Datum</TableHead>
-                    <TableHead>Geldig tot</TableHead>
+                    <TableHead className="hidden md:table-cell">Datum</TableHead>
+                    <TableHead className="hidden md:table-cell">Geldig tot</TableHead>
                     <TableHead className="text-right">Bedrag</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Acties</TableHead>
@@ -220,9 +221,9 @@ export default function OffertesPage() {
                             {offerte.offerteNumber}
                           </Link>
                         </TableCell>
-                        <TableCell>{offerte.client.name || '-'}</TableCell>
-                        <TableCell>{formatDate(offerte.date)}</TableCell>
-                        <TableCell>{formatDate(offerte.validUntil)}</TableCell>
+                        <TableCell className="max-w-[120px] truncate">{offerte.client.name || '-'}</TableCell>
+                        <TableCell className="hidden md:table-cell">{formatDate(offerte.date)}</TableCell>
+                        <TableCell className="hidden md:table-cell">{formatDate(offerte.validUntil)}</TableCell>
                         <TableCell className="text-right font-medium">
                           {formatCurrency(offerte.total)}
                         </TableCell>
@@ -263,6 +264,7 @@ export default function OffertesPage() {
                   )}
                 </TableBody>
               </Table>
+              </div>
             )}
           </CardContent>
         </Card>
