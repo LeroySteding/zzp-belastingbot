@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { createWorker } from 'tesseract.js'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -231,6 +230,8 @@ export default function ScanPage() {
     setScanProgress(0)
 
     try {
+      // Dynamically import tesseract.js (~2MB) only when user initiates a scan
+      const { createWorker } = await import('tesseract.js')
       const worker = await createWorker('nld+eng', undefined, {
         logger: (m) => {
           if (m.status === 'recognizing text') {
