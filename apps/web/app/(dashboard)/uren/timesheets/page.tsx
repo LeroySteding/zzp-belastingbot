@@ -103,7 +103,7 @@ export default function TimesheetsPage() {
           const project = getProjectById(e.projectId);
           return project?.clientId === client.id;
         }),
-        color: 'bg-gray-500',
+        color: 'bg-muted/500',
         rate: 0, // Mixed rates for clients
       })).filter(g => g.entries.length > 0);
 
@@ -147,27 +147,27 @@ export default function TimesheetsPage() {
   };
 
   const statusColors: Record<string, string> = {
-    concept: 'bg-gray-100 text-gray-800',
+    concept: 'bg-muted text-foreground',
     goedgekeurd: 'bg-green-100 text-green-800',
     gefactureerd: 'bg-blue-100 text-blue-800',
   };
 
   if (loading && projectsData.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/50">
 
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 print:px-0">
         <div className="mb-8 print:mb-4">
-          <h1 className="text-3xl font-bold text-gray-900 print:text-2xl">Urenstaten</h1>
-          <p className="text-gray-600 mt-2 print:text-sm">Genereer overzichten en exporteer voor facturatie</p>
+          <h1 className="text-3xl font-bold text-foreground print:text-2xl">Urenstaten</h1>
+          <p className="text-muted-foreground mt-2 print:text-sm">Genereer overzichten en exporteer voor facturatie</p>
         </div>
 
         {/* Filters */}
@@ -234,7 +234,7 @@ export default function TimesheetsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8 print:mb-4">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 Periode
               </CardTitle>
@@ -248,13 +248,13 @@ export default function TimesheetsPage() {
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600">Totaal Uren</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Totaal Uren</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold print:text-2xl">
                 {Math.round(totalHours * 10) / 10}h
               </div>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {filteredEntries.length} registraties
               </p>
             </CardContent>
@@ -262,7 +262,7 @@ export default function TimesheetsPage() {
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600">Totaal Omzet</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Totaal Omzet</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold print:text-2xl">
@@ -293,7 +293,7 @@ export default function TimesheetsPage() {
                 <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
               </div>
             ) : groupedData.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">
+              <p className="text-muted-foreground text-center py-8">
                 Geen uren gevonden voor deze periode
               </p>
             ) : (
@@ -312,14 +312,14 @@ export default function TimesheetsPage() {
                           <div className={`w-3 h-3 rounded-full ${group.color}`} />
                           <div>
                             <h3 className="font-semibold text-lg print:text-base">{group.name}</h3>
-                            <p className="text-sm text-gray-600 print:text-xs">{group.subtitle}</p>
+                            <p className="text-sm text-muted-foreground print:text-xs">{group.subtitle}</p>
                           </div>
                         </div>
                         <div className="text-right">
                           <div className="font-bold text-lg print:text-base">
                             {Math.round(groupHours * 10) / 10}h
                           </div>
-                          <div className="text-sm text-gray-600 print:text-xs">
+                          <div className="text-sm text-muted-foreground print:text-xs">
                             {'\u20AC'}{Math.round(groupRevenue)}
                           </div>
                         </div>

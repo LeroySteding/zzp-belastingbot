@@ -55,7 +55,7 @@ function getTypeIcon(type: string) {
       );
     default:
       return (
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-600">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
           <Bell className="h-5 w-5" />
         </span>
       );
@@ -164,7 +164,7 @@ export default function NotificationsPage() {
     <div className="max-w-3xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Meldingen</h1>
+          <h1 className="text-3xl font-bold text-foreground">Meldingen</h1>
           {unreadCount > 0 && (
             <p className="text-sm text-muted-foreground mt-1">
               {unreadCount} ongelezen {unreadCount === 1 ? 'melding' : 'meldingen'}

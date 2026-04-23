@@ -100,7 +100,7 @@ Groet,
       <div className="max-w-4xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Instellingen</h1>
-          <p className="text-gray-600">Pas je portaal aan naar jouw bedrijfsstijl</p>
+          <p className="text-muted-foreground">Pas je portaal aan naar jouw bedrijfsstijl</p>
         </div>
 
         <Tabs defaultValue="branding" className="space-y-6">
@@ -129,21 +129,21 @@ Groet,
                     placeholder="Mijn Creatieve Bureau"
                     className="mt-2"
                   />
-                  <p className="text-sm text-gray-500 mt-2">
+                  <p className="text-sm text-muted-foreground mt-2">
                     Deze naam wordt getoond in het klantportaal
                   </p>
                 </div>
 
                 <div>
                   <Label>Logo</Label>
-                  <div className="mt-2 border-2 border-dashed rounded-lg p-8 text-center hover:bg-gray-50 transition-colors cursor-pointer">
+                  <div className="mt-2 border-2 border-dashed rounded-lg p-8 text-center hover:bg-muted/50 transition-colors cursor-pointer">
                     <div className="w-20 h-20 bg-gray-200 rounded-lg mx-auto mb-4 flex items-center justify-center">
-                      <Upload className="h-8 w-8 text-gray-400" />
+                      <Upload className="h-8 w-8 text-muted-foreground" />
                     </div>
                     <p className="text-sm font-medium mb-1">Klik om logo te uploaden</p>
-                    <p className="text-xs text-gray-500">PNG, JPG of SVG &bull; Max 2MB</p>
+                    <p className="text-xs text-muted-foreground">PNG, JPG of SVG &bull; Max 2MB</p>
                   </div>
-                  <p className="text-sm text-gray-500 mt-2">
+                  <p className="text-sm text-muted-foreground mt-2">
                     Aanbevolen: vierkant formaat, minimaal 200x200px
                   </p>
                 </div>
@@ -165,7 +165,7 @@ Groet,
                       className="flex-1 font-mono"
                     />
                   </div>
-                  <p className="text-sm text-gray-500 mt-2">
+                  <p className="text-sm text-muted-foreground mt-2">
                     Deze kleur wordt gebruikt voor knoppen en accenten
                   </p>
                 </div>
@@ -173,7 +173,7 @@ Groet,
                 <div className="pt-4 border-t">
                   <h3 className="font-medium mb-3">Preview</h3>
                   <div className="border rounded-lg p-6 bg-gradient-to-b from-blue-50 to-white">
-                    <div className="bg-white rounded-lg p-4 shadow-sm">
+                    <div className="bg-card rounded-lg p-4 shadow-sm">
                       <div className="flex items-center gap-3 mb-4">
                         <div
                           className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold"
@@ -362,7 +362,7 @@ Groet,
                       Test
                     </Button>
                   </div>
-                  <p className="text-sm text-gray-500 mt-2">
+                  <p className="text-sm text-muted-foreground mt-2">
                     Dit is je standaard portal URL voor klanten
                   </p>
                 </div>
@@ -374,14 +374,14 @@ Groet,
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold mb-1">Custom Domein</h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-foreground">
                         Gebruik je eigen domein zoals portal.jouwbedrijf.nl voor een volledig gebrand portaal
                       </p>
                     </div>
                   </div>
 
-                  <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                    <Label htmlFor="custom-domain" className="text-gray-400">Custom Domein</Label>
+                  <div className="bg-muted/50 p-4 rounded-lg mb-4">
+                    <Label htmlFor="custom-domain" className="text-muted-foreground">Custom Domein</Label>
                     <Input
                       id="custom-domain"
                       placeholder="portal.jouwbedrijf.nl"

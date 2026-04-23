@@ -283,19 +283,19 @@ ${company.name}`;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center">
         <div className="flex items-center gap-2">
           <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-          <span className="text-gray-600">Factuur voorbereiden...</span>
+          <span className="text-muted-foreground">Factuur voorbereiden...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/50">
       {/* Header */}
-      <header className="bg-white border-b">
+      <header className="bg-card border-b">
         <div className="container mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-2">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" asChild aria-label="Terug naar facturen">
@@ -573,7 +573,7 @@ ${company.name}`;
                         <SelectItem value="minimal">Minimaal</SelectItem>
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-gray-500 mt-1">{templateDescriptions[template]}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{templateDescriptions[template]}</p>
                   </div>
                   <div>
                     <Label htmlFor="recurring">Terugkerende Factuur</Label>
@@ -610,7 +610,7 @@ ${company.name}`;
                 {items.map((item, index) => (
                   <div key={item.id} className="border rounded-lg p-4 space-y-3">
                     <div className="flex justify-between items-start">
-                      <span className="text-sm font-medium text-gray-500">Regel {index + 1}</span>
+                      <span className="text-sm font-medium text-muted-foreground">Regel {index + 1}</span>
                       {items.length > 1 && (
                         <Button
                           variant="ghost"
@@ -671,7 +671,7 @@ ${company.name}`;
                       </div>
                     </div>
                     <div className="text-right text-sm">
-                      <span className="text-gray-600">Totaal: </span>
+                      <span className="text-muted-foreground">Totaal: </span>
                       <span className="font-semibold">
                         {formatCurrency(item.quantity * item.unitPrice)}
                       </span>
@@ -682,18 +682,18 @@ ${company.name}`;
                 {/* Totals */}
                 <div className="border-t pt-4 space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Subtotaal</span>
+                    <span className="text-muted-foreground">Subtotaal</span>
                     <span className="font-medium">{formatCurrency(calculation.subtotal)}</span>
                   </div>
                   {calculation.btw21 > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">BTW 21%</span>
+                      <span className="text-muted-foreground">BTW 21%</span>
                       <span className="font-medium">{formatCurrency(calculation.btw21)}</span>
                     </div>
                   )}
                   {calculation.btw9 > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">BTW 9%</span>
+                      <span className="text-muted-foreground">BTW 9%</span>
                       <span className="font-medium">{formatCurrency(calculation.btw9)}</span>
                     </div>
                   )}
@@ -748,32 +748,32 @@ ${company.name}`;
           </DialogHeader>
           <div className="p-6 space-y-4">
             <div>
-              <Label className="text-gray-600">Naar:</Label>
-              <div className="mt-1 p-3 bg-gray-50 rounded border">
+              <Label className="text-muted-foreground">Naar:</Label>
+              <div className="mt-1 p-3 bg-muted/50 rounded border">
                 {client.email || 'Geen email adres ingevuld'}
               </div>
             </div>
             <div>
-              <Label className="text-gray-600">Onderwerp:</Label>
-              <div className="mt-1 p-3 bg-gray-50 rounded border font-medium">
+              <Label className="text-muted-foreground">Onderwerp:</Label>
+              <div className="mt-1 p-3 bg-muted/50 rounded border font-medium">
                 {emailSubject}
               </div>
             </div>
             <div>
-              <Label className="text-gray-600">Bericht:</Label>
-              <div className="mt-1 p-4 bg-gray-50 rounded border whitespace-pre-wrap text-sm">
+              <Label className="text-muted-foreground">Bericht:</Label>
+              <div className="mt-1 p-4 bg-muted/50 rounded border whitespace-pre-wrap text-sm">
                 {emailBody}
               </div>
             </div>
             <div>
-              <Label className="text-gray-600">Bijlage:</Label>
+              <Label className="text-muted-foreground">Bijlage:</Label>
               <div className="mt-1 p-3 bg-blue-50 rounded border flex items-center gap-2">
                 <div className="bg-blue-100 p-2 rounded">
                   <FileText className="h-5 w-5 text-blue-600" />
                 </div>
                 <div>
                   <div className="font-medium text-sm">{invoiceNumber}.pdf</div>
-                  <div className="text-xs text-gray-500">PDF Factuur</div>
+                  <div className="text-xs text-muted-foreground">PDF Factuur</div>
                 </div>
               </div>
             </div>

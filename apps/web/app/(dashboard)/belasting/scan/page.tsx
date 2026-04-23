@@ -340,8 +340,8 @@ export default function ScanPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Bon Scanner</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-foreground">Bon Scanner</h1>
+          <p className="text-muted-foreground mt-2">
             Scan een bon en sla de uitgave automatisch op
           </p>
         </div>
@@ -349,8 +349,8 @@ export default function ScanPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
             <CheckCircle2 className="h-16 w-16 text-green-500 mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Uitgave opgeslagen!</h2>
-            <p className="text-gray-600 mb-8">
+            <h2 className="text-2xl font-bold text-foreground mb-2">Uitgave opgeslagen!</h2>
+            <p className="text-muted-foreground mb-8">
               De uitgave is succesvol toegevoegd aan je administratie.
             </p>
             <div className="flex gap-3">
@@ -371,8 +371,8 @@ export default function ScanPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Bon Scanner</h1>
-        <p className="text-gray-600 mt-2">
+        <h1 className="text-3xl font-bold text-foreground">Bon Scanner</h1>
+        <p className="text-muted-foreground mt-2">
           Scan een bon en sla de uitgave automatisch op
         </p>
       </div>
@@ -397,7 +397,7 @@ export default function ScanPage() {
                     onClick={() => fileInputRef.current?.click()}
                     className={`
                       border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
-                      ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
+                      ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-border hover:border-gray-400'}
                     `}
                   >
                     <input
@@ -410,16 +410,16 @@ export default function ScanPage() {
                         if (file) handleFile(file)
                       }}
                     />
-                    <Upload className="h-10 w-10 text-gray-400 mx-auto mb-3" />
-                    <p className="text-sm font-medium text-gray-700">
+                    <Upload className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-sm font-medium text-foreground">
                       {isDragging
                         ? 'Laat de bon hier los...'
                         : 'Sleep een bon hierheen of klik om te uploaden'}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">JPG, PNG of WebP (max 10MB)</p>
+                    <p className="text-xs text-muted-foreground mt-1">JPG, PNG of WebP (max 10MB)</p>
                   </div>
 
-                  <div className="text-center text-sm text-gray-500">of</div>
+                  <div className="text-center text-sm text-muted-foreground">of</div>
 
                   <Button
                     variant="outline"
@@ -443,7 +443,7 @@ export default function ScanPage() {
                 </>
               ) : (
                 <div className="space-y-4">
-                  <div className="relative border-2 border-gray-200 rounded-lg overflow-hidden">
+                  <div className="relative border-2 border-border rounded-lg overflow-hidden">
                     <Button
                       type="button"
                       variant="ghost"
@@ -457,7 +457,7 @@ export default function ScanPage() {
                     <img
                       src={imagePreview}
                       alt="Bon preview"
-                      className="w-full h-auto max-h-96 object-contain bg-gray-50"
+                      className="w-full h-auto max-h-96 object-contain bg-muted/50"
                     />
                   </div>
 
@@ -508,7 +508,7 @@ export default function ScanPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <pre className="text-xs text-gray-600 whitespace-pre-wrap bg-gray-50 rounded-lg p-3 max-h-48 overflow-y-auto font-mono">
+                <pre className="text-xs text-muted-foreground whitespace-pre-wrap bg-muted/50 rounded-lg p-3 max-h-48 overflow-y-auto font-mono">
                   {rawText}
                 </pre>
               </CardContent>
@@ -544,7 +544,7 @@ export default function ScanPage() {
               <div className="space-y-2">
                 <Label htmlFor="amount">Bedrag excl. BTW</Label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
                     &euro;
                   </span>
                   <Input
@@ -605,13 +605,13 @@ export default function ScanPage() {
 
               {/* Calculated BTW summary */}
               {numericAmount > 0 && (
-                <div className="bg-gray-50 rounded-lg p-4 space-y-2 border">
+                <div className="bg-muted/50 rounded-lg p-4 space-y-2 border">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Bedrag excl. BTW:</span>
+                    <span className="text-muted-foreground">Bedrag excl. BTW:</span>
                     <span className="font-medium">&euro; {numericAmount.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">BTW ({btwRate}%):</span>
+                    <span className="text-muted-foreground">BTW ({btwRate}%):</span>
                     <span className="font-medium">&euro; {btwAmount.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm font-bold border-t pt-2">

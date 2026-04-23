@@ -73,19 +73,19 @@ export default function SettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-        <span className="ml-2 text-gray-500">Instellingen laden...</span>
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Instellingen laden...</span>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/50">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Instellingen</h1>
-          <p className="text-gray-600 mt-2">Beheer je voorkeuren en bedrijfsgegevens</p>
+          <h1 className="text-3xl font-bold text-foreground">Instellingen</h1>
+          <p className="text-muted-foreground mt-2">Beheer je voorkeuren en bedrijfsgegevens</p>
         </div>
 
         <Tabs defaultValue="general" className="w-full">
@@ -122,7 +122,7 @@ export default function SettingsPage() {
                       onChange={(e) => setDefaultRate(e.target.value)}
                       placeholder="85"
                     />
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Dit tarief wordt gebruikt als standaard bij het aanmaken van nieuwe projecten
                     </p>
                   </div>
@@ -140,7 +140,7 @@ export default function SettingsPage() {
                       min="1"
                       max="24"
                     />
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Standaard aantal werkuren voor rapportages en statistieken
                     </p>
                   </div>
@@ -153,7 +153,7 @@ export default function SettingsPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <Label>Timer meldingen</Label>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-muted-foreground">
                           Krijg een herinnering als je vergeet de timer te stoppen
                         </p>
                       </div>
@@ -163,7 +163,7 @@ export default function SettingsPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <Label>Automatisch pauze detectie</Label>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-muted-foreground">
                           Detecteer automatisch pauzes langer dan 15 minuten
                         </p>
                       </div>
@@ -173,7 +173,7 @@ export default function SettingsPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <Label>Wekelijkse samenvattingen</Label>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-muted-foreground">
                           Ontvang elke maandag een overzicht van de vorige week
                         </p>
                       </div>

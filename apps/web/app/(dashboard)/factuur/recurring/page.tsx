@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -20,26 +20,34 @@ import {
   TrendingUp,
   Calendar,
   RotateCcw,
+  AlertTriangle,
+  CheckCircle,
+  Info,
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/factuur/invoice-utils';
 import {
   getRecurringInvoices,
-  processRecurringInvoices,
   pauseRecurring,
   resumeRecurring,
   RecurringInvoiceData,
 } from '@/lib/factuur/actions';
+import {
+  processRecurringInvoices as processRecurring,
+  getRecurringInvoicesSummary,
+} from '@/lib/factuur/recurring-processor';
 
 const statusColors: Record<string, string> = {
-  concept: 'bg-gray-100 text-gray-800',
+  concept: 'bg-muted text-foreground',
   verzonden: 'bg-blue-100 text-blue-800',
   betaald: 'bg-green-100 text-green-800',
+  verlopen: 'bg-red-100 text-red-800',
 };
 
 const statusLabels: Record<string, string> = {
   concept: 'Concept',
   verzonden: 'Verzonden',
   betaald: 'Betaald',
+  verlopen: 'Verlopen',
 };
 
 const frequencyLabels: Record<string, string> = {
@@ -56,8 +64,12 @@ export default function RecurringInvoicesPage() {
   const [resumeFrequency, setResumeFrequency] = useState<'maandelijks' | 'kwartaal'>('maandelijks');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [processResult, setProcessResult] = useState<{
-    processed: number;
+    created: number;
     errors: string[];
+  } | null>(null);
+  const [summary, setSummary] = useState<{
+    total: number;
+    dueNow: number;
   } | null>(null);
 
   useEffect(() => {
@@ -66,18 +78,21 @@ export default function RecurringInvoicesPage() {
 
   async function loadData() {
     setLoading(true);
-    const data = await getRecurringInvoices();
+    const [data, summaryData] = await Promise.all([
+      getRecurringInvoices(),
+      getRecurringInvoicesSummary(),
+    ]);
     setInvoices(data);
+    setSummary(summaryData);
     setLoading(false);
   }
 
   async function handleProcess() {
     setProcessing(true);
     setProcessResult(null);
-    const result = await processRecurringInvoices();
+    const result = await processRecurring();
     setProcessResult(result);
     setProcessing(false);
-    // Reload data to show updated state
     await loadData();
   }
 
@@ -100,7 +115,7 @@ export default function RecurringInvoicesPage() {
     setActionLoading(null);
   }
 
-  // Calculate stats
+  // Bereken statistieken
   const monthlyRecurringRevenue = invoices.reduce((sum, inv) => {
     if (inv.recurringFrequency === 'maandelijks') {
       return sum + inv.total;
@@ -122,10 +137,22 @@ export default function RecurringInvoicesPage() {
     0
   );
 
+  // Sorteer: te verwerken facturen bovenaan
+  const sortedInvoices = [...invoices].sort((a, b) => {
+    const aDue = a.nextRecurringDate && new Date(a.nextRecurringDate) <= new Date();
+    const bDue = b.nextRecurringDate && new Date(b.nextRecurringDate) <= new Date();
+    if (aDue && !bDue) return -1;
+    if (!aDue && bDue) return 1;
+    if (a.nextRecurringDate && b.nextRecurringDate) {
+      return new Date(a.nextRecurringDate).getTime() - new Date(b.nextRecurringDate).getTime();
+    }
+    return 0;
+  });
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/50">
       {/* Header */}
-      <header className="bg-white border-b">
+      <header className="bg-card border-b">
         <div className="container mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-2">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" asChild aria-label="Terug naar facturen">
@@ -137,7 +164,7 @@ export default function RecurringInvoicesPage() {
               <FileText className="h-6 w-6 text-blue-600" />
               <span className="font-bold text-lg">ZZP Factuur</span>
             </Link>
-            <span className="text-gray-300">|</span>
+            <span className="text-border">|</span>
             <h1 className="text-2xl font-bold">Terugkerende Facturen</h1>
           </div>
           <div className="flex gap-3">
@@ -150,38 +177,77 @@ export default function RecurringInvoicesPage() {
               ) : (
                 <RefreshCw className="h-4 w-4 mr-2" />
               )}
-              Verwerk Openstaande
+              Genereer nu
             </Button>
           </div>
         </div>
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Process Result Banner */}
+        {/* Waarschuwing: te verwerken facturen */}
+        {dueCount > 0 && !processResult && (
+          <div className="mb-6 p-4 rounded-lg border bg-orange-50 border-orange-200">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="h-5 w-5 text-orange-600 shrink-0" />
+              <div className="flex-1">
+                <p className="font-medium text-orange-900">
+                  {dueCount} {dueCount === 1 ? 'factuur wacht' : 'facturen wachten'} op generatie
+                </p>
+                <p className="text-sm text-orange-700 mt-1">
+                  Klik op &quot;Genereer nu&quot; om deze facturen automatisch aan te maken als concept.
+                </p>
+              </div>
+              <Button onClick={handleProcess} disabled={processing} size="sm" variant="outline" className="border-orange-300 text-orange-800 hover:bg-orange-100">
+                {processing ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                )}
+                Genereer nu
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Resultaat banner */}
         {processResult && (
           <div
             className={`mb-6 p-4 rounded-lg border ${
               processResult.errors.length > 0
                 ? 'bg-yellow-50 border-yellow-200'
-                : processResult.processed > 0
+                : processResult.created > 0
                 ? 'bg-green-50 border-green-200'
                 : 'bg-blue-50 border-blue-200'
             }`}
           >
             <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">
-                  {processResult.processed > 0
-                    ? `${processResult.processed} factuur/facturen succesvol aangemaakt`
-                    : 'Geen facturen om te verwerken'}
-                </p>
-                {processResult.errors.length > 0 && (
-                  <ul className="mt-2 text-sm text-red-700 list-disc list-inside">
-                    {processResult.errors.map((err, i) => (
-                      <li key={i}>{err}</li>
-                    ))}
-                  </ul>
+              <div className="flex items-center gap-3">
+                {processResult.errors.length > 0 ? (
+                  <AlertTriangle className="h-5 w-5 text-yellow-600 shrink-0" />
+                ) : processResult.created > 0 ? (
+                  <CheckCircle className="h-5 w-5 text-green-600 shrink-0" />
+                ) : (
+                  <Info className="h-5 w-5 text-blue-600 shrink-0" />
                 )}
+                <div>
+                  <p className="font-medium">
+                    {processResult.created > 0
+                      ? `${processResult.created} ${processResult.created === 1 ? 'factuur' : 'facturen'} succesvol aangemaakt als concept`
+                      : 'Geen facturen om te verwerken'}
+                  </p>
+                  {processResult.created > 0 && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      De nieuwe facturen zijn aangemaakt als concept. Controleer en verstuur ze via het facturenoverzicht.
+                    </p>
+                  )}
+                  {processResult.errors.length > 0 && (
+                    <ul className="mt-2 text-sm text-red-700 list-disc list-inside">
+                      {processResult.errors.map((err, i) => (
+                        <li key={i}>{err}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </div>
               <Button
                 variant="ghost"
@@ -194,24 +260,24 @@ export default function RecurringInvoicesPage() {
           </div>
         )}
 
-        {/* Stats Cards */}
+        {/* Statistieken */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <RotateCcw className="h-4 w-4" />
                 Actieve Recurring
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{totalRecurringInvoices}</div>
-              <p className="text-sm text-gray-600 mt-1">terugkerende facturen</p>
+              <p className="text-sm text-muted-foreground mt-1">terugkerende facturen</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
                 Maandelijks Inkomen
               </CardTitle>
@@ -220,51 +286,56 @@ export default function RecurringInvoicesPage() {
               <div className="text-3xl font-bold text-green-600">
                 {formatCurrency(monthlyRecurringRevenue)}
               </div>
-              <p className="text-sm text-gray-600 mt-1">verwachte maandomzet</p>
+              <p className="text-sm text-muted-foreground mt-1">verwachte maandomzet</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 Te Verwerken
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-orange-600">{dueCount}</div>
-              <p className="text-sm text-gray-600 mt-1">facturen wachten op generatie</p>
+              <div className={`text-3xl font-bold ${dueCount > 0 ? 'text-orange-600' : 'text-foreground'}`}>
+                {dueCount}
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">facturen wachten op generatie</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <FileText className="h-4 w-4" />
                 Totaal Gegenereerd
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{totalGeneratedCount}</div>
-              <p className="text-sm text-gray-600 mt-1">facturen aangemaakt</p>
+              <p className="text-sm text-muted-foreground mt-1">facturen aangemaakt</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Recurring Invoices Table */}
+        {/* Terugkerende facturen tabel */}
         <Card>
           <CardHeader>
             <CardTitle>Terugkerende Facturen</CardTitle>
+            <CardDescription>
+              Overzicht van alle terugkerende facturen en hun generatiestatus. Facturen die klaar zijn voor generatie staan bovenaan.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-                <span className="ml-2 text-gray-500">Laden...</span>
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-muted-foreground">Laden...</span>
               </div>
             ) : invoices.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
-                <RotateCcw className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <div className="text-center py-12 text-muted-foreground">
+                <RotateCcw className="h-12 w-12 mx-auto mb-4 text-border" />
                 <p className="text-lg font-medium mb-2">
                   Geen terugkerende facturen
                 </p>
@@ -278,37 +349,47 @@ export default function RecurringInvoicesPage() {
               </div>
             ) : (
               <div className="space-y-2">
-                {invoices.map((invoice) => {
+                {sortedInvoices.map((invoice) => {
                   const isExpanded = expandedId === invoice.id;
                   const isDue =
                     invoice.nextRecurringDate &&
                     new Date(invoice.nextRecurringDate) <= new Date();
 
+                  // Bereken dagen tot volgende generatie
+                  let daysUntilNext: number | null = null;
+                  if (invoice.nextRecurringDate) {
+                    const nextDate = new Date(invoice.nextRecurringDate);
+                    const today = new Date();
+                    daysUntilNext = Math.ceil(
+                      (nextDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+                    );
+                  }
+
                   return (
-                    <div key={invoice.id} className="border rounded-lg">
-                      {/* Main Row */}
+                    <div key={invoice.id} className={`border rounded-lg ${isDue ? 'border-orange-300 bg-orange-50/30' : ''}`}>
+                      {/* Hoofdrij */}
                       <div
-                        className="flex items-center gap-4 p-4 cursor-pointer hover:bg-gray-50"
+                        className="flex items-center gap-4 p-4 cursor-pointer hover:bg-muted/50"
                         onClick={() =>
                           setExpandedId(isExpanded ? null : invoice.id)
                         }
                       >
                         <div className="shrink-0">
                           {isExpanded ? (
-                            <ChevronDown className="h-4 w-4 text-gray-400" />
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
                           ) : (
-                            <ChevronRight className="h-4 w-4 text-gray-400" />
+                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
                           )}
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-medium truncate">
                               {invoice.invoiceNumber}
                             </span>
                             <Badge
                               className={
-                                statusColors[invoice.status] || 'bg-gray-100'
+                                statusColors[invoice.status] || 'bg-muted'
                               }
                             >
                               {statusLabels[invoice.status] || invoice.status}
@@ -323,8 +404,13 @@ export default function RecurringInvoicesPage() {
                               </Badge>
                             )}
                           </div>
-                          <div className="text-sm text-gray-600 mt-1">
+                          <div className="text-sm text-muted-foreground mt-1">
                             {invoice.clientName}
+                            {invoice.generatedInvoices.length > 0 && (
+                              <span className="text-muted-foreground ml-2">
+                                -- {invoice.generatedInvoices.length} keer gegenereerd
+                              </span>
+                            )}
                           </div>
                         </div>
 
@@ -332,10 +418,21 @@ export default function RecurringInvoicesPage() {
                           <div className="font-medium">
                             {formatCurrency(invoice.total)}
                           </div>
-                          <div className="text-sm text-gray-600">
-                            {invoice.nextRecurringDate
-                              ? `Volgende: ${formatDate(invoice.nextRecurringDate)}`
-                              : 'Geen volgende datum'}
+                          <div className="text-sm text-muted-foreground">
+                            {isDue ? (
+                              <span className="text-orange-700 font-medium">Klaar voor generatie</span>
+                            ) : invoice.nextRecurringDate ? (
+                              <>
+                                Volgende: {formatDate(invoice.nextRecurringDate)}
+                                {daysUntilNext !== null && daysUntilNext > 0 && (
+                                  <span className="text-muted-foreground ml-1">
+                                    (over {daysUntilNext} {daysUntilNext === 1 ? 'dag' : 'dagen'})
+                                  </span>
+                                )}
+                              </>
+                            ) : (
+                              'Geen volgende datum'
+                            )}
                           </div>
                         </div>
 
@@ -359,14 +456,14 @@ export default function RecurringInvoicesPage() {
                         </div>
                       </div>
 
-                      {/* Expanded Content - Generated Invoices History */}
+                      {/* Uitgeklapte inhoud - Gegenereerde facturen geschiedenis */}
                       {isExpanded && (
-                        <div className="border-t bg-gray-50 p-4">
-                          <h4 className="text-sm font-medium text-gray-700 mb-3">
+                        <div className="border-t bg-muted/50 p-4">
+                          <h4 className="text-sm font-medium text-foreground mb-3">
                             Gegenereerde Facturen ({invoice.generatedInvoices.length})
                           </h4>
                           {invoice.generatedInvoices.length === 0 ? (
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-muted-foreground">
                               Nog geen facturen gegenereerd vanuit deze
                               terugkerende factuur.
                             </p>
@@ -386,7 +483,12 @@ export default function RecurringInvoicesPage() {
                                 {invoice.generatedInvoices.map((gen) => (
                                   <TableRow key={gen.id}>
                                     <TableCell className="font-medium">
-                                      {gen.invoiceNumber}
+                                      <Link
+                                        href={`/factuur/invoices/${gen.id}`}
+                                        className="text-blue-600 hover:underline"
+                                      >
+                                        {gen.invoiceNumber}
+                                      </Link>
                                     </TableCell>
                                     <TableCell>
                                       {formatDate(gen.date)}
@@ -398,7 +500,7 @@ export default function RecurringInvoicesPage() {
                                       <Badge
                                         className={
                                           statusColors[gen.status] ||
-                                          'bg-gray-100'
+                                          'bg-muted'
                                         }
                                       >
                                         {statusLabels[gen.status] || gen.status}
@@ -418,9 +520,32 @@ export default function RecurringInvoicesPage() {
             )}
           </CardContent>
         </Card>
+
+        {/* Informatie kaart */}
+        <Card className="mt-6 bg-blue-50 border-blue-200">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <div className="bg-blue-100 p-2 rounded-lg">
+                <Info className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-medium text-blue-900 mb-1">
+                  Hoe werken terugkerende facturen?
+                </h3>
+                <ul className="mt-2 space-y-1 text-sm text-blue-700">
+                  <li>-- Maak een factuur aan met een terugkerende frequentie (maandelijks of per kwartaal)</li>
+                  <li>-- Wanneer de volgende datum bereikt is, verschijnt de factuur als &quot;Te verwerken&quot;</li>
+                  <li>-- Klik op &quot;Genereer nu&quot; om automatisch nieuwe conceptfacturen aan te maken</li>
+                  <li>-- Nieuwe facturen worden aangemaakt als concept, zodat je ze kunt controleren voor verzending</li>
+                  <li>-- De volgende generatiedatum wordt automatisch doorgeschoven</li>
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Resume Dialog */}
+      {/* Hervatten dialoog */}
       <Dialog
         open={resumeDialogId !== null}
         onOpenChange={(open) => {

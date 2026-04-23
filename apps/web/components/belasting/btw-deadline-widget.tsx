@@ -9,9 +9,9 @@ export function BTWDeadlineWidget() {
   const deadline = getNextBTWDeadline()
   
   const urgencyColor = {
-    green: 'bg-green-100 text-green-800 border-green-200',
-    orange: 'bg-orange-100 text-orange-800 border-orange-200',
-    red: 'bg-red-100 text-red-800 border-red-200',
+    green: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800',
+    orange: 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800',
+    red: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800',
   }[deadline.urgency]
 
   const urgencyIcon = deadline.urgency === 'red'
@@ -29,7 +29,7 @@ export function BTWDeadlineWidget() {
           {urgencyIcon && <AlertCircle className="h-4 w-4 text-red-500" />}
           BTW Aangifte Deadline
         </CardTitle>
-        <Calendar className="h-4 w-4 text-gray-600" />
+        <Calendar className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
@@ -37,7 +37,7 @@ export function BTWDeadlineWidget() {
             <div className="text-2xl font-bold">
               {deadline.daysRemaining} {deadline.daysRemaining === 1 ? 'dag' : 'dagen'}
             </div>
-            <p className="text-xs text-gray-600 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Q{deadline.quarter} {deadline.year}
             </p>
           </div>
@@ -49,17 +49,17 @@ export function BTWDeadlineWidget() {
           </div>
 
           {deadline.urgency === 'red' && (
-            <p className="text-xs text-red-600 font-medium">
+            <p className="text-xs text-red-600 dark:text-red-400 font-medium">
               ⚠️ Deadline is zeer dichtbij!
             </p>
           )}
           {deadline.urgency === 'orange' && (
-            <p className="text-xs text-orange-600">
+            <p className="text-xs text-orange-600 dark:text-orange-400">
               Let op: deadline nadert
             </p>
           )}
           {deadline.urgency === 'green' && (
-            <p className="text-xs text-green-600">
+            <p className="text-xs text-green-600 dark:text-green-400">
               Voldoende tijd tot de deadline
             </p>
           )}

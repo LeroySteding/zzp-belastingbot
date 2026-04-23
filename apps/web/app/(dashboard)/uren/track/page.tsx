@@ -139,7 +139,7 @@ export default function TrackPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     );
@@ -148,13 +148,13 @@ export default function TrackPage() {
   const todayHours = todayEntries.reduce((sum, e) => sum + e.duration, 0) / 60;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/50">
 
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Tijd registreren</h1>
-          <p className="text-gray-600 mt-2">Start de timer of voer uren handmatig in</p>
+          <h1 className="text-3xl font-bold text-foreground">Tijd registreren</h1>
+          <p className="text-muted-foreground mt-2">Start de timer of voer uren handmatig in</p>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
@@ -175,7 +175,7 @@ export default function TrackPage() {
                   <CardContent className="space-y-6">
                     {/* Timer Display */}
                     <div className="text-center py-8">
-                      <div className="text-6xl font-mono font-bold text-gray-900 mb-4">
+                      <div className="text-6xl font-mono font-bold text-foreground mb-4">
                         {formatTime(elapsedSeconds)}
                       </div>
                       <Button
@@ -316,7 +316,7 @@ export default function TrackPage() {
               </CardHeader>
               <CardContent>
                 {todayEntries.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">
+                  <p className="text-muted-foreground text-center py-8">
                     Nog geen tijd geregistreerd vandaag
                   </p>
                 ) : (
@@ -328,15 +328,15 @@ export default function TrackPage() {
                           <div className="flex items-center gap-3">
                             <div className={`w-3 h-3 rounded-full ${project?.color || 'bg-gray-400'}`} />
                             <div>
-                              <p className="font-medium text-gray-900">{project?.name}</p>
-                              <p className="text-sm text-gray-600">{entry.description}</p>
-                              <p className="text-xs text-gray-500">
+                              <p className="font-medium text-foreground">{project?.name}</p>
+                              <p className="text-sm text-muted-foreground">{entry.description}</p>
+                              <p className="text-xs text-muted-foreground">
                                 {entry.startTime} - {entry.endTime}
                               </p>
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="font-medium text-gray-900">
+                            <p className="font-medium text-foreground">
                               {Math.round(entry.duration / 60 * 10) / 10}h
                             </p>
                           </div>
@@ -362,7 +362,7 @@ export default function TrackPage() {
                 <div className="text-3xl font-bold text-blue-600">
                   {Math.round(todayHours * 10) / 10}h
                 </div>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   {todayEntries.length} registraties
                 </p>
               </CardContent>
@@ -374,12 +374,12 @@ export default function TrackPage() {
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Start/Stop timer</span>
-                  <kbd className="px-2 py-1 bg-gray-100 rounded">Space</kbd>
+                  <span className="text-muted-foreground">Start/Stop timer</span>
+                  <kbd className="px-2 py-1 bg-muted rounded">Space</kbd>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Nieuwe registratie</span>
-                  <kbd className="px-2 py-1 bg-gray-100 rounded">N</kbd>
+                  <span className="text-muted-foreground">Nieuwe registratie</span>
+                  <kbd className="px-2 py-1 bg-muted rounded">N</kbd>
                 </div>
               </CardContent>
             </Card>
@@ -388,7 +388,7 @@ export default function TrackPage() {
               <CardHeader>
                 <CardTitle>Tips</CardTitle>
               </CardHeader>
-              <CardContent className="text-sm text-gray-600 space-y-2">
+              <CardContent className="text-sm text-muted-foreground space-y-2">
                 <p>Vergeet niet een beschrijving toe te voegen voor later</p>
                 <p>Zet de timer aan zodra je begint met werken</p>
                 <p>Check je dashboard voor een overzicht</p>

@@ -100,30 +100,30 @@ export default function ReportsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center">
         <div className="flex items-center gap-2">
           <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-          <span className="text-gray-600">Rapportages laden...</span>
+          <span className="text-muted-foreground">Rapportages laden...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/50">
       {/* Header */}
-      <header className="bg-white border-b">
+      <header className="bg-card border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <Link href="/dashboard" className="flex items-center gap-2">
               <FileText className="h-6 w-6 text-blue-600" />
               <span className="font-bold text-lg">ZZP Factuur</span>
             </Link>
-            <span className="text-gray-300">|</span>
+            <span className="text-border">|</span>
             <h1 className="text-2xl font-bold">Jaaroverzicht</h1>
           </div>
           <div className="flex gap-2 items-center">
-            <span className="text-sm text-gray-600">Jaar:</span>
+            <span className="text-sm text-muted-foreground">Jaar:</span>
             <Select value={selectedYear} onValueChange={setSelectedYear}>
               <SelectTrigger className="w-32">
                 <SelectValue />
@@ -147,16 +147,16 @@ export default function ReportsPage() {
         <div className="grid md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Totale Omzet</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Totale Omzet</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-blue-600">{formatCurrency(totalRevenue)}</div>
-              <p className="text-sm text-gray-600 mt-1">{yearInvoices.length} facturen</p>
+              <p className="text-sm text-muted-foreground mt-1">{yearInvoices.length} facturen</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">BTW 21%</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">BTW 21%</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{formatCurrency(btwTotals.btw21)}</div>
@@ -164,7 +164,7 @@ export default function ReportsPage() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">BTW 9%</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">BTW 9%</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{formatCurrency(btwTotals.btw9)}</div>
@@ -172,7 +172,7 @@ export default function ReportsPage() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Aantal Klanten</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Aantal Klanten</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{clientRevenue.size}</div>
@@ -182,7 +182,7 @@ export default function ReportsPage() {
 
         {yearInvoices.length === 0 ? (
           <Card>
-            <CardContent className="py-12 text-center text-gray-500">
+            <CardContent className="py-12 text-center text-muted-foreground">
               Geen facturen gevonden voor {selectedYear}.
             </CardContent>
           </Card>

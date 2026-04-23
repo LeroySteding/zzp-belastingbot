@@ -31,8 +31,8 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -89,13 +89,13 @@ export default function DashboardPage() {
   const recentEntries = timeEntriesData.slice(0, 5);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
 
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-2">Overzicht van je gewerkte uren en omzet</p>
+          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground mt-2">Overzicht van je gewerkte uren en omzet</p>
         </div>
 
         {/* Stats Cards */}
@@ -103,11 +103,11 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Deze week</CardTitle>
-              <Clock className="h-4 w-4 text-blue-600" />
+              <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{Math.round(thisWeekHours * 10) / 10} uur</div>
-              <p className="text-xs text-gray-600 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {thisWeekEntries.length} registraties
               </p>
             </CardContent>
@@ -116,11 +116,11 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Deze maand - Uren</CardTitle>
-              <TrendingUp className="h-4 w-4 text-green-600" />
+              <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{Math.round(thisMonthHours * 10) / 10} uur</div>
-              <p className="text-xs text-gray-600 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {thisMonthEntries.length} registraties
               </p>
             </CardContent>
@@ -129,11 +129,11 @@ export default function DashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Deze maand - Omzet</CardTitle>
-              <Euro className="h-4 w-4 text-purple-600" />
+              <Euro className="h-4 w-4 text-purple-600 dark:text-purple-400" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{'\u20AC'}{Math.round(thisMonthRevenue)}</div>
-              <p className="text-xs text-gray-600 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Gebaseerd op uurtarieven
               </p>
             </CardContent>
@@ -141,11 +141,11 @@ export default function DashboardPage() {
         </div>
 
         {/* Quick Start Timer */}
-        <Card className="mb-8 bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
+        <Card className="mb-8 bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200 dark:from-blue-950/30 dark:to-blue-900/30 dark:border-blue-800">
           <CardContent className="flex items-center justify-between p-6">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Klaar om te beginnen?</h3>
-              <p className="text-gray-600 mt-1">Start de timer en vergeet geen uren meer</p>
+              <h3 className="text-lg font-semibold text-foreground">Klaar om te beginnen?</h3>
+              <p className="text-muted-foreground mt-1">Start de timer en vergeet geen uren meer</p>
             </div>
             <Link href="/uren/track">
               <Button size="lg" className="gap-2">
@@ -216,17 +216,17 @@ export default function DashboardPage() {
                 return (
                   <div key={entry.id} className="flex items-center justify-between border-b pb-3 last:border-0">
                     <div className="flex items-center gap-4">
-                      <div className={`w-3 h-3 rounded-full ${project?.color || 'bg-gray-400'}`} />
+                      <div className={`w-3 h-3 rounded-full ${project?.color || 'bg-muted-foreground'}`} />
                       <div>
-                        <p className="font-medium text-gray-900">{project?.name}</p>
-                        <p className="text-sm text-gray-600">{entry.description}</p>
+                        <p className="font-medium text-foreground">{project?.name}</p>
+                        <p className="text-sm text-muted-foreground">{entry.description}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-gray-900">
+                      <p className="font-medium text-foreground">
                         {Math.round(entry.duration / 60 * 10) / 10}h
                       </p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-foreground">
                         {format(new Date(entry.date), 'dd MMM', { locale: nl })}
                       </p>
                     </div>

@@ -2,6 +2,7 @@ import { Sidebar } from '@/components/shared/sidebar'
 import { OnboardingCheck } from '@/components/shared/onboarding-check'
 import { NotificationBell } from '@/components/notifications/notification-bell'
 import { SearchTrigger } from '@/components/search/search-trigger'
+import { InstallPrompt } from '@/components/pwa/install-prompt'
 
 export default function DashboardLayout({
   children,
@@ -22,6 +23,7 @@ export default function DashboardLayout({
           </div>
         </main>
       </div>
+      <InstallPrompt />
     </OnboardingCheck>
   )
 }

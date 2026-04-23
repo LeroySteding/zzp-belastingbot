@@ -38,7 +38,7 @@ import {
 } from '@/components/ui/dialog';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  concept: { label: 'Concept', color: 'text-gray-700', bg: 'bg-gray-100', icon: FileText },
+  concept: { label: 'Concept', color: 'text-foreground', bg: 'bg-muted', icon: FileText },
   verzonden: { label: 'Verzonden', color: 'text-blue-700', bg: 'bg-blue-100', icon: Send },
   ondertekend: { label: 'Ondertekend', color: 'text-green-700', bg: 'bg-green-100', icon: CheckCircle2 },
   actief: { label: 'Actief', color: 'text-emerald-700', bg: 'bg-emerald-100', icon: CheckCircle2 },

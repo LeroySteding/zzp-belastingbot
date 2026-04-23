@@ -29,7 +29,11 @@ import {
   Save,
   CheckCircle,
   Cable,
+  Sun,
+  Moon,
+  Monitor,
 } from 'lucide-react'
+import { useTheme } from 'next-themes'
 import { getProfile, updateProfile } from '@/lib/belasting/actions'
 import { getUserSubscription } from '@/lib/subscriptions/actions'
 import { lookupAddress } from '@/lib/integrations/address'
@@ -44,6 +48,7 @@ import type { Profile } from '@/lib/belasting/types'
 
 export default function SettingsPage() {
   const router = useRouter()
+  const { theme, setTheme } = useTheme()
   const [loading, setLoading] = useState(true)
 
   // Profile state
@@ -272,13 +277,13 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               {profileSuccess && (
-                <div role="status" className="flex items-center gap-2 p-3 text-sm text-green-600 bg-green-50 rounded-md">
+                <div role="status" className="flex items-center gap-2 p-3 text-sm text-green-600 bg-green-600/10 dark:text-green-400 dark:bg-green-400/10 rounded-md">
                   <CheckCircle className="h-4 w-4" aria-hidden="true" />
                   Gegevens succesvol opgeslagen!
                 </div>
               )}
               {profileError && (
-                <div role="alert" className="p-3 text-sm text-red-600 bg-red-50 rounded-md">
+                <div role="alert" className="p-3 text-sm text-red-600 bg-red-600/10 dark:text-red-400 dark:bg-red-400/10 rounded-md">
                   {profileError}
                 </div>
               )}
@@ -384,13 +389,13 @@ export default function SettingsPage() {
                 </div>
 
                 {addressFound && (
-                  <div className="flex items-center gap-2 p-3 text-sm text-green-600 bg-green-50 rounded-md">
+                  <div className="flex items-center gap-2 p-3 text-sm text-green-600 bg-green-600/10 dark:text-green-400 dark:bg-green-400/10 rounded-md">
                     <CheckCircle className="h-4 w-4" aria-hidden="true" />
                     Gevonden: {addressFound}
                   </div>
                 )}
                 {addressLookupError && (
-                  <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">
+                  <div className="p-3 text-sm text-red-600 bg-red-600/10 dark:text-red-400 dark:bg-red-400/10 rounded-md">
                     {addressLookupError}
                   </div>
                 )}
@@ -454,13 +459,13 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               {invoiceSuccess && (
-                <div role="status" className="flex items-center gap-2 p-3 text-sm text-green-600 bg-green-50 rounded-md">
+                <div role="status" className="flex items-center gap-2 p-3 text-sm text-green-600 bg-green-600/10 dark:text-green-400 dark:bg-green-400/10 rounded-md">
                   <CheckCircle className="h-4 w-4" aria-hidden="true" />
                   Facturatie-instellingen opgeslagen!
                 </div>
               )}
               {invoiceError && (
-                <div role="alert" className="p-3 text-sm text-red-600 bg-red-50 rounded-md">
+                <div role="alert" className="p-3 text-sm text-red-600 bg-red-600/10 dark:text-red-400 dark:bg-red-400/10 rounded-md">
                   {invoiceError}
                 </div>
               )}
@@ -730,6 +735,62 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
 
+            {/* Thema */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sun className="h-5 w-5" />
+                  Thema
+                </CardTitle>
+                <CardDescription>
+                  Kies hoe het platform eruitziet
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setTheme('light')}
+                    className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-colors ${
+                      theme === 'light'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/40'
+                    }`}
+                  >
+                    <Sun className="h-6 w-6" />
+                    <span className="text-sm font-medium">Licht</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTheme('dark')}
+                    className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-colors ${
+                      theme === 'dark'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/40'
+                    }`}
+                  >
+                    <Moon className="h-6 w-6" />
+                    <span className="text-sm font-medium">Donker</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTheme('system')}
+                    className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-colors ${
+                      theme === 'system'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/40'
+                    }`}
+                  >
+                    <Monitor className="h-6 w-6" />
+                    <span className="text-sm font-medium">Systeem</span>
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-3">
+                  Bij &quot;Systeem&quot; volgt het platform automatisch de voorkeur van je apparaat.
+                </p>
+              </CardContent>
+            </Card>
+
             {/* Team management link */}
             <Card>
               <CardHeader>
@@ -779,7 +840,7 @@ export default function SettingsPage() {
                   variant="outline"
                   onClick={handleSignOut}
                   disabled={signingOut}
-                  className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-600/10 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-400/10"
                 >
                   {signingOut ? (
                     <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />

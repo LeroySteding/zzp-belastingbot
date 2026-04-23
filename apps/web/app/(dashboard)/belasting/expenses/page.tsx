@@ -98,8 +98,8 @@ export default function ExpensesPage() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Uitgaven</h1>
-            <p className="text-gray-600 mt-2">
+            <h1 className="text-3xl font-bold text-foreground">Uitgaven</h1>
+            <p className="text-muted-foreground mt-2">
               Beheer je zakelijke uitgaven en onkosten
             </p>
           </div>
@@ -126,7 +126,7 @@ export default function ExpensesPage() {
         {/* Filters */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Jaar
             </label>
             <Select value={selectedYear} onValueChange={setSelectedYear}>
@@ -144,7 +144,7 @@ export default function ExpensesPage() {
             </Select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Kwartaal
             </label>
             <Select value={selectedQuarter} onValueChange={setSelectedQuarter}>
@@ -160,7 +160,7 @@ export default function ExpensesPage() {
             </Select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-foreground mb-2">
               Categorie
             </label>
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
@@ -186,24 +186,24 @@ export default function ExpensesPage() {
             {/* BTW Summary */}
             {filteredExpenses.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <div className="text-sm font-medium text-blue-900">BTW te betalen</div>
-                  <div className="text-2xl font-bold text-blue-600 mt-1">
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800">
+                  <div className="text-sm font-medium text-blue-900 dark:text-blue-200">BTW te betalen</div>
+                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">
                     € {totalBTW.toFixed(2)}
                   </div>
-                  <div className="text-xs text-blue-700 mt-1">
+                  <div className="text-xs text-blue-700 dark:text-blue-300 mt-1">
                     Dit kwartaal
                   </div>
                 </div>
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <div className="text-sm font-medium text-gray-700">Totaal excl. BTW</div>
-                  <div className="text-2xl font-bold text-gray-900 mt-1">
+                <div className="bg-muted/50 p-4 rounded-lg border border-border">
+                  <div className="text-sm font-medium text-foreground">Totaal excl. BTW</div>
+                  <div className="text-2xl font-bold text-foreground mt-1">
                     € {totalExcl.toFixed(2)}
                   </div>
                 </div>
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <div className="text-sm font-medium text-gray-700">Totaal incl. BTW</div>
-                  <div className="text-2xl font-bold text-gray-900 mt-1">
+                <div className="bg-muted/50 p-4 rounded-lg border border-border">
+                  <div className="text-sm font-medium text-foreground">Totaal incl. BTW</div>
+                  <div className="text-2xl font-bold text-foreground mt-1">
                     € {totalIncl.toFixed(2)}
                   </div>
                 </div>
@@ -240,7 +240,7 @@ export default function ExpensesPage() {
                               actionHref="/expenses/new"
                             />
                           ) : (
-                            <div className="text-center py-8 text-gray-500">
+                            <div className="text-center py-8 text-muted-foreground">
                               Geen uitgaven gevonden voor deze selectie
                             </div>
                           )}
@@ -253,18 +253,18 @@ export default function ExpensesPage() {
                             {expense.receipt_path ? (
                               <button
                                 onClick={() => setViewingReceipt(expense.receipt_path)}
-                                className="flex items-center justify-center w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded border border-gray-300 transition-colors"
+                                className="flex items-center justify-center w-10 h-10 bg-muted hover:bg-muted/80 rounded border border-border transition-colors"
                                 aria-label="Bekijk bon"
                               >
                                 {expense.receipt_path.endsWith('.pdf') ? (
-                                  <FileText className="h-5 w-5 text-gray-600" aria-hidden="true" />
+                                  <FileText className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
                                 ) : (
-                                  <Receipt className="h-5 w-5 text-gray-600" aria-hidden="true" />
+                                  <Receipt className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
                                 )}
                               </button>
                             ) : (
-                              <div className="flex items-center justify-center w-10 h-10 bg-gray-50 rounded border border-gray-200">
-                                <span className="text-xs text-gray-400">-</span>
+                              <div className="flex items-center justify-center w-10 h-10 bg-muted/50 rounded border border-border">
+                                <span className="text-xs text-muted-foreground">-</span>
                               </div>
                             )}
                           </TableCell>
@@ -275,7 +275,7 @@ export default function ExpensesPage() {
                             {expense.description}
                           </TableCell>
                           <TableCell className="hidden md:table-cell">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
                               {expense.category}
                             </span>
                           </TableCell>
@@ -286,7 +286,7 @@ export default function ExpensesPage() {
                             <div className="text-sm">
                               {expense.btw_rate}%
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-muted-foreground">
                               € {expense.btw_amount.toFixed(2)}
                             </div>
                           </TableCell>
@@ -310,7 +310,7 @@ export default function ExpensesPage() {
                                 {deleting === expense.id ? (
                                   <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                                 ) : (
-                                  <Trash2 className="h-4 w-4 text-red-600" aria-hidden="true" />
+                                  <Trash2 className="h-4 w-4 text-red-600 dark:text-red-400" aria-hidden="true" />
                                 )}
                               </Button>
                             </div>
@@ -324,12 +324,12 @@ export default function ExpensesPage() {
             </div>
 
             {filteredExpenses.length > 0 && (
-              <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="bg-muted/50 p-4 rounded-lg">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-sm font-medium text-foreground">
                     {filteredExpenses.length} uitgave{filteredExpenses.length !== 1 ? 'n' : ''}
                   </span>
-                  <span className="text-lg font-bold text-gray-900">
+                  <span className="text-lg font-bold text-foreground">
                     Totaal: € {totalIncl.toFixed(2)}
                   </span>
                 </div>
@@ -347,14 +347,14 @@ export default function ExpensesPage() {
           </DialogHeader>
           <div className="mt-4">
             {viewingReceipt?.endsWith('.pdf') ? (
-              <div className="bg-gray-100 p-8 rounded text-center">
-                <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-700 mb-4">PDF weergave</p>
+              <div className="bg-muted p-8 rounded text-center">
+                <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <p className="text-foreground mb-4">PDF weergave</p>
                 <a
                   href={viewingReceipt}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
+                  className="text-primary hover:underline"
                 >
                   Download PDF
                 </a>
@@ -363,7 +363,7 @@ export default function ExpensesPage() {
               <img
                 src={viewingReceipt}
                 alt="Bon afbeelding"
-                className="w-full h-auto rounded-lg border border-gray-200"
+                className="w-full h-auto rounded-lg border border-border"
               />
             ) : null}
           </div>

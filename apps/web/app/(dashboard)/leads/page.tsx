@@ -20,7 +20,7 @@ import { getLeads, getPipelineStats, getSavedSearches, deleteSavedSearch } from 
 import type { Lead, PipelineStats, SavedSearch } from '@/lib/leads/actions';
 
 const STAGE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  nieuw: { label: 'Nieuw', color: 'text-gray-700', bg: 'bg-gray-100' },
+  nieuw: { label: 'Nieuw', color: 'text-foreground', bg: 'bg-muted' },
   gecontacteerd: { label: 'Gecontacteerd', color: 'text-blue-700', bg: 'bg-blue-100' },
   geinteresseerd: { label: 'Ge\u00EFnteresseerd', color: 'text-yellow-700', bg: 'bg-yellow-100' },
   offerte: { label: 'Offerte', color: 'text-purple-700', bg: 'bg-purple-100' },

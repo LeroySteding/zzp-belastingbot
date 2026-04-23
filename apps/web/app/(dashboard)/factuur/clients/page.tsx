@@ -184,16 +184,16 @@ export default function ClientsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/50">
       {/* Header */}
-      <header className="bg-white border-b">
+      <header className="bg-card border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <Link href="/dashboard" className="flex items-center gap-2">
               <FileText className="h-6 w-6 text-blue-600" />
               <span className="font-bold text-lg">ZZP Factuur</span>
             </Link>
-            <span className="text-gray-300">|</span>
+            <span className="text-border">|</span>
             <h1 className="text-2xl font-bold">Klanten</h1>
           </div>
           <Button onClick={() => handleOpenDialog()}>
@@ -208,7 +208,7 @@ export default function ClientsPage() {
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Totaal Klanten</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Totaal Klanten</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{clients.length}</div>
@@ -223,7 +223,7 @@ export default function ClientsPage() {
               <CardTitle>Alle Klanten</CardTitle>
               <div className="flex-1 max-w-sm">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Zoek op naam of email..."
                     value={searchQuery}
@@ -237,8 +237,8 @@ export default function ClientsPage() {
           <CardContent>
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-                <span className="ml-2 text-gray-500">Klanten laden...</span>
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-muted-foreground">Klanten laden...</span>
               </div>
             ) : (
               <Table>
@@ -255,7 +255,7 @@ export default function ClientsPage() {
                 <TableBody>
                   {filteredClients.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                         {searchQuery ? 'Geen klanten gevonden' : 'Nog geen klanten. Voeg je eerste klant toe!'}
                       </TableCell>
                     </TableRow>
@@ -264,9 +264,9 @@ export default function ClientsPage() {
                       <TableRow key={client.id}>
                         <TableCell className="font-medium">{client.name}</TableCell>
                         <TableCell>{client.email}</TableCell>
-                        <TableCell className="text-gray-600">{client.kvk || '-'}</TableCell>
-                        <TableCell className="text-gray-600">{client.btwNumber || '-'}</TableCell>
-                        <TableCell className="text-gray-600">{formatDate(client.createdAt)}</TableCell>
+                        <TableCell className="text-muted-foreground">{client.kvk || '-'}</TableCell>
+                        <TableCell className="text-muted-foreground">{client.btwNumber || '-'}</TableCell>
+                        <TableCell className="text-muted-foreground">{formatDate(client.createdAt)}</TableCell>
                         <TableCell>
                           <div className="flex justify-end gap-2">
                             <Button

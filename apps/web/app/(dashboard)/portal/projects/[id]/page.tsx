@@ -25,7 +25,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
 const statusColors: Record<string, string> = {
-  'offerte': 'bg-gray-100 text-gray-800',
+  'offerte': 'bg-muted text-foreground',
   'in-uitvoering': 'bg-blue-100 text-blue-800',
   'review': 'bg-orange-100 text-orange-800',
   'afgerond': 'bg-green-100 text-green-800',
@@ -113,10 +113,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
             <div>
               <h1 className="text-3xl font-bold mb-2">{project.name}</h1>
-              <p className="text-gray-600">{project.clientName}</p>
+              <p className="text-muted-foreground">{project.clientName}</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Badge className={statusColors[project.displayStatus] ?? 'bg-gray-100 text-gray-800'}>
+              <Badge className={statusColors[project.displayStatus] ?? 'bg-muted text-foreground'}>
                 {statusLabels[project.displayStatus] ?? project.displayStatus}
               </Badge>
               <Link href={`/portal/projects/${project.id}`}>
@@ -135,20 +135,20 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <h3 className="font-semibold mb-2">Beschrijving</h3>
-                <p className="text-gray-600">{project.description}</p>
+                <p className="text-muted-foreground">{project.description}</p>
               </div>
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-600">Voortgang</span>
+                    <span className="text-muted-foreground">Voortgang</span>
                     <span className="font-medium">{project.progress}%</span>
                   </div>
                   <Progress value={project.progress} />
                 </div>
                 {project.deadline && (
                   <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4 text-gray-400" />
-                    <span className="text-gray-600">Deadline:</span>
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Deadline:</span>
                     <span className="font-medium">
                       {new Date(project.deadline).toLocaleDateString('nl-NL', {
                         day: 'numeric',
@@ -184,24 +184,24 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     .map((milestone, index) => (
                     <div
                       key={milestone.id}
-                      className="flex items-center gap-3 p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-move"
+                      className="flex items-center gap-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-move"
                     >
-                      <GripVertical className="h-5 w-5 text-gray-400" />
+                      <GripVertical className="h-5 w-5 text-muted-foreground" />
                       <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                        milestone.completed ? 'bg-green-100' : 'bg-gray-100'
+                        milestone.completed ? 'bg-green-100' : 'bg-muted'
                       }`}>
                         {milestone.completed ? (
                           <Check className="h-5 w-5 text-green-600" />
                         ) : (
-                          <span className="text-sm font-medium text-gray-600">{index + 1}</span>
+                          <span className="text-sm font-medium text-muted-foreground">{index + 1}</span>
                         )}
                       </div>
                       <div className="flex-1">
-                        <p className={`font-medium ${milestone.completed ? 'text-gray-500 line-through' : ''}`}>
+                        <p className={`font-medium ${milestone.completed ? 'text-muted-foreground line-through' : ''}`}>
                           {milestone.title}
                         </p>
                         {milestone.due_date && (
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-muted-foreground">
                             {new Date(milestone.due_date).toLocaleDateString('nl-NL', {
                               day: 'numeric',
                               month: 'short'
@@ -235,10 +235,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 <CardDescription>Upload bestanden om met je klant te delen</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="border-2 border-dashed rounded-lg p-8 text-center mb-6 hover:bg-gray-50 transition-colors cursor-pointer">
-                  <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <div className="border-2 border-dashed rounded-lg p-8 text-center mb-6 hover:bg-muted/50 transition-colors cursor-pointer">
+                  <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                   <p className="text-sm font-medium mb-1">Klik om bestanden te uploaden</p>
-                  <p className="text-xs text-gray-500">of sleep bestanden hierheen</p>
+                  <p className="text-xs text-muted-foreground">of sleep bestanden hierheen</p>
                 </div>
 
                 {project.files.length > 0 ? (
@@ -246,7 +246,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     {project.files.map((file) => (
                       <div
                         key={file.id}
-                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50"
                       >
                         <div className="flex items-center gap-3">
                           <div className="p-2 bg-blue-100 rounded">
@@ -254,7 +254,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                           </div>
                           <div>
                             <p className="font-medium text-sm">{file.name}</p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-muted-foreground">
                               {file.size} &bull; Geüpload op {new Date(file.uploadedAt).toLocaleDateString('nl-NL')}
                             </p>
                           </div>
@@ -266,7 +266,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                     ))}
                   </div>
                 ) : (
-                  <p className="text-center text-gray-500 text-sm">Nog geen bestanden geüpload</p>
+                  <p className="text-center text-muted-foreground text-sm">Nog geen bestanden geüpload</p>
                 )}
               </CardContent>
             </Card>
@@ -292,7 +292,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                         <div className="flex-1">
                           <div className="flex items-baseline gap-2 mb-1">
                             <span className="font-medium text-sm">{comment.author}</span>
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-muted-foreground">
                               {new Date(comment.timestamp).toLocaleDateString('nl-NL', {
                                 day: 'numeric',
                                 month: 'short',
@@ -301,14 +301,14 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                               })}
                             </span>
                           </div>
-                          <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">
+                          <p className="text-sm text-foreground bg-muted/50 p-3 rounded-lg">
                             {comment.content}
                           </p>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <p className="text-center text-gray-500 text-sm py-8">Nog geen reacties</p>
+                    <p className="text-center text-muted-foreground text-sm py-8">Nog geen reacties</p>
                   )}
                 </div>
 

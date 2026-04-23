@@ -58,7 +58,7 @@ export default function ClientsPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold mb-2">Klanten</h1>
-            <p className="text-gray-600">Beheer je klanten en verstuur uitnodigingen</p>
+            <p className="text-muted-foreground">Beheer je klanten en verstuur uitnodigingen</p>
           </div>
           <div className="flex gap-2">
             <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
@@ -108,7 +108,7 @@ export default function ClientsPage() {
                           {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                         </Button>
                       </div>
-                      <p className="text-xs text-gray-500 mt-2">
+                      <p className="text-xs text-muted-foreground mt-2">
                         Deze link verloopt na 7 dagen
                       </p>
                     </div>
@@ -191,7 +191,7 @@ export default function ClientsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Mail className="h-4 w-4" />
                       <span className="truncate">{client.email}</span>
                     </div>
@@ -210,19 +210,19 @@ export default function ClientsPage() {
                             <Link
                               key={project.id}
                               href={`/portal/projects/${project.id}`}
-                              className="block text-sm text-gray-600 hover:text-blue-600 truncate"
+                              className="block text-sm text-muted-foreground hover:text-blue-600 truncate"
                             >
                               &bull; {project.name}
                             </Link>
                           ))}
                           {clientProjects.length > 2 && (
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-muted-foreground">
                               +{clientProjects.length - 2} meer...
                             </p>
                           )}
                         </div>
                       ) : (
-                        <p className="text-sm text-gray-500">Geen projecten</p>
+                        <p className="text-sm text-muted-foreground">Geen projecten</p>
                       )}
                     </div>
 
@@ -255,9 +255,9 @@ export default function ClientsPage() {
         {clients.length === 0 && (
           <Card>
             <CardContent className="py-12 text-center">
-              <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <User className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Nog geen klanten</h3>
-              <p className="text-gray-600 mb-4">Begin met het toevoegen van je eerste klant</p>
+              <p className="text-muted-foreground mb-4">Begin met het toevoegen van je eerste klant</p>
               <Button onClick={() => setIsAddDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Eerste Klant Toevoegen

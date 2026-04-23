@@ -81,20 +81,20 @@ export default function CategoriesPage() {
     
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Categorieën</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-foreground">Categorieën</h1>
+          <p className="text-muted-foreground mt-2">
             Overzicht van je uitgaven per categorie
           </p>
         </div>
 
         {error && (
-          <Card className="border-red-200 bg-red-50">
+          <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/30">
             <CardContent className="pt-6">
               <div className="flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+                <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5" />
                 <div>
-                  <h3 className="font-medium text-red-900">Fout</h3>
-                  <p className="text-sm text-red-700 mt-1">{error}</p>
+                  <h3 className="font-medium text-red-900 dark:text-red-200">Fout</h3>
+                  <p className="text-sm text-red-700 dark:text-red-300 mt-1">{error}</p>
                 </div>
               </div>
             </CardContent>
@@ -103,8 +103,8 @@ export default function CategoriesPage() {
 
         {loading ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Statistieken laden...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Statistieken laden...</p>
           </div>
         ) : (
           <>
@@ -113,32 +113,32 @@ export default function CategoriesPage() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card>
                   <CardContent className="pt-6">
-                    <div className="text-sm text-gray-600">Totaal uitgaven</div>
-                    <div className="text-2xl font-bold text-gray-900 mt-1">
+                    <div className="text-sm text-muted-foreground">Totaal uitgaven</div>
+                    <div className="text-2xl font-bold text-foreground mt-1">
                       {overall.totalExpenses}
                     </div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="pt-6">
-                    <div className="text-sm text-gray-600">Excl. BTW</div>
-                    <div className="text-2xl font-bold text-gray-900 mt-1">
+                    <div className="text-sm text-muted-foreground">Excl. BTW</div>
+                    <div className="text-2xl font-bold text-foreground mt-1">
                       {formatEuro(overall.totalExcl)}
                     </div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="pt-6">
-                    <div className="text-sm text-gray-600">BTW</div>
-                    <div className="text-2xl font-bold text-gray-900 mt-1">
+                    <div className="text-sm text-muted-foreground">BTW</div>
+                    <div className="text-2xl font-bold text-foreground mt-1">
                       {formatEuro(overall.totalBtw)}
                     </div>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="pt-6">
-                    <div className="text-sm text-gray-600">Incl. BTW</div>
-                    <div className="text-2xl font-bold text-gray-900 mt-1">
+                    <div className="text-sm text-muted-foreground">Incl. BTW</div>
+                    <div className="text-2xl font-bold text-foreground mt-1">
                       {formatEuro(overall.totalIncl)}
                     </div>
                   </CardContent>
@@ -156,8 +156,8 @@ export default function CategoriesPage() {
               </CardHeader>
               <CardContent>
                 {categories.length === 0 || overall?.totalExpenses === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <Tag className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Tag className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
                     <p>Nog geen uitgaven geregistreerd</p>
                     <p className="text-sm mt-2">
                       Voeg uitgaven toe om statistieken per categorie te zien
@@ -213,7 +213,7 @@ export default function CategoriesPage() {
                           <TableCell className="text-right">
                             {category.count > 0 ? (
                               <div className="flex items-center justify-end gap-2">
-                                <div className="w-24 bg-gray-200 rounded-full h-2">
+                                <div className="w-24 bg-muted rounded-full h-2">
                                   <div
                                     className="bg-blue-600 h-2 rounded-full"
                                     style={{
@@ -238,31 +238,31 @@ export default function CategoriesPage() {
             </Card>
 
             {/* Available Categories Info */}
-            <Card className="bg-blue-50 border-blue-200">
+            <Card className="bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-blue-900">
+                <CardTitle className="flex items-center gap-2 text-blue-900 dark:text-blue-200">
                   <Tag className="h-5 w-5" />
                   Beschikbare categorieën
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-blue-700 mb-4">
+                <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
                   Je kunt je uitgaven indelen in de volgende categorieën:
                 </p>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {EXPENSE_CATEGORIES.map((category) => (
                     <div
                       key={category}
-                      className="flex items-center gap-2 bg-white rounded-lg p-3 border border-blue-200"
+                      className="flex items-center gap-2 bg-card rounded-lg p-3 border border-blue-200 dark:border-blue-800"
                     >
                       <span className="text-xl">{getCategoryIcon(category)}</span>
-                      <span className="text-sm font-medium text-gray-900">
+                      <span className="text-sm font-medium text-foreground">
                         {category}
                       </span>
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-blue-600 mt-4">
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-4">
                   💡 Tip: Gebruik consistente categorieën voor betere rapportage en
                   analyse van je zakelijke uitgaven.
                 </p>
@@ -287,16 +287,16 @@ export default function CategoriesPage() {
                       .map((category, index) => (
                         <div
                           key={category.name}
-                          className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                          className="flex items-center justify-between p-4 bg-muted/50 rounded-lg"
                         >
                           <div className="flex items-center gap-3">
                             <div
                               className={`flex items-center justify-center w-10 h-10 rounded-full ${
                                 index === 0
-                                  ? 'bg-yellow-100 text-yellow-700'
+                                  ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
                                   : index === 1
-                                  ? 'bg-gray-100 text-gray-700'
-                                  : 'bg-orange-100 text-orange-700'
+                                  ? 'bg-muted text-foreground'
+                                  : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
                               }`}
                             >
                               <span className="text-xl font-bold">#{index + 1}</span>
@@ -306,20 +306,20 @@ export default function CategoriesPage() {
                                 <span className="text-lg">
                                   {getCategoryIcon(category.name)}
                                 </span>
-                                <span className="font-semibold text-gray-900">
+                                <span className="font-semibold text-foreground">
                                   {category.name}
                                 </span>
                               </div>
-                              <p className="text-sm text-gray-600">
+                              <p className="text-sm text-muted-foreground">
                                 {category.count} uitgaven
                               </p>
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className="font-bold text-lg text-gray-900">
+                            <div className="font-bold text-lg text-foreground">
                               {formatEuro(category.totalIncl)}
                             </div>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-muted-foreground">
                               {getPercentage(category.totalIncl)} van totaal
                             </p>
                           </div>
