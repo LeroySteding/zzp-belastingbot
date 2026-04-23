@@ -25,11 +25,21 @@ export async function isOnboardingComplete(): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return false;
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('profiles')
     .select('onboarding_completed')
     .eq('id', user.id)
     .single();
+
+  // If column doesn't exist yet, check if profile has company_name set
+  if (error?.message?.includes('column')) {
+    const { data: fallback } = await supabase
+      .from('profiles')
+      .select('company_name')
+      .eq('id', user.id)
+      .single();
+    return !!fallback?.company_name;
+  }
 
   return data?.onboarding_completed === true;
 }
@@ -39,25 +49,44 @@ export async function completeOnboarding(data: OnboardingData): Promise<{ succes
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Niet ingelogd' };
 
-  // Update or insert profile
-  const { error: profileError } = await supabase
+  // Update or insert profile - try with all fields first, fallback to base fields
+  const fullPayload = {
+    id: user.id,
+    display_name: data.displayName,
+    company_name: data.companyName,
+    kvk_number: data.kvkNumber,
+    btw_number: data.btwNumber,
+    iban: data.iban,
+    address: data.address,
+    services: data.services,
+    hourly_rate: data.hourlyRate,
+    onboarding_completed: true,
+    onboarding_completed_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  let { error: profileError } = await supabase
     .from('profiles')
-    .upsert({
+    .upsert(fullPayload);
+
+  // Fallback: if columns don't exist yet, save only base columns
+  if (profileError?.message?.includes('column') || profileError?.code === 'PGRST204') {
+    const basePayload = {
       id: user.id,
-      display_name: data.displayName,
       company_name: data.companyName,
       kvk_number: data.kvkNumber,
       btw_number: data.btwNumber,
       iban: data.iban,
       address: data.address,
-      services: data.services,
-      hourly_rate: data.hourlyRate,
-      onboarding_completed: true,
-      onboarding_completed_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-    });
-
-  if (profileError) {
+    };
+    const { error: fallbackError } = await supabase
+      .from('profiles')
+      .upsert(basePayload);
+    if (fallbackError) {
+      return { success: false, error: fallbackError.message };
+    }
+  } else if (profileError) {
     return { success: false, error: profileError.message };
   }
 

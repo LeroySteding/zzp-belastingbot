@@ -61,15 +61,18 @@ export async function getFinancialOverview(year: number): Promise<FinancialOverv
   if (!user) return emptyOverview;
 
   // Check KOR (Kleineondernemersregeling) status from profile.
-  // kor_enabled is a boolean column added via migration 20240103000000_advanced_features.
-  // If the profile or field does not exist, default to false.
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('kor_enabled')
-    .eq('id', user.id)
-    .single();
-
-  const korEnabled: boolean = profile?.kor_enabled ?? false;
+  // If kor_enabled column doesn't exist yet, default to false.
+  let korEnabled = false;
+  try {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('kor_enabled')
+      .eq('id', user.id)
+      .single();
+    korEnabled = profile?.kor_enabled ?? false;
+  } catch {
+    // Column may not exist yet
+  }
 
   // Fetch paid invoices (recognized revenue) for the year
   const { data: paidInvoices } = await supabase
