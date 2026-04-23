@@ -455,5 +455,38 @@ DROP TRIGGER IF EXISTS set_updated_at_contracts ON contracts;
 CREATE TRIGGER set_updated_at_contracts BEFORE UPDATE ON contracts FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
 
 -- ============================================
+-- PROFILE EXTENSIONS (settings page)
+-- ============================================
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS display_name TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS city TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS postal_code TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS default_payment_term INTEGER DEFAULT 30;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS default_btw_rate INTEGER DEFAULT 21;
+
+-- ============================================
+-- NOTIFICATION PREFERENCES
+-- ============================================
+CREATE TABLE IF NOT EXISTS notification_preferences (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID UNIQUE NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    email_invoice_paid BOOLEAN DEFAULT true,
+    email_invoice_overdue BOOLEAN DEFAULT true,
+    email_weekly_summary BOOLEAN DEFAULT true,
+    push_invoice_paid BOOLEAN DEFAULT true,
+    push_invoice_overdue BOOLEAN DEFAULT true,
+    push_deadlines BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE notification_preferences ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN CREATE POLICY "Users can view own notification prefs" ON notification_preferences FOR SELECT USING (auth.uid() = user_id); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Users can insert own notification prefs" ON notification_preferences FOR INSERT WITH CHECK (auth.uid() = user_id); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE POLICY "Users can update own notification prefs" ON notification_preferences FOR UPDATE USING (auth.uid() = user_id); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DROP TRIGGER IF EXISTS set_updated_at_notification_preferences ON notification_preferences;
+CREATE TRIGGER set_updated_at_notification_preferences BEFORE UPDATE ON notification_preferences FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
+
+-- ============================================
 -- DONE!
 -- ============================================

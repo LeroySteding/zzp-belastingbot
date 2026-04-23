@@ -22,6 +22,7 @@ export async function getProfile(): Promise<Profile | null> {
 
   return {
     id: data.id,
+    display_name: data.display_name ?? null,
     company_name: data.company_name,
     btw_number: data.btw_number,
     kvk_number: data.kvk_number,
@@ -29,40 +30,58 @@ export async function getProfile(): Promise<Profile | null> {
     phone: data.phone ?? null,
     email: data.email ?? null,
     address: data.address ?? null,
+    city: data.city ?? null,
+    postal_code: data.postal_code ?? null,
     kor_enabled: data.kor_enabled ?? false,
     kor_threshold: data.kor_threshold ?? 20000,
+    default_payment_term: data.default_payment_term ?? 30,
+    default_btw_rate: data.default_btw_rate ?? 21,
     created_at: data.created_at,
     updated_at: data.updated_at,
   }
 }
 
 export async function updateProfile(data: {
-  company_name: string
+  display_name?: string
+  company_name?: string
   btw_number?: string
   kvk_number?: string
   iban?: string
   email?: string
   phone?: string
   address?: string
+  city?: string
+  postal_code?: string
   kor_enabled?: boolean
+  default_payment_term?: number
+  default_btw_rate?: number
 }): Promise<Profile | null> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
+  // Build update payload, only including provided fields
+  const updatePayload: Record<string, unknown> = {
+    updated_at: new Date().toISOString(),
+  }
+
+  if (data.display_name !== undefined) updatePayload.display_name = data.display_name || null
+  if (data.company_name !== undefined) updatePayload.company_name = data.company_name || null
+  if (data.btw_number !== undefined) updatePayload.btw_number = data.btw_number || null
+  if (data.kvk_number !== undefined) updatePayload.kvk_number = data.kvk_number || null
+  if (data.iban !== undefined) updatePayload.iban = data.iban || null
+  if (data.email !== undefined) updatePayload.email = data.email || null
+  if (data.phone !== undefined) updatePayload.phone = data.phone || null
+  if (data.address !== undefined) updatePayload.address = data.address || null
+  if (data.city !== undefined) updatePayload.city = data.city || null
+  if (data.postal_code !== undefined) updatePayload.postal_code = data.postal_code || null
+  if (data.kor_enabled !== undefined) updatePayload.kor_enabled = data.kor_enabled
+  if (data.default_payment_term !== undefined) updatePayload.default_payment_term = data.default_payment_term
+  if (data.default_btw_rate !== undefined) updatePayload.default_btw_rate = data.default_btw_rate
+
   const { data: updated, error } = await supabase
     .from('profiles')
-    .update({
-      company_name: data.company_name,
-      btw_number: data.btw_number || null,
-      kvk_number: data.kvk_number || null,
-      iban: data.iban || null,
-      email: data.email || null,
-      phone: data.phone || null,
-      address: data.address || null,
-      kor_enabled: data.kor_enabled ?? false,
-      updated_at: new Date().toISOString(),
-    })
+    .update(updatePayload)
     .eq('id', user.id)
     .select('*')
     .single()
@@ -71,6 +90,7 @@ export async function updateProfile(data: {
 
   return {
     id: updated.id,
+    display_name: updated.display_name ?? null,
     company_name: updated.company_name,
     btw_number: updated.btw_number,
     kvk_number: updated.kvk_number,
@@ -78,8 +98,12 @@ export async function updateProfile(data: {
     phone: updated.phone ?? null,
     email: updated.email ?? null,
     address: updated.address ?? null,
+    city: updated.city ?? null,
+    postal_code: updated.postal_code ?? null,
     kor_enabled: updated.kor_enabled ?? false,
     kor_threshold: updated.kor_threshold ?? 20000,
+    default_payment_term: updated.default_payment_term ?? 30,
+    default_btw_rate: updated.default_btw_rate ?? 21,
     created_at: updated.created_at,
     updated_at: updated.updated_at,
   }
