@@ -78,7 +78,7 @@ export function useToast() {
 
 function ToastContainer({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id: string) => void }) {
   return (
-    <div className="fixed bottom-0 right-0 z-50 p-4 space-y-2 max-w-md w-full">
+    <div className="fixed bottom-0 right-0 z-50 p-4 space-y-2 max-w-md w-full" aria-live="polite" aria-relevant="additions removals">
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} onRemove={onRemove} />
       ))}
@@ -112,12 +112,13 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) =
 
   return (
     <div
+      role="alert"
       className={cn(
         'flex items-start gap-3 p-4 rounded-lg border shadow-lg animate-in slide-in-from-right-full',
         styles[toast.type]
       )}
     >
-      <Icon className={cn('h-5 w-5 shrink-0 mt-0.5', iconColors[toast.type])} />
+      <Icon className={cn('h-5 w-5 shrink-0 mt-0.5', iconColors[toast.type])} aria-hidden="true" />
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-sm">{toast.title}</p>
         {toast.description && (
@@ -127,8 +128,9 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) =
       <button
         onClick={() => onRemove(toast.id)}
         className="shrink-0 opacity-70 hover:opacity-100 transition-opacity"
+        aria-label="Melding sluiten"
       >
-        <X className="h-4 w-4" />
+        <X className="h-4 w-4" aria-hidden="true" />
       </button>
     </div>
   )

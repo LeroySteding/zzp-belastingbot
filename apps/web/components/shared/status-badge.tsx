@@ -28,6 +28,7 @@ const dotStyles: Record<StatusVariant, string> = {
 export function StatusBadge({ variant, children, className, dot = false }: StatusBadgeProps) {
   return (
     <span
+      role="status"
       className={cn(
         'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium border',
         variantStyles[variant],
@@ -35,11 +36,12 @@ export function StatusBadge({ variant, children, className, dot = false }: Statu
       )}
     >
       {dot && (
-        <span 
+        <span
           className={cn(
             'w-1.5 h-1.5 rounded-full',
             dotStyles[variant]
           )}
+          aria-hidden="true"
         />
       )}
       {children}

@@ -145,18 +145,21 @@ export function NotificationBell() {
         size="icon"
         className="relative"
         onClick={() => setOpen(!open)}
-        aria-label="Meldingen"
+        aria-label={unreadCount > 0 ? `Meldingen (${unreadCount} ongelezen)` : 'Meldingen'}
+        aria-expanded={open}
+        aria-controls="notification-dropdown"
+        aria-haspopup="true"
       >
-        <Bell className="h-5 w-5" />
+        <Bell className="h-5 w-5" aria-hidden="true" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+          <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white" aria-hidden="true">
             {displayCount}
           </span>
         )}
       </Button>
 
       {open && (
-        <Card className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-hidden z-50 py-0 gap-0 shadow-lg">
+        <Card id="notification-dropdown" role="region" aria-label="Meldingen" className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-hidden z-50 py-0 gap-0 shadow-lg">
           {/* Header */}
           <div className="flex items-center justify-between border-b px-4 py-3">
             <h3 className="text-sm font-semibold">Meldingen</h3>

@@ -12,7 +12,7 @@ export default function DashboardLayout({
     <OnboardingCheck>
       <div className="min-h-screen bg-background">
         <Sidebar />
-        <main className="lg:pl-64">
+        <main id="main-content" className="lg:pl-64">
           <div className="flex justify-end items-center gap-3 px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 lg:pt-8">
             <SearchTrigger />
             <NotificationBell />

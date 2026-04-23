@@ -14,7 +14,7 @@ export default function LandingNav() {
   const [open, setOpen] = useState(false);
 
   return (
-    <nav className="border-b border-border/40 sticky top-0 bg-background/95 backdrop-blur-sm z-50">
+    <nav aria-label="Hoofdnavigatie" className="border-b border-border/40 sticky top-0 bg-background/95 backdrop-blur-sm z-50">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-2">
@@ -53,19 +53,22 @@ export default function LandingNav() {
         <button
           className="sm:hidden p-2 -mr-2 text-foreground"
           onClick={() => setOpen(true)}
-          aria-label="Open menu"
+          aria-label="Menu openen"
+          aria-expanded={open}
+          aria-controls="mobile-nav-menu"
         >
-          <Menu className="h-5 w-5" />
+          <Menu className="h-5 w-5" aria-hidden="true" />
         </button>
       </div>
 
       {/* Mobile overlay */}
       {open && (
-        <div className="fixed inset-0 z-50 sm:hidden">
+        <div id="mobile-nav-menu" className="fixed inset-0 z-50 sm:hidden" role="dialog" aria-modal="true" aria-label="Navigatiemenu">
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/50"
             onClick={() => setOpen(false)}
+            aria-hidden="true"
           />
           {/* Panel */}
           <div className="relative bg-background w-full h-full flex flex-col">
@@ -80,9 +83,9 @@ export default function LandingNav() {
               <button
                 className="p-2 -mr-2 text-foreground"
                 onClick={() => setOpen(false)}
-                aria-label="Sluit menu"
+                aria-label="Menu sluiten"
               >
-                <X className="h-5 w-5" />
+                <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
 

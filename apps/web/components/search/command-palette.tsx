@@ -172,10 +172,13 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Zoekpalet"
       onClick={() => onOpenChange(false)}
     >
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/50" />
+      <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
 
       {/* Palette */}
       <div
@@ -191,7 +194,11 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           )}
           <input
             ref={inputRef}
-            type="text"
+            type="search"
+            role="combobox"
+            aria-label="Zoeken naar facturen, klanten, projecten"
+            aria-expanded={results.length > 0}
+            aria-autocomplete="list"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}

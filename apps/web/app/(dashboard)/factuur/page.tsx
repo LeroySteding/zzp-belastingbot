@@ -239,7 +239,7 @@ export default function DashboardPage() {
             <CardTitle>Omzet per Maand ({currentYear})</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
+            <div className="h-80" role="img" aria-label={`Staafdiagram: omzet per maand voor ${currentYear}`}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={monthlyData}>
                   <CartesianGrid strokeDasharray="3 3" />

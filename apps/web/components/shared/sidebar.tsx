@@ -139,8 +139,11 @@ export function Sidebar() {
           size="icon"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="bg-background"
+          aria-label={mobileMenuOpen ? 'Menu sluiten' : 'Menu openen'}
+          aria-expanded={mobileMenuOpen}
+          aria-controls="sidebar-nav"
         >
-          {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          {mobileMenuOpen ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
         </Button>
       </div>
 
@@ -149,6 +152,7 @@ export function Sidebar() {
         <div
           className="lg:hidden fixed inset-0 bg-black/50 z-40"
           onClick={() => setMobileMenuOpen(false)}
+          aria-hidden="true"
         />
       )}
 
@@ -175,7 +179,7 @@ export function Sidebar() {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-3 space-y-6 overflow-y-auto pb-4">
+          <nav id="sidebar-nav" aria-label="Hoofdmenu" className="flex-1 px-3 space-y-6 overflow-y-auto pb-4">
             {navSections.map((section) => (
               <div key={section.title}>
                 <p className="px-3 mb-2 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
@@ -192,14 +196,15 @@ export function Sidebar() {
                         key={item.href}
                         href={item.href}
                         onClick={() => setMobileMenuOpen(false)}
+                        aria-current={isActive ? 'page' : undefined}
                         className={cn(
                           'sidebar-nav-item text-sm',
                           isActive && 'active'
                         )}
                         style={isActive ? { borderLeft: `3px solid ${section.accentColor}` } : undefined}
                       >
-                        <Icon className="h-4 w-4 shrink-0" />
-                        {item.name}
+                        <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                        <span>{item.name}</span>
                       </Link>
                     )
                   })}
@@ -212,30 +217,32 @@ export function Sidebar() {
           <div className="p-3 border-t border-sidebar-border">
             <Link
               href="/settings/team"
+              aria-current={pathname === '/settings/team' ? 'page' : undefined}
               className={cn(
                 'sidebar-nav-item text-sm mb-1',
                 pathname === '/settings/team' && 'active'
               )}
             >
-              <UsersRound className="h-4 w-4" />
-              Team
+              <UsersRound className="h-4 w-4" aria-hidden="true" />
+              <span>Team</span>
             </Link>
             <Link
               href="/settings"
+              aria-current={pathname === '/settings' ? 'page' : undefined}
               className={cn(
                 'sidebar-nav-item text-sm mb-1',
                 pathname === '/settings' && 'active'
               )}
             >
-              <Settings className="h-4 w-4" />
-              Instellingen
+              <Settings className="h-4 w-4" aria-hidden="true" />
+              <span>Instellingen</span>
             </Link>
             <button
               className="sidebar-nav-item text-sm w-full"
               onClick={handleLogout}
             >
-              <LogOut className="h-4 w-4" />
-              Uitloggen
+              <LogOut className="h-4 w-4" aria-hidden="true" />
+              <span>Uitloggen</span>
             </button>
           </div>
         </div>
