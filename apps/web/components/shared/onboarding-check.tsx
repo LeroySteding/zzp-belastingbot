@@ -31,14 +31,27 @@ export function OnboardingCheck({ children }: { children: React.ReactNode }) {
           return
         }
 
-        const { data } = await supabase
+        // Check if onboarding is complete - try full query, fallback if columns missing
+        let isComplete = false
+        const { data, error } = await supabase
           .from('profiles')
-          .select('onboarding_completed')
+          .select('onboarding_completed, company_name')
           .eq('id', user.id)
           .single()
 
-        // Redirect to onboarding if no profile exists or onboarding not completed
-        if (!data || data.onboarding_completed === false) {
+        if (!error && data) {
+          isComplete = data.onboarding_completed === true || !!data.company_name
+        } else if (error?.message?.includes('column')) {
+          // onboarding_completed column doesn't exist yet, check company_name only
+          const { data: fallback } = await supabase
+            .from('profiles')
+            .select('company_name')
+            .eq('id', user.id)
+            .single()
+          isComplete = !!fallback?.company_name
+        }
+
+        if (!isComplete) {
           router.push('/onboarding')
           return
         }

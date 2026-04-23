@@ -49,29 +49,35 @@ export async function completeOnboarding(data: OnboardingData): Promise<{ succes
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Niet ingelogd' };
 
-  // Update or insert profile - try with all fields first, fallback to base fields
-  const fullPayload = {
-    id: user.id,
-    display_name: data.displayName,
-    company_name: data.companyName,
-    kvk_number: data.kvkNumber,
-    btw_number: data.btwNumber,
-    iban: data.iban,
-    address: data.address,
-    services: data.services,
-    hourly_rate: data.hourlyRate,
-    onboarding_completed: true,
-    onboarding_completed_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
-
-  let { error: profileError } = await supabase
-    .from('profiles')
-    .upsert(fullPayload);
-
-  // Fallback: if columns don't exist yet, save only base columns
-  if (profileError?.message?.includes('column') || profileError?.code === 'PGRST204') {
-    const basePayload = {
+  // Try progressively smaller payloads until one works.
+  // Columns like display_name, services, hourly_rate, onboarding_completed
+  // may not exist yet if migrations haven't been applied.
+  const payloads = [
+    {
+      id: user.id,
+      display_name: data.displayName,
+      company_name: data.companyName,
+      kvk_number: data.kvkNumber,
+      btw_number: data.btwNumber,
+      iban: data.iban,
+      address: data.address,
+      services: data.services,
+      hourly_rate: data.hourlyRate,
+      onboarding_completed: true,
+      onboarding_completed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    {
+      id: user.id,
+      company_name: data.companyName,
+      kvk_number: data.kvkNumber,
+      btw_number: data.btwNumber,
+      iban: data.iban,
+      address: data.address,
+      onboarding_completed: true,
+      updated_at: new Date().toISOString(),
+    },
+    {
       id: user.id,
       company_name: data.companyName,
       kvk_number: data.kvkNumber,
@@ -79,14 +85,23 @@ export async function completeOnboarding(data: OnboardingData): Promise<{ succes
       iban: data.iban,
       address: data.address,
       updated_at: new Date().toISOString(),
-    };
-    const { error: fallbackError } = await supabase
-      .from('profiles')
-      .upsert(basePayload);
-    if (fallbackError) {
-      return { success: false, error: fallbackError.message };
+    },
+  ];
+
+  let profileError: { message: string } | null = null;
+  for (const payload of payloads) {
+    const { error } = await supabase.from('profiles').upsert(payload);
+    if (!error) {
+      profileError = null;
+      break;
     }
-  } else if (profileError) {
+    if (error.message?.includes('column')) {
+      profileError = error;
+      continue;
+    }
+    return { success: false, error: error.message };
+  }
+  if (profileError) {
     return { success: false, error: profileError.message };
   }
 
