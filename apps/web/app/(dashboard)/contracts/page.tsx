@@ -16,6 +16,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { formatDate, formatCurrency } from '@/lib/utils';
+import { EmptyState } from '@/components/ui/empty-state';
 import { getContracts, deleteContract, type Contract } from '@/lib/contracts/actions';
 import { Badge } from '@/components/ui/badge';
 
@@ -139,24 +140,21 @@ export default function ContractsPage() {
 
       {/* Contracts List */}
       {filtered.length === 0 ? (
-        <div className="card-premium p-12 text-center">
-          <ScrollText className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-          <h3 className="text-lg font-semibold mb-2">
-            {contracts.length === 0 ? 'Nog geen contracten' : 'Geen resultaten'}
-          </h3>
-          <p className="text-muted-foreground text-sm mb-4">
-            {contracts.length === 0
-              ? 'Maak je eerste contract aan met een van onze templates.'
-              : 'Probeer een ander zoekwoord of filter.'}
-          </p>
-          {contracts.length === 0 && (
-            <Link
-              href="/contracts/new"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm font-medium"
-            >
-              <Plus className="h-4 w-4" />
-              Nieuw Contract
-            </Link>
+        <div className="card-premium p-6">
+          {contracts.length === 0 ? (
+            <EmptyState
+              icon={ScrollText}
+              title="Nog geen contracten"
+              description="Maak je eerste contract aan met een van onze templates."
+              actionLabel="Nieuw contract"
+              actionHref="/contracts/new"
+            />
+          ) : (
+            <EmptyState
+              icon={Search}
+              title="Geen resultaten"
+              description="Probeer een ander zoekwoord of filter."
+            />
           )}
         </div>
       ) : (

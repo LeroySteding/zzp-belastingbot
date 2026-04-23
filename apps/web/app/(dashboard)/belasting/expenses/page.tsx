@@ -24,6 +24,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Plus, Pencil, Trash2, Receipt, FileText, Download, Loader2, ScanLine } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { getExpenses, deleteExpense } from '@/lib/belasting/actions'
 import type { Expense } from '@/lib/belasting/types'
 import { EXPENSE_CATEGORIES } from '@/lib/types/index'
@@ -237,8 +238,20 @@ export default function ExpensesPage() {
                   <TableBody>
                     {filteredExpenses.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                          Geen uitgaven gevonden voor deze selectie
+                        <TableCell colSpan={8}>
+                          {expenses.length === 0 ? (
+                            <EmptyState
+                              icon={Receipt}
+                              title="Nog geen uitgaven"
+                              description="Registreer je eerste zakelijke uitgave om je administratie bij te houden."
+                              actionLabel="Nieuwe uitgave"
+                              actionHref="/expenses/new"
+                            />
+                          ) : (
+                            <div className="text-center py-8 text-gray-500">
+                              Geen uitgaven gevonden voor deze selectie
+                            </div>
+                          )}
                         </TableCell>
                       </TableRow>
                     ) : (

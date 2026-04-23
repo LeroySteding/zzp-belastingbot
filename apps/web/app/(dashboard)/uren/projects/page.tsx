@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Clock, Euro, TrendingUp, AlertCircle, Loader2 } from 'lucide-react';
+import { Plus, Clock, Euro, TrendingUp, AlertCircle, Loader2, Briefcase } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
 import { getUrenProjects, getUrenClients, getTimeEntries, calculateProjectStats, createProject } from '@/lib/uren/actions';
 import type { UrenProject, UrenClient, UrenTimeEntry, UrenProjectStats } from '@/lib/uren/actions';
 import Link from 'next/link';
@@ -178,6 +179,17 @@ export default function ProjectsPage() {
         </div>
 
         {/* Projects Grid */}
+        {projectsData.length === 0 ? (
+          <div className="card-premium p-6">
+            <EmptyState
+              icon={Briefcase}
+              title="Nog geen projecten"
+              description="Maak je eerste project aan om uren te registreren en budgetten bij te houden."
+              actionLabel="Nieuw project"
+              actionHref="/uren/projects"
+            />
+          </div>
+        ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projectsData.map((project) => {
             const stats = statsMap[project.id];
@@ -271,6 +283,7 @@ export default function ProjectsPage() {
             );
           })}
         </div>
+        )}
 
         {/* Summary Stats */}
         <div className="grid md:grid-cols-4 gap-6 mt-8">

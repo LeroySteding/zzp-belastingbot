@@ -20,6 +20,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Minus,
+  BarChart3,
+  Check,
 } from 'lucide-react'
 import {
   BarChart,
@@ -34,6 +36,7 @@ import {
   Cell,
 } from 'recharts'
 import { formatCurrency } from '@/lib/utils'
+import { EmptyState } from '@/components/ui/empty-state'
 import { getInvoices } from '@/lib/factuur/actions'
 import { getTimeEntries, getUrenProjects } from '@/lib/uren/actions'
 import { getExpenses } from '@/lib/belasting/actions'
@@ -293,22 +296,32 @@ export default function DashboardPage() {
           {/* Revenue Chart */}
           <div className="card-premium p-6 lg:col-span-2">
             <h2 className="text-lg font-semibold mb-4">Omzet vs Kosten</h2>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={summary.revenueByMonth} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
-                  <Tooltip
-                    formatter={(value) => formatCurrency(Number(value))}
-                    labelStyle={{ fontWeight: 600 }}
-                    contentStyle={{ borderRadius: '8px', border: '1px solid var(--border)' }}
-                  />
-                  <Bar dataKey="income" name="Omzet" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="expenses" name="Kosten" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {summary.revenueByMonth.length === 0 || summary.revenueByMonth.every((m: any) => (m.income === 0 || !m.income) && (m.expenses === 0 || !m.expenses)) ? (
+              <EmptyState
+                icon={BarChart3}
+                title="Nog geen omzet data"
+                description="Maak je eerste factuur om je omzet te zien"
+                actionLabel="Nieuwe factuur"
+                actionHref="/dashboard/invoices/new"
+              />
+            ) : (
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={summary.revenueByMonth} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                    <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
+                    <Tooltip
+                      formatter={(value) => formatCurrency(Number(value))}
+                      labelStyle={{ fontWeight: 600 }}
+                      contentStyle={{ borderRadius: '8px', border: '1px solid var(--border)' }}
+                    />
+                    <Bar dataKey="income" name="Omzet" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="expenses" name="Kosten" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </div>
 
           {/* Invoice Aging Pie */}
@@ -355,9 +368,11 @@ export default function DashboardPage() {
                 </div>
               </>
             ) : (
-              <div className="flex items-center justify-center h-48 text-muted-foreground text-sm">
-                Geen openstaande facturen
-              </div>
+              <EmptyState
+                icon={FileText}
+                title="Geen openstaande facturen"
+                description="Alle facturen zijn betaald of je hebt nog geen facturen verstuurd"
+              />
             )}
           </div>
         </div>
@@ -396,7 +411,13 @@ export default function DashboardPage() {
                   </div>
                 )
               }) : (
-                <p className="text-sm text-muted-foreground">Nog geen activiteit</p>
+                <EmptyState
+                  icon={Clock}
+                  title="Nog geen activiteit"
+                  description="Begin met factureren of uren schrijven"
+                  actionLabel="Ga aan de slag"
+                  actionHref="/dashboard/invoices"
+                />
               )}
             </div>
           </div>
@@ -438,7 +459,11 @@ export default function DashboardPage() {
                   </Link>
                 )
               }) : (
-                <p className="text-sm text-muted-foreground">Geen aankomende deadlines</p>
+                <EmptyState
+                  icon={Check}
+                  title="Geen deadlines"
+                  description="Je hebt geen aankomende deadlines. Lekker rustig!"
+                />
               )}
             </div>
           </div>
@@ -535,7 +560,13 @@ export default function DashboardPage() {
                 </table>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">Nog geen klantgegevens beschikbaar</p>
+              <EmptyState
+                icon={Users}
+                title="Nog geen klanten"
+                description="Voeg je eerste klant toe via een factuur"
+                actionLabel="Nieuwe factuur"
+                actionHref="/dashboard/invoices/new"
+              />
             )}
           </div>
 
@@ -583,7 +614,13 @@ export default function DashboardPage() {
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">Nog geen uitgaven geregistreerd</p>
+              <EmptyState
+                icon={Receipt}
+                title="Nog geen uitgaven"
+                description="Registreer je eerste uitgave"
+                actionLabel="Uitgave toevoegen"
+                actionHref="/dashboard/expenses/new"
+              />
             )}
           </div>
         </div>

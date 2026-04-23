@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Download, Copy, Trash2, FileText, Loader2, RotateCcw, LinkIcon, CheckCircle2 } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
 import { formatCurrency, formatDate, getInvoiceTotal } from '@/lib/factuur/invoice-utils';
 import { Invoice, InvoiceStatus } from '@/lib/factuur/types/invoice';
 import { getInvoices, deleteInvoiceAction, duplicateInvoiceAction } from '@/lib/factuur/actions';
@@ -234,8 +235,18 @@ export default function InvoicesPage() {
                 <TableBody>
                   {filteredInvoices.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                        {statusFilter !== 'all' ? 'Geen facturen met deze status' : 'Nog geen facturen. Maak je eerste factuur!'}
+                      <TableCell colSpan={7}>
+                        {statusFilter !== 'all' ? (
+                          <div className="text-center py-8 text-gray-500">Geen facturen met deze status</div>
+                        ) : (
+                          <EmptyState
+                            icon={FileText}
+                            title="Nog geen facturen"
+                            description="Maak je eerste factuur aan om te beginnen met factureren."
+                            actionLabel="Nieuwe factuur"
+                            actionHref="/factuur/invoices/new"
+                          />
+                        )}
                       </TableCell>
                     </TableRow>
                   ) : (

@@ -15,6 +15,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { EmptyState } from '@/components/ui/empty-state';
 import { getLeads, getPipelineStats, getSavedSearches, deleteSavedSearch } from '@/lib/leads/actions';
 import type { Lead, PipelineStats, SavedSearch } from '@/lib/leads/actions';
 
@@ -181,16 +182,13 @@ export default function LeadsDashboardPage() {
           </Link>
         </div>
         {recentLeads.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            <Target className="h-10 w-10 mx-auto mb-3 opacity-50" />
-            <p>Nog geen leads. Voeg je eerste lead toe!</p>
-            <Link
-              href="/leads/new"
-              className="inline-flex items-center gap-2 mt-3 text-sm text-primary hover:underline"
-            >
-              <Plus className="h-4 w-4" /> Lead Toevoegen
-            </Link>
-          </div>
+          <EmptyState
+            icon={Target}
+            title="Nog geen leads"
+            description="Voeg je eerste lead toe om je sales pipeline te starten."
+            actionLabel="Lead toevoegen"
+            actionHref="/leads/new"
+          />
         ) : (
           <div className="divide-y divide-border">
             {recentLeads.map((lead) => {

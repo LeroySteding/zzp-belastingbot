@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Trash2, FileText, Loader2, FileCheck, Send, XCircle, Clock, CheckCircle } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
 import { formatCurrency, formatDate } from '@/lib/factuur/invoice-utils';
 import { getOffertes, deleteOfferte, type Offerte, type OfferteStatus } from '@/lib/offerte/actions';
 
@@ -194,10 +195,18 @@ export default function OffertesPage() {
                 <TableBody>
                   {filteredOffertes.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                        {statusFilter !== 'all'
-                          ? 'Geen offertes met deze status'
-                          : 'Nog geen offertes. Maak je eerste offerte!'}
+                      <TableCell colSpan={7}>
+                        {statusFilter !== 'all' ? (
+                          <div className="text-center py-8 text-gray-500">Geen offertes met deze status</div>
+                        ) : (
+                          <EmptyState
+                            icon={FileCheck}
+                            title="Nog geen offertes"
+                            description="Maak je eerste offerte aan om een prijsvoorstel naar je klant te sturen."
+                            actionLabel="Nieuwe offerte"
+                            actionHref="/factuur/offertes/new"
+                          />
+                        )}
                       </TableCell>
                     </TableRow>
                   ) : (
