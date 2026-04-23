@@ -90,7 +90,7 @@ function StatusBadge({ connected, comingSoon }: { connected: boolean; comingSoon
     );
   }
   return (
-    <Badge className="bg-gray-100 text-gray-600 border-gray-200">
+    <Badge className="bg-muted text-muted-foreground border-border">
       <XCircle className="h-3 w-3" />
       Niet verbonden
     </Badge>
@@ -718,8 +718,8 @@ function FutureIntegrationCard({
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100">
-              <BookOpen className="h-5 w-5 text-gray-500" aria-hidden="true" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+              <BookOpen className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
             </div>
             <div>
               <CardTitle className="text-base">{name}</CardTitle>
