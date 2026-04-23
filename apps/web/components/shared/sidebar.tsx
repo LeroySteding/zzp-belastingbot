@@ -38,6 +38,7 @@ import {
   Cable,
   RotateCcw,
   Calculator,
+  Landmark,
 } from 'lucide-react'
 import { useState } from 'react'
 import { AccountSwitcher } from '@/components/shared/account-switcher'
@@ -96,6 +97,7 @@ const navSections: NavSection[] = [
       { name: 'Categorieën', href: '/belasting/categories', icon: Tag },
       { name: 'BTW Rapporten', href: '/belasting/reports', icon: FileText },
       { name: 'BTW Aangifte', href: '/belasting/btw', icon: Calculator },
+      { name: 'Bank Sync', href: '/belasting/bank-sync', icon: Landmark },
     ],
   },
   {
