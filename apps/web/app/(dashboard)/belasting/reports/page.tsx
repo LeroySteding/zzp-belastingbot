@@ -74,7 +74,7 @@ export default function ReportsPage() {
   async function fetchReports() {
     try {
       setLoading(true)
-      const response = await fetch('/api/reports')
+      const response = await fetch('/api/belasting/reports')
       const data = await response.json()
 
       if (!response.ok) {
@@ -95,7 +95,7 @@ export default function ReportsPage() {
       setGenerating(true)
       setError(null)
 
-      const response = await fetch('/api/reports', {
+      const response = await fetch('/api/belasting/reports', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -126,7 +126,7 @@ export default function ReportsPage() {
   }
 
   function downloadPDF(reportId: string) {
-    window.open(`/api/reports/${reportId}/pdf`, '_blank')
+    window.open(`/api/belasting/reports/${reportId}/pdf`, '_blank')
   }
 
   function getStatusBadge(status: string) {

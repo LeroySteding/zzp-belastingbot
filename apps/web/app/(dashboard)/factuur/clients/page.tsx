@@ -86,9 +86,11 @@ export default function ClientsPage() {
 
   const handleDelete = async (id: string) => {
     if (confirm('Weet je zeker dat je deze klant wilt verwijderen?')) {
-      const success = await deleteClientAction(id);
-      if (success) {
+      const result = await deleteClientAction(id);
+      if (result.success) {
         setClients(clients.filter(c => c.id !== id));
+      } else if (result.error) {
+        alert(result.error);
       }
     }
   };
@@ -183,18 +185,18 @@ export default function ClientsPage() {
                               variant="ghost"
                               size="icon"
                               onClick={() => handleOpenDialog(client)}
-                              title="Bewerken"
+                              aria-label="Bewerken"
                             >
-                              <Edit className="h-4 w-4" />
+                              <Edit className="h-4 w-4" aria-hidden="true" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => handleDelete(client.id)}
-                              title="Verwijderen"
+                              aria-label="Verwijderen"
                               className="text-red-500 hover:text-red-700 hover:bg-red-50"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-4 w-4" aria-hidden="true" />
                             </Button>
                           </div>
                         </TableCell>

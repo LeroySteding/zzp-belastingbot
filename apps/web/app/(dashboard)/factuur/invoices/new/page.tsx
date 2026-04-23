@@ -10,17 +10,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { ArrowLeft, Plus, Trash2, Eye, Mail, FileText, Loader2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Eye, Mail, FileText, Loader2, Download, CheckCircle2, AlertCircle } from 'lucide-react';
 import { getDueDate, calculateInvoice, formatCurrency } from '@/lib/factuur/invoice-utils';
 import { CompanyInfo, ClientInfo, Client, LineItem, RecurringFrequency, InvoiceTemplate } from '@/lib/factuur/types/invoice';
 import InvoicePreview from '@/components/factuur/InvoicePreview';
 import { getClients, getCompanyInfo, getNextInvoiceNumber, createInvoiceAction } from '@/lib/factuur/actions';
+import { sendInvoiceEmail } from '@/lib/factuur/email-actions';
 
 export default function NewInvoicePage() {
   const router = useRouter();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
 
   const [company, setCompany] = useState<CompanyInfo>({
     name: '',
@@ -54,6 +56,25 @@ export default function NewInvoicePage() {
   const [recurring, setRecurring] = useState<RecurringFrequency>(null);
   const [template, setTemplate] = useState<InvoiceTemplate>('modern');
   const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailResult, setEmailResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  useEffect(() => {
+    async function loadData() {
+      const [clientsData, companyData, nextNumber] = await Promise.all([
+        getClients(),
+        getCompanyInfo(),
+        getNextInvoiceNumber(),
+      ]);
+      setClients(clientsData);
+      if (companyData) {
+        setCompany(companyData);
+      }
+      setInvoiceNumber(nextNumber);
+      setLoading(false);
+    }
+    loadData();
+  }, []);
 
   useEffect(() => {
     async function loadData() {
@@ -156,6 +177,60 @@ export default function NewInvoicePage() {
     }
   };
 
+  const handleGeneratePdf = async () => {
+    setGeneratingPdf(true);
+    try {
+      const response = await fetch('/api/factuur/pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(invoice),
+      });
+
+      if (!response.ok) {
+        throw new Error('PDF generatie mislukt');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${invoiceNumber}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      alert('Er is een fout opgetreden bij het genereren van de PDF.');
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
+
+  const handleSendEmail = async () => {
+    if (!client.email) {
+      setEmailResult({ type: 'error', message: 'Vul eerst een email adres in bij de klantgegevens.' });
+      return;
+    }
+
+    setSendingEmail(true);
+    setEmailResult(null);
+
+    try {
+      const result = await sendInvoiceEmail(invoice, client.email, emailSubject, emailBody);
+
+      if (result.success) {
+        setEmailResult({ type: 'success', message: 'Email is succesvol verstuurd!' });
+      } else {
+        setEmailResult({ type: 'error', message: result.error || 'Email versturen mislukt.' });
+      }
+    } catch (err: any) {
+      setEmailResult({ type: 'error', message: `Onverwachte fout: ${err.message}` });
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
   const emailSubject = `Factuur ${invoiceNumber} van ${company.name}`;
   const emailBody = `Beste ${client.name},
 
@@ -201,9 +276,9 @@ ${company.name}`;
       <header className="bg-white border-b">
         <div className="container mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-2">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild>
+            <Button variant="ghost" size="icon" asChild aria-label="Terug naar facturen">
               <Link href="/factuur/invoices">
-                <ArrowLeft className="h-5 w-5" />
+                <ArrowLeft className="h-5 w-5" aria-hidden="true" />
               </Link>
             </Button>
             <h1 className="text-2xl font-bold">Nieuwe Factuur</h1>
@@ -221,7 +296,14 @@ ${company.name}`;
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Opslaan als Concept
             </Button>
-            <Button variant="default" disabled>Genereer PDF</Button>
+            <Button variant="default" onClick={handleGeneratePdf} disabled={generatingPdf}>
+              {generatingPdf ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-2" />
+              )}
+              Genereer PDF
+            </Button>
           </div>
         </div>
       </header>
@@ -253,7 +335,7 @@ ${company.name}`;
                     rows={3}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="kvk">KvK-nummer</Label>
                     <Input
@@ -279,7 +361,7 @@ ${company.name}`;
                     onChange={(e) => setCompany({ ...company, iban: e.target.value })}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="company-email">Email</Label>
                     <Input
@@ -366,7 +448,7 @@ ${company.name}`;
                 <CardTitle>Factuurgegevens</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="invoice-number">Factuurnummer</Label>
                     <Input id="invoice-number" value={invoiceNumber} disabled />
@@ -393,7 +475,7 @@ ${company.name}`;
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="template">Factuur Template</Label>
                     <Select value={template} onValueChange={(value) => setTemplate(value as InvoiceTemplate)}>
@@ -450,8 +532,9 @@ ${company.name}`;
                           size="icon"
                           onClick={() => removeItem(item.id)}
                           className="h-8 w-8"
+                          aria-label={`Regel ${index + 1} verwijderen`}
                         >
-                          <Trash2 className="h-4 w-4 text-red-500" />
+                          <Trash2 className="h-4 w-4 text-red-500" aria-hidden="true" />
                         </Button>
                       )}
                     </div>
@@ -464,7 +547,7 @@ ${company.name}`;
                         rows={2}
                       />
                     </div>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-3 gap-2 sm:gap-3">
                       <div>
                         <Label>Aantal</Label>
                         <Input
@@ -609,13 +692,36 @@ ${company.name}`;
                 </div>
               </div>
             </div>
+            {emailResult && (
+              <div
+                className={`flex items-center gap-2 p-3 rounded border ${
+                  emailResult.type === 'success'
+                    ? 'bg-green-50 border-green-200 text-green-800'
+                    : 'bg-red-50 border-red-200 text-red-800'
+                }`}
+              >
+                {emailResult.type === 'success' ? (
+                  <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
+                ) : (
+                  <AlertCircle className="h-5 w-5 text-red-600 shrink-0" />
+                )}
+                <span className="text-sm">{emailResult.message}</span>
+              </div>
+            )}
             <div className="flex justify-end gap-2 pt-4 border-t">
-              <Button variant="outline" onClick={() => setShowEmailDialog(false)}>
+              <Button variant="outline" onClick={() => { setShowEmailDialog(false); setEmailResult(null); }}>
                 Sluiten
               </Button>
-              <Button disabled>
-                <Mail className="h-4 w-4 mr-2" />
-                Versturen (Preview Only)
+              <Button
+                onClick={handleSendEmail}
+                disabled={sendingEmail || !client.email}
+              >
+                {sendingEmail ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Mail className="h-4 w-4 mr-2" />
+                )}
+                {sendingEmail ? 'Versturen...' : 'Versturen'}
               </Button>
             </div>
           </div>

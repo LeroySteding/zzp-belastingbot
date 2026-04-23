@@ -67,6 +67,12 @@ export default function LoginPage() {
               Nog geen account?{' '}
               <Link href="/signup" className="text-primary hover:underline">Registreren</Link>
             </p>
+            <Link
+              href="/demo"
+              className="text-sm text-center text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Of bekijk eerst de demo &rarr;
+            </Link>
           </CardFooter>
         </form>
       </Card>

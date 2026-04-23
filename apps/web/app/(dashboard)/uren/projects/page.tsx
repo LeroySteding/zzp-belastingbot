@@ -9,7 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Clock, Euro, TrendingUp, AlertCircle, Loader2 } from 'lucide-react';
+import { Plus, Clock, Euro, TrendingUp, AlertCircle, Briefcase, Download } from 'lucide-react';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Skeleton, ProjectCardsSkeleton } from '@/components/ui/skeleton';
 import { getUrenProjects, getUrenClients, getTimeEntries, calculateProjectStats, createProject } from '@/lib/uren/actions';
 import type { UrenProject, UrenClient, UrenTimeEntry, UrenProjectStats } from '@/lib/uren/actions';
 import Link from 'next/link';
@@ -83,8 +85,14 @@ export default function ProjectsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-8">
+            <Skeleton className="h-9 w-48" />
+            <Skeleton className="h-4 w-72 mt-2" />
+          </div>
+          <ProjectCardsSkeleton count={6} />
+        </div>
       </div>
     );
   }
@@ -94,12 +102,17 @@ export default function ProjectsPage() {
 
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8 flex justify-between items-center">
+        <div className="mb-6 md:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Projecten</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Projecten</h1>
             <p className="text-gray-600 mt-2">Beheer je projecten en budgetten</p>
           </div>
 
+          <div className="flex gap-2 sm:gap-3 items-center flex-wrap">
+            <a href="/api/export/time-entries" download className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-secondary transition-colors">
+              <Download className="w-4 h-4" />
+              Exporteer CSV
+            </a>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2">
@@ -175,10 +188,22 @@ export default function ProjectsPage() {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         {/* Projects Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {projectsData.length === 0 ? (
+          <div className="card-premium p-6">
+            <EmptyState
+              icon={Briefcase}
+              title="Nog geen projecten"
+              description="Maak je eerste project aan om uren te registreren en budgetten bij te houden."
+              actionLabel="Nieuw project"
+              actionHref="/uren/projects"
+            />
+          </div>
+        ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
           {projectsData.map((project) => {
             const stats = statsMap[project.id];
             const entries = getEntriesByProject(project.id);
@@ -271,9 +296,10 @@ export default function ProjectsPage() {
             );
           })}
         </div>
+        )}
 
         {/* Summary Stats */}
-        <div className="grid md:grid-cols-4 gap-6 mt-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mt-6 md:mt-8">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-gray-600">Totaal Projecten</CardTitle>

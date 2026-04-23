@@ -1,11 +1,11 @@
 /**
  * Bank Statement Parser for Dutch Banks
- * Supports ING, Rabobank, ABN AMRO CSV formats
+ * Supports ING, Rabobank, ABN AMRO, Knab, and Revolut CSV formats
  */
 
 import { BankTransaction } from './types'
 
-export type BankName = 'ING' | 'Rabobank' | 'ABN AMRO' | 'Overig'
+export type BankName = 'ING' | 'Rabobank' | 'ABN AMRO' | 'Knab' | 'Revolut' | 'Overig'
 
 interface ParseResult {
   transactions: BankTransaction[]
@@ -28,12 +28,16 @@ export function parseBankStatement(csvContent: string): ParseResult {
   // Detect bank by header format
   if (header.includes('datum') && header.includes('naam / omschrijving') && header.includes('bedrag')) {
     return parseINGFormat(lines)
+  } else if (header.includes('rekeningnummer') && header.includes('creditdebet') && header.includes('tegenrekeninghouder')) {
+    return parseKnabFormat(lines)
   } else if (header.includes('datum') && header.includes('omschrijving') && header.includes('bedrag')) {
     return parseRabobankFormat(lines)
-  } else if (header.includes('boekingsdatum') || header.includes('transactiedatum')) {
+  } else if (header.includes('boekingsdatum') || (header.includes('transactiedatum') && !header.includes('creditdebet'))) {
     return parseABNFormat(lines)
+  } else if (header.includes('type') && header.includes('product') && header.includes('started date') && header.includes('state')) {
+    return parseRevolutFormat(lines)
   }
-  
+
   return parseGenericFormat(lines)
 }
 
@@ -166,6 +170,110 @@ function parseABNFormat(lines: string[]): ParseResult {
 }
 
 /**
+ * Knab CSV Format
+ * Headers: "Rekeningnummer","Transactiedatum","Valutacode","CreditDebet","Bedrag","Tegenrekening","Tegenrekeninghouder","Valutadatum","Betaalwijze","Omschrijving","Type betaling","Machtigingsnummer","Incassant ID","Adres"
+ */
+function parseKnabFormat(lines: string[]): ParseResult {
+  const transactions: BankTransaction[] = []
+  const errors: string[] = []
+
+  for (let i = 1; i < lines.length; i++) {
+    try {
+      const line = lines[i]
+      if (!line.trim()) continue
+
+      const parts = parseCSVLine(line)
+      if (parts.length < 10) continue
+
+      const date = parseKnabDate(parts[1])
+      const creditDebet = parts[3].trim().toUpperCase()
+      const amountStr = parts[4].replace(',', '.')
+      const amount = parseFloat(amountStr)
+
+      // Knab: "D" for debit (outgoing), "C" for credit (incoming)
+      // Amount is always positive, sign determined by CreditDebet
+      const isExpense = creditDebet === 'D'
+
+      if (isExpense && amount > 0) {
+        const description = parts[9] || parts[6] || 'Geen omschrijving'
+        const { category, btw_rate } = categorizTransaction(description)
+        transactions.push({
+          date: date.toISOString().split('T')[0],
+          description: description.trim(),
+          amount: Math.abs(amount),
+          category,
+          btw_rate,
+        })
+      }
+    } catch (error) {
+      errors.push(`Regel ${i + 1}: ${error}`)
+    }
+  }
+
+  return { transactions, bankName: 'Knab', errors }
+}
+
+/**
+ * Revolut CSV Format
+ * Headers: Type,Product,Started Date,Completed Date,Description,Amount,Fee,Currency,State,Balance
+ */
+function parseRevolutFormat(lines: string[]): ParseResult {
+  const transactions: BankTransaction[] = []
+  const errors: string[] = []
+
+  for (let i = 1; i < lines.length; i++) {
+    try {
+      const line = lines[i]
+      if (!line.trim()) continue
+
+      const parts = parseCSVLine(line)
+      if (parts.length < 9) continue
+
+      const state = parts[8].trim().toUpperCase()
+      const currency = parts[7].trim().toUpperCase()
+
+      // Only process completed EUR transactions
+      if (state !== 'COMPLETED' || currency !== 'EUR') continue
+
+      const dateStr = parts[2].trim() // Started Date
+      const date = parseRevolutDate(dateStr)
+      const amountStr = parts[5].replace(',', '.')
+      const amount = parseFloat(amountStr)
+      const feeStr = parts[6].replace(',', '.')
+      const fee = parseFloat(feeStr) || 0
+      const description = parts[4] || 'Geen omschrijving'
+
+      // Revolut: negative amount = outgoing (expense)
+      if (amount < 0) {
+        const { category, btw_rate } = categorizTransaction(description)
+        transactions.push({
+          date: date.toISOString().split('T')[0],
+          description: description.trim(),
+          amount: Math.abs(amount),
+          category,
+          btw_rate,
+        })
+      }
+
+      // Also add fee as separate expense if applicable
+      if (fee < 0) {
+        transactions.push({
+          date: date.toISOString().split('T')[0],
+          description: `Revolut fee: ${description.trim()}`,
+          amount: Math.abs(fee),
+          category: 'Overig',
+          btw_rate: 0,
+        })
+      }
+    } catch (error) {
+      errors.push(`Regel ${i + 1}: ${error}`)
+    }
+  }
+
+  return { transactions, bankName: 'Revolut', errors }
+}
+
+/**
  * Generic CSV parser (fallback)
  */
 function parseGenericFormat(lines: string[]): ParseResult {
@@ -267,6 +375,22 @@ function parseABNDate(dateStr: string): Date {
     }
   }
   return new Date(dateStr)
+}
+
+function parseKnabDate(dateStr: string): Date {
+  // Knab format: DD-MM-YYYY
+  const parts = dateStr.trim().split('-')
+  if (parts.length === 3 && parts[0].length <= 2) {
+    return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`)
+  }
+  return new Date(dateStr)
+}
+
+function parseRevolutDate(dateStr: string): Date {
+  // Revolut format: YYYY-MM-DD HH:MM:SS or similar ISO format
+  // Take only the date portion
+  const datePart = dateStr.trim().split(' ')[0]
+  return new Date(datePart)
 }
 
 function parseDateFlexible(dateStr: string): Date {

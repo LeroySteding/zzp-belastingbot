@@ -11,17 +11,18 @@ export function Navbar() {
   const isActive = (path: string) => pathname === path;
   
   return (
-    <nav className="border-b bg-white">
+    <nav aria-label="Urenregistratie navigatie" className="border-b bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
             <Link href="/" className="flex items-center">
-              <Clock className="h-6 w-6 text-blue-600" />
+              <Clock className="h-6 w-6 text-blue-600" aria-hidden="true" />
               <span className="ml-2 text-xl font-bold text-gray-900">UrenTracker</span>
             </Link>
             <div className="hidden sm:ml-8 sm:flex sm:space-x-4">
               <Link
                 href="/dashboard"
+                aria-current={isActive('/dashboard') ? 'page' : undefined}
                 className={cn(
                   'inline-flex items-center px-3 py-2 text-sm font-medium rounded-md',
                   isActive('/dashboard')
@@ -29,11 +30,12 @@ export function Navbar() {
                     : 'text-gray-700 hover:bg-gray-100'
                 )}
               >
-                <LayoutDashboard className="h-4 w-4 mr-2" />
+                <LayoutDashboard className="h-4 w-4 mr-2" aria-hidden="true" />
                 Dashboard
               </Link>
               <Link
                 href="/track"
+                aria-current={isActive('/track') ? 'page' : undefined}
                 className={cn(
                   'inline-flex items-center px-3 py-2 text-sm font-medium rounded-md',
                   isActive('/track')
@@ -41,11 +43,12 @@ export function Navbar() {
                     : 'text-gray-700 hover:bg-gray-100'
                 )}
               >
-                <Clock className="h-4 w-4 mr-2" />
+                <Clock className="h-4 w-4 mr-2" aria-hidden="true" />
                 Timer
               </Link>
               <Link
                 href="/projects"
+                aria-current={isActive('/projects') ? 'page' : undefined}
                 className={cn(
                   'inline-flex items-center px-3 py-2 text-sm font-medium rounded-md',
                   isActive('/projects')
@@ -53,11 +56,12 @@ export function Navbar() {
                     : 'text-gray-700 hover:bg-gray-100'
                 )}
               >
-                <FolderKanban className="h-4 w-4 mr-2" />
+                <FolderKanban className="h-4 w-4 mr-2" aria-hidden="true" />
                 Projecten
               </Link>
               <Link
                 href="/timesheets"
+                aria-current={isActive('/timesheets') ? 'page' : undefined}
                 className={cn(
                   'inline-flex items-center px-3 py-2 text-sm font-medium rounded-md',
                   isActive('/timesheets')
@@ -65,11 +69,12 @@ export function Navbar() {
                     : 'text-gray-700 hover:bg-gray-100'
                 )}
               >
-                <FileText className="h-4 w-4 mr-2" />
+                <FileText className="h-4 w-4 mr-2" aria-hidden="true" />
                 Urenstaten
               </Link>
               <Link
                 href="/settings"
+                aria-current={isActive('/settings') ? 'page' : undefined}
                 className={cn(
                   'inline-flex items-center px-3 py-2 text-sm font-medium rounded-md',
                   isActive('/settings')
@@ -77,7 +82,7 @@ export function Navbar() {
                     : 'text-gray-700 hover:bg-gray-100'
                 )}
               >
-                <Settings className="h-4 w-4 mr-2" />
+                <Settings className="h-4 w-4 mr-2" aria-hidden="true" />
                 Instellingen
               </Link>
             </div>

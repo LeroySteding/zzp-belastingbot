@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -23,7 +24,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Plus, Pencil, Trash2, Receipt, FileText, Download, Loader2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, Receipt, FileText, Download, Loader2, ScanLine } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
+import { ExpensesListSkeleton } from '@/components/ui/skeleton'
 import { getExpenses, deleteExpense } from '@/lib/belasting/actions'
 import type { Expense } from '@/lib/belasting/types'
 import { EXPENSE_CATEGORIES } from '@/lib/types/index'
@@ -90,11 +93,6 @@ export default function ExpensesPage() {
     }
   }
 
-  const handleExportCSV = () => {
-    const url = `/api/expenses/export?year=${selectedYear}&quarter=${selectedQuarter}`
-    window.location.href = url
-  }
-
   return (<>
 
       <div className="space-y-6">
@@ -106,14 +104,16 @@ export default function ExpensesPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={handleExportCSV}
-              disabled={filteredExpenses.length === 0}
-            >
-              <Download className="mr-2 h-4 w-4" />
+            <a href="/api/export/expenses" download className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-secondary transition-colors">
+              <Download className="w-4 h-4" />
               Exporteer CSV
-            </Button>
+            </a>
+            <Link href="/belasting/scan">
+              <Button variant="outline">
+                <ScanLine className="mr-2 h-4 w-4" />
+                Bon scannen
+              </Button>
+            </Link>
             <Link href="/expenses/new">
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
@@ -180,9 +180,7 @@ export default function ExpensesPage() {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-          </div>
+          <ExpensesListSkeleton />
         ) : (
           <>
             {/* BTW Summary */}
@@ -216,14 +214,15 @@ export default function ExpensesPage() {
             <div className="border rounded-lg overflow-hidden">
               <div className="overflow-x-auto">
                 <Table>
+                  <TableCaption className="sr-only">Overzicht van zakelijke uitgaven</TableCaption>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-16">Bon</TableHead>
+                      <TableHead className="w-16 hidden sm:table-cell">Bon</TableHead>
                       <TableHead>Datum</TableHead>
                       <TableHead>Omschrijving</TableHead>
-                      <TableHead>Categorie</TableHead>
-                      <TableHead className="text-right">Excl. BTW</TableHead>
-                      <TableHead className="text-right">BTW</TableHead>
+                      <TableHead className="hidden md:table-cell">Categorie</TableHead>
+                      <TableHead className="text-right hidden md:table-cell">Excl. BTW</TableHead>
+                      <TableHead className="text-right hidden md:table-cell">BTW</TableHead>
                       <TableHead className="text-right">Totaal</TableHead>
                       <TableHead className="text-right">Acties</TableHead>
                     </TableRow>
@@ -231,24 +230,36 @@ export default function ExpensesPage() {
                   <TableBody>
                     {filteredExpenses.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                          Geen uitgaven gevonden voor deze selectie
+                        <TableCell colSpan={8}>
+                          {expenses.length === 0 ? (
+                            <EmptyState
+                              icon={Receipt}
+                              title="Nog geen uitgaven"
+                              description="Registreer je eerste zakelijke uitgave om je administratie bij te houden."
+                              actionLabel="Nieuwe uitgave"
+                              actionHref="/expenses/new"
+                            />
+                          ) : (
+                            <div className="text-center py-8 text-gray-500">
+                              Geen uitgaven gevonden voor deze selectie
+                            </div>
+                          )}
                         </TableCell>
                       </TableRow>
                     ) : (
                       filteredExpenses.map((expense) => (
                         <TableRow key={expense.id}>
-                          <TableCell>
+                          <TableCell className="hidden sm:table-cell">
                             {expense.receipt_path ? (
                               <button
                                 onClick={() => setViewingReceipt(expense.receipt_path)}
                                 className="flex items-center justify-center w-10 h-10 bg-gray-100 hover:bg-gray-200 rounded border border-gray-300 transition-colors"
-                                title="Bekijk bon"
+                                aria-label="Bekijk bon"
                               >
                                 {expense.receipt_path.endsWith('.pdf') ? (
-                                  <FileText className="h-5 w-5 text-gray-600" />
+                                  <FileText className="h-5 w-5 text-gray-600" aria-hidden="true" />
                                 ) : (
-                                  <Receipt className="h-5 w-5 text-gray-600" />
+                                  <Receipt className="h-5 w-5 text-gray-600" aria-hidden="true" />
                                 )}
                               </button>
                             ) : (
@@ -260,18 +271,18 @@ export default function ExpensesPage() {
                           <TableCell className="whitespace-nowrap">
                             {format(new Date(expense.date), 'd MMM yyyy', { locale: nl })}
                           </TableCell>
-                          <TableCell className="font-medium">
+                          <TableCell className="font-medium max-w-[150px] truncate">
                             {expense.description}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="hidden md:table-cell">
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                               {expense.category}
                             </span>
                           </TableCell>
-                          <TableCell className="text-right whitespace-nowrap">
+                          <TableCell className="text-right whitespace-nowrap hidden md:table-cell">
                             € {expense.amount_excl.toFixed(2)}
                           </TableCell>
-                          <TableCell className="text-right whitespace-nowrap">
+                          <TableCell className="text-right whitespace-nowrap hidden md:table-cell">
                             <div className="text-sm">
                               {expense.btw_rate}%
                             </div>
@@ -285,8 +296,8 @@ export default function ExpensesPage() {
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
                               <Link href={`/expenses/${expense.id}/edit`}>
-                                <Button variant="ghost" size="sm" title="Bewerken">
-                                  <Pencil className="h-4 w-4" />
+                                <Button variant="ghost" size="sm" aria-label="Bewerken">
+                                  <Pencil className="h-4 w-4" aria-hidden="true" />
                                 </Button>
                               </Link>
                               <Button
@@ -294,12 +305,12 @@ export default function ExpensesPage() {
                                 size="sm"
                                 onClick={() => handleDelete(expense.id)}
                                 disabled={deleting === expense.id}
-                                title="Verwijderen"
+                                aria-label="Verwijderen"
                               >
                                 {deleting === expense.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
                                 ) : (
-                                  <Trash2 className="h-4 w-4 text-red-600" />
+                                  <Trash2 className="h-4 w-4 text-red-600" aria-hidden="true" />
                                 )}
                               </Button>
                             </div>
@@ -351,7 +362,7 @@ export default function ExpensesPage() {
             ) : viewingReceipt ? (
               <img
                 src={viewingReceipt}
-                alt="Receipt"
+                alt="Bon afbeelding"
                 className="w-full h-auto rounded-lg border border-gray-200"
               />
             ) : null}

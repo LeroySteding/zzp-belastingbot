@@ -1,5 +1,6 @@
 export interface Profile {
   id: string
+  display_name: string | null
   company_name: string | null
   btw_number: string | null
   kvk_number: string | null
@@ -7,8 +8,12 @@ export interface Profile {
   phone: string | null
   email: string | null
   address: string | null
+  city: string | null
+  postal_code: string | null
   kor_enabled: boolean
   kor_threshold: number
+  default_payment_term: number
+  default_btw_rate: number
   created_at: string
   updated_at: string
 }
@@ -53,7 +58,7 @@ export interface BankImport {
   id: string
   user_id: string
   filename: string
-  bank_name: 'ING' | 'Rabobank' | 'ABN AMRO' | 'Overig'
+  bank_name: 'ING' | 'Rabobank' | 'ABN AMRO' | 'Knab' | 'Revolut' | 'Overig'
   import_date: string
   total_transactions: number
   transactions_imported: number

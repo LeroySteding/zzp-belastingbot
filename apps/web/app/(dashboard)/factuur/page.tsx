@@ -5,10 +5,11 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Plus, TrendingUp, Clock, CheckCircle, Loader2 } from 'lucide-react';
+import { FileText, Plus, TrendingUp, Clock, CheckCircle, Loader2, FileCheck, Bell } from 'lucide-react';
 import { formatCurrency, formatDate, getInvoiceTotal } from '@/lib/factuur/invoice-utils';
 import { Invoice } from '@/lib/factuur/types/invoice';
 import { getInvoices } from '@/lib/factuur/actions';
+import { getOverdueInvoices, type OverdueInvoice } from '@/lib/factuur/reminder-actions';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const statusColors: Record<string, string> = {
@@ -25,12 +26,17 @@ const statusLabels: Record<string, string> = {
 
 export default function DashboardPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [overdueInvoices, setOverdueInvoices] = useState<OverdueInvoice[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
-      const data = await getInvoices();
+      const [data, overdue] = await Promise.all([
+        getInvoices(),
+        getOverdueInvoices(),
+      ]);
       setInvoices(data);
+      setOverdueInvoices(overdue);
       setLoading(false);
     }
     load();
@@ -123,7 +129,30 @@ export default function DashboardPage() {
               <Link href="/factuur/clients">Klanten</Link>
             </Button>
             <Button variant="outline" asChild>
+              <Link href="/factuur/offertes">
+                <FileCheck className="h-4 w-4 mr-2" />
+                Offertes
+              </Link>
+            </Button>
+            <Button variant="outline" asChild className="relative">
+              <Link href="/factuur/reminders">
+                <Bell className="h-4 w-4 mr-2" />
+                Herinneringen
+                {overdueInvoices.length > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {overdueInvoices.length}
+                  </span>
+                )}
+              </Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/factuur/recurring">Terugkerend</Link>
+            </Button>
+            <Button variant="outline" asChild>
               <Link href="/factuur/reports">Rapportages</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/factuur/integrations">Integraties</Link>
             </Button>
             <Button asChild>
               <Link href="/factuur/invoices/new">
@@ -210,7 +239,7 @@ export default function DashboardPage() {
             <CardTitle>Omzet per Maand ({currentYear})</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
+            <div className="h-80" role="img" aria-label={`Staafdiagram: omzet per maand voor ${currentYear}`}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={monthlyData}>
                   <CartesianGrid strokeDasharray="3 3" />
