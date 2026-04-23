@@ -148,6 +148,11 @@ export async function createExpense(input: {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
+  // Validate that amount is positive
+  if (input.amount_excl <= 0) {
+    return null
+  }
+
   const { data, error } = await supabase
     .from('expenses')
     .insert({

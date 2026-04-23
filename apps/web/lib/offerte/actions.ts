@@ -186,6 +186,11 @@ export async function createOfferte(input: {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
+  // Validate items
+  if (!input.items || input.items.length === 0) {
+    return null;
+  }
+
   // Calculate totals
   let subtotal = 0;
   let totalBtw = 0;
@@ -194,6 +199,10 @@ export async function createOfferte(input: {
     subtotal += itemTotal;
     totalBtw += itemTotal * (item.btwRate / 100);
   });
+
+  if (subtotal <= 0) {
+    return null;
+  }
 
   const { data: offerte, error } = await supabase
     .from('offertes')
@@ -264,6 +273,9 @@ export async function deleteOfferte(id: string): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return false;
 
+  // Delete offerte items first (cascade)
+  await supabase.from('offerte_items').delete().eq('offerte_id', id);
+
   const { error } = await supabase
     .from('offertes')
     .delete()
@@ -294,6 +306,22 @@ export async function convertToInvoice(id: string): Promise<string | null> {
     .single();
 
   if (!offerte) return null;
+
+  // Check if offerte status allows conversion
+  if (offerte.status === 'afgewezen' || offerte.status === 'verlopen') {
+    return null;
+  }
+
+  // Check if already converted to an invoice
+  if (offerte.converted_invoice_id) {
+    return null;
+  }
+
+  // Check validity date - if expired and status is 'verzonden', auto-update to 'verlopen'
+  if (offerte.valid_until && new Date(offerte.valid_until) < new Date()) {
+    await supabase.from('offertes').update({ status: 'verlopen' }).eq('id', id);
+    return null;
+  }
 
   // Generate next invoice number
   const year = new Date().getFullYear();

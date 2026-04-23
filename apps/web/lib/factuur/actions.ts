@@ -137,10 +137,20 @@ export async function updateClientAction(
   };
 }
 
-export async function deleteClientAction(id: string): Promise<boolean> {
+export async function deleteClientAction(id: string): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return false;
+  if (!user) return { success: false, error: 'Niet ingelogd' };
+
+  // Check if client has linked invoices
+  const { count } = await supabase
+    .from('invoices')
+    .select('*', { count: 'exact', head: true })
+    .eq('client_id', id);
+
+  if (count && count > 0) {
+    return { success: false, error: 'Klant kan niet worden verwijderd omdat er facturen aan gekoppeld zijn' };
+  }
 
   const { error } = await supabase
     .from('clients')
@@ -148,17 +158,44 @@ export async function deleteClientAction(id: string): Promise<boolean> {
     .eq('id', id)
     .eq('user_id', user.id);
 
-  return !error;
+  if (error) return { success: false, error: error.message };
+  return { success: true };
 }
 
 // ============================================
 // INVOICES
 // ============================================
 
+export async function checkOverdueInvoices(): Promise<number> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return 0;
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const { data, error } = await supabase
+    .from('invoices')
+    .update({ status: 'verlopen' })
+    .eq('user_id', user.id)
+    .eq('status', 'verzonden')
+    .lt('due_date', today)
+    .select('id');
+
+  if (error) {
+    console.error('Failed to check overdue invoices:', error.message);
+    return 0;
+  }
+
+  return data?.length || 0;
+}
+
 export async function getInvoices(): Promise<Invoice[]> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
+
+  // Auto-mark overdue invoices
+  await checkOverdueInvoices();
 
   const { data: invoices, error } = await supabase
     .from('invoices')
@@ -228,6 +265,11 @@ export async function createInvoiceAction(input: {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
+  // Validate items
+  if (!input.items || input.items.length === 0) {
+    return null;
+  }
+
   // Calculate totals
   let subtotal = 0;
   let totalBtw = 0;
@@ -236,6 +278,10 @@ export async function createInvoiceAction(input: {
     subtotal += itemTotal;
     totalBtw += itemTotal * (item.btwRate / 100);
   });
+
+  if (subtotal <= 0) {
+    return null;
+  }
 
   // Calculate next_recurring_date if recurring
   let nextRecurringDate: string | null = null;
@@ -319,6 +365,11 @@ export async function deleteInvoiceAction(id: string): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return false;
 
+  // Delete related records first to maintain referential integrity
+  await supabase.from('invoice_items').delete().eq('invoice_id', id);
+  await supabase.from('payment_matches').delete().eq('invoice_id', id);
+
+  // Then delete the invoice
   const { error } = await supabase
     .from('invoices')
     .delete()
@@ -369,6 +420,12 @@ export async function duplicateInvoiceAction(id: string): Promise<string | null>
       subtotal: original.subtotal,
       total_btw: original.total_btw,
       total: original.total,
+      // Reset payment/send state for the duplicate
+      paid_at: null,
+      sent_at: null,
+      payment_id: null,
+      last_reminder_sent_at: null,
+      reminder_count: 0,
     })
     .select('id')
     .single();

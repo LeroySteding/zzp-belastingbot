@@ -16,6 +16,11 @@ export async function sendInvoiceEmail(
   subject: string,
   body: string
 ): Promise<SendEmailResult> {
+  // Validate email before making the API call
+  if (!recipientEmail || !recipientEmail.includes('@')) {
+    return { success: false, error: 'Ongeldig e-mailadres' };
+  }
+
   try {
     const response = await fetch('/api/factuur/send-email', {
       method: 'POST',
