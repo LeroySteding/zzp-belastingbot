@@ -10,12 +10,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { ArrowLeft, Plus, Trash2, Eye, Mail, FileText, Loader2, Download, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Eye, Mail, FileText, Loader2, Download, CheckCircle2, AlertCircle, CheckCircle, XCircle, ArrowDownCircle } from 'lucide-react';
 import { getDueDate, calculateInvoice, formatCurrency } from '@/lib/factuur/invoice-utils';
 import { CompanyInfo, ClientInfo, Client, LineItem, RecurringFrequency, InvoiceTemplate } from '@/lib/factuur/types/invoice';
 import InvoicePreview from '@/components/factuur/InvoicePreview';
 import { getClients, getCompanyInfo, getNextInvoiceNumber, createInvoiceAction } from '@/lib/factuur/actions';
 import { sendInvoiceEmail } from '@/lib/factuur/email-actions';
+import { validateVatNumber, type ViesResult } from '@/lib/integrations/vies';
 
 export default function NewInvoicePage() {
   const router = useRouter();
@@ -58,6 +59,8 @@ export default function NewInvoicePage() {
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [sendingEmail, setSendingEmail] = useState(false);
   const [emailResult, setEmailResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [viesValidating, setViesValidating] = useState(false);
+  const [viesResult, setViesResult] = useState<ViesResult | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -96,6 +99,25 @@ export default function NewInvoicePage() {
         });
       }
     }
+  };
+
+  const handleViesValidation = async () => {
+    const btwValue = client.btwNumber?.trim();
+    if (!btwValue) return;
+    setViesValidating(true);
+    setViesResult(null);
+    const result = await validateVatNumber(btwValue);
+    setViesResult(result);
+    setViesValidating(false);
+  };
+
+  const handleViesAutoFill = () => {
+    if (!viesResult || !viesResult.valid) return;
+    setClient((prev) => ({
+      ...prev,
+      name: viesResult.name || prev.name,
+      address: viesResult.address || prev.address,
+    }));
   };
 
   const addItem = () => {
@@ -421,6 +443,69 @@ ${company.name}`;
                     onChange={(e) => setClient({ ...client, email: e.target.value })}
                     disabled={selectedClientId !== 'manual' && selectedClientId !== ''}
                   />
+                </div>
+                <div>
+                  <Label htmlFor="client-btw">BTW-nummer</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="client-btw"
+                      value={client.btwNumber || ''}
+                      onChange={(e) => {
+                        setClient({ ...client, btwNumber: e.target.value });
+                        setViesResult(null);
+                      }}
+                      placeholder="NL123456789B01"
+                      disabled={selectedClientId !== 'manual' && selectedClientId !== ''}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleViesValidation}
+                      disabled={viesValidating || !client.btwNumber?.trim()}
+                      className="shrink-0"
+                    >
+                      {viesValidating ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                      ) : null}
+                      Valideer
+                    </Button>
+                  </div>
+                  {viesResult && (
+                    <div className={`mt-2 text-sm flex items-start gap-2 rounded-md p-2 ${
+                      viesResult.valid
+                        ? 'bg-green-50 text-green-800 border border-green-200'
+                        : 'bg-red-50 text-red-800 border border-red-200'
+                    }`}>
+                      {viesResult.valid ? (
+                        <CheckCircle className="h-4 w-4 mt-0.5 shrink-0 text-green-600" />
+                      ) : (
+                        <XCircle className="h-4 w-4 mt-0.5 shrink-0 text-red-600" />
+                      )}
+                      <div className="flex-1">
+                        {viesResult.valid ? (
+                          <>
+                            <span className="font-medium">Geldig</span>
+                            {(viesResult.name || viesResult.address) && (
+                              <span> - {[viesResult.name, viesResult.address].filter(Boolean).join(', ')}</span>
+                            )}
+                            {(viesResult.name || viesResult.address) && (selectedClientId === 'manual' || selectedClientId === '') && (
+                              <button
+                                type="button"
+                                onClick={handleViesAutoFill}
+                                className="ml-2 inline-flex items-center gap-1 text-green-700 hover:text-green-900 underline text-xs font-medium"
+                              >
+                                <ArrowDownCircle className="h-3 w-3" />
+                                Gegevens overnemen
+                              </button>
+                            )}
+                          </>
+                        ) : (
+                          <span className="font-medium">Ongeldig BTW-nummer</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
