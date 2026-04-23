@@ -1,6 +1,8 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { sendEmail } from '@/lib/email/send';
+import { buildWelcomeEmail } from '@/lib/email/emails';
 
 export interface OnboardingData {
   displayName: string;
@@ -74,6 +76,23 @@ export async function completeOnboarding(data: OnboardingData): Promise<{ succes
       // Non-fatal: profile was saved, client creation failed
       console.error('Failed to create first client:', clientError.message);
     }
+  }
+
+  // Send welcome email (non-fatal if it fails)
+  try {
+    if (user.email) {
+      const { subject, html, text } = buildWelcomeEmail(data.displayName);
+      await sendEmail({
+        to: user.email,
+        subject,
+        html,
+        text,
+        tags: [{ name: 'type', value: 'welcome' }],
+      });
+    }
+  } catch {
+    // Non-fatal: onboarding succeeded, welcome email failed
+    console.error('Failed to send welcome email');
   }
 
   return { success: true };

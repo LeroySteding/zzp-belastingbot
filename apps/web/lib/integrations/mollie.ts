@@ -1,5 +1,7 @@
 import createMollieClient, { Payment, PaymentStatus } from '@mollie/api-client';
 import { createClient } from '@/lib/supabase/server';
+import { sendEmail } from '@/lib/email/send';
+import { buildPaymentConfirmationEmail } from '@/lib/email/emails';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -25,6 +27,68 @@ export interface SyncResult {
   matched: number;
   unmatched: number;
   errors: string[];
+}
+
+// ---------------------------------------------------------------------------
+// Send payment confirmation email
+// ---------------------------------------------------------------------------
+
+async function sendPaymentConfirmation(invoiceId: string, userId: string) {
+  try {
+    const supabase = await createClient();
+
+    // Fetch invoice with client info for the email
+    const { data: invoice } = await supabase
+      .from('invoices')
+      .select(`
+        invoice_number, total, paid_at,
+        clients (name, email)
+      `)
+      .eq('id', invoiceId)
+      .eq('user_id', userId)
+      .single();
+
+    if (!invoice) return;
+
+    const clientEmail = (invoice.clients as any)?.email;
+    const clientName = (invoice.clients as any)?.name || 'klant';
+    if (!clientEmail) return;
+
+    const totalFormatted = new Intl.NumberFormat('nl-NL', {
+      style: 'currency',
+      currency: 'EUR',
+    }).format(Number(invoice.total) || 0);
+
+    const paidDate = invoice.paid_at
+      ? new Date(invoice.paid_at).toLocaleDateString('nl-NL', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        })
+      : new Date().toLocaleDateString('nl-NL', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        });
+
+    const { subject, html, text } = buildPaymentConfirmationEmail({
+      clientName,
+      invoiceNumber: invoice.invoice_number,
+      amount: totalFormatted,
+      paidDate,
+    });
+
+    await sendEmail({
+      to: clientEmail,
+      subject,
+      html,
+      text,
+      tags: [{ name: 'type', value: 'payment_confirmation' }],
+    });
+  } catch {
+    // Non-fatal: payment was processed, email failed
+    console.error('Failed to send payment confirmation email for invoice', invoiceId);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -218,6 +282,9 @@ export async function syncMolliePayments(userId: string): Promise<SyncResult> {
           result.errors.push(
             `Betaling ${payment.id} gematcht maar factuur update mislukt: ${updateError.message}`,
           );
+        } else {
+          // Send payment confirmation email
+          await sendPaymentConfirmation(match.invoiceId, userId);
         }
       } else {
         result.unmatched++;
@@ -298,11 +365,16 @@ export async function processMollieWebhook(paymentId: string): Promise<void> {
   });
 
   if (match) {
-    await supabase
+    const { error: updateError } = await supabase
       .from('invoices')
       .update({ status: 'betaald', paid_at: new Date().toISOString() })
       .eq('id', match.invoiceId)
       .eq('user_id', userId);
+
+    if (!updateError) {
+      // Send payment confirmation email
+      await sendPaymentConfirmation(match.invoiceId, userId);
+    }
   }
 }
 
