@@ -48,7 +48,7 @@ function getTypeIcon(type: string) {
       );
     default:
       return (
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-600">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-muted-foreground">
           <Bell className="h-4 w-4" />
         </span>
       );
