@@ -2,6 +2,7 @@ import createMollieClient, { Payment, PaymentStatus } from '@mollie/api-client';
 import { createClient } from '@/lib/supabase/server';
 import { sendEmail } from '@/lib/email/send';
 import { buildPaymentConfirmationEmail } from '@/lib/email/emails';
+import { createNotification } from '@/lib/notifications/actions';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -285,6 +286,19 @@ export async function syncMolliePayments(userId: string): Promise<SyncResult> {
         } else {
           // Send payment confirmation email
           await sendPaymentConfirmation(match.invoiceId, userId);
+
+          // Create in-app notification
+          const amountFormatted = new Intl.NumberFormat('nl-NL', {
+            style: 'currency',
+            currency: 'EUR',
+          }).format(paymentAmount);
+          await createNotification({
+            userId,
+            type: 'invoice_paid',
+            title: 'Betaling ontvangen',
+            message: `Factuur ${match.invoiceNumber} van ${amountFormatted} is betaald`,
+            href: '/dashboard/invoices',
+          });
         }
       } else {
         result.unmatched++;
@@ -374,6 +388,19 @@ export async function processMollieWebhook(paymentId: string): Promise<void> {
     if (!updateError) {
       // Send payment confirmation email
       await sendPaymentConfirmation(match.invoiceId, userId);
+
+      // Create in-app notification
+      const amountFormatted = new Intl.NumberFormat('nl-NL', {
+        style: 'currency',
+        currency: 'EUR',
+      }).format(paymentAmount);
+      await createNotification({
+        userId,
+        type: 'invoice_paid',
+        title: 'Betaling ontvangen',
+        message: `Factuur ${match.invoiceNumber} van ${amountFormatted} is betaald`,
+        href: '/dashboard/invoices',
+      });
     }
   }
 }
