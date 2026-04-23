@@ -271,8 +271,9 @@ export default function AssistantPage() {
             onClick={() => handleSend()}
             disabled={loading || !input.trim()}
             size="icon"
+            aria-label="Versturen"
           >
-            <Send className="h-4 w-4" />
+            <Send className="h-4 w-4" aria-hidden="true" />
           </Button>
         </div>
         <div className="mt-2 flex flex-wrap gap-1.5">

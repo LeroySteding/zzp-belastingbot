@@ -128,9 +128,9 @@ export default function RecurringInvoicesPage() {
       <header className="bg-white border-b">
         <div className="container mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-2">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild>
+            <Button variant="ghost" size="icon" asChild aria-label="Terug naar facturen">
               <Link href="/factuur/invoices">
-                <ArrowLeft className="h-5 w-5" />
+                <ArrowLeft className="h-5 w-5" aria-hidden="true" />
               </Link>
             </Button>
             <Link href="/factuur" className="flex items-center gap-2">

@@ -89,8 +89,9 @@ export function ReceiptUpload({ onUpload, onClear, currentReceipt, loading }: Re
             className="absolute top-2 right-2 z-10"
             onClick={handleClear}
             disabled={loading}
+            aria-label="Bon verwijderen"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4" aria-hidden="true" />
           </Button>
 
           <div className="flex items-center gap-4">
@@ -101,7 +102,7 @@ export function ReceiptUpload({ onUpload, onClear, currentReceipt, loading }: Re
             ) : (
               <img
                 src={preview}
-                alt="Receipt preview"
+                alt="Voorbeeld van geupload bon"
                 className="w-24 h-24 object-cover rounded"
               />
             )}

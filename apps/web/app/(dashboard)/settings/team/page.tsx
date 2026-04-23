@@ -243,8 +243,8 @@ export default function TeamSettingsPage() {
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center gap-4">
         <Link href="/settings">
-          <Button variant="outline" size="icon">
-            <ArrowLeft className="h-4 w-4" />
+          <Button variant="outline" size="icon" aria-label="Terug naar instellingen">
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
           </Button>
         </Link>
         <div className="flex-1">
@@ -357,18 +357,18 @@ export default function TeamSettingsPage() {
                       variant="outline"
                       size="icon"
                       onClick={() => handleEditOpen(member)}
-                      title="Bewerken"
+                      aria-label="Bewerken"
                     >
-                      <Pencil className="h-4 w-4" />
+                      <Pencil className="h-4 w-4" aria-hidden="true" />
                     </Button>
                     <Button
                       variant="outline"
                       size="icon"
                       onClick={() => handleRemove(member.id)}
-                      title="Verwijderen"
+                      aria-label="Verwijderen"
                       className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
                     </Button>
                   </div>
                 </div>
