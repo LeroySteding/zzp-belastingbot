@@ -35,6 +35,7 @@ import {
   TrendingUp,
   ScrollText,
   Mail,
+  Cable,
 } from 'lucide-react'
 import { useState } from 'react'
 import { AccountSwitcher } from '@/components/shared/account-switcher'
@@ -225,6 +226,17 @@ export function Sidebar() {
             >
               <UsersRound className="h-4 w-4" aria-hidden="true" />
               <span>Team</span>
+            </Link>
+            <Link
+              href="/settings/integrations"
+              aria-current={pathname === '/settings/integrations' ? 'page' : undefined}
+              className={cn(
+                'sidebar-nav-item text-sm mb-1',
+                pathname === '/settings/integrations' && 'active'
+              )}
+            >
+              <Cable className="h-4 w-4" aria-hidden="true" />
+              <span>Integraties</span>
             </Link>
             <Link
               href="/settings"

@@ -28,6 +28,7 @@ import {
   LogOut,
   Save,
   CheckCircle,
+  Cable,
 } from 'lucide-react'
 import { getProfile, updateProfile } from '@/lib/belasting/actions'
 import { getUserSubscription } from '@/lib/subscriptions/actions'
@@ -679,6 +680,27 @@ export default function SettingsPage() {
                   <Button variant="outline" className="gap-2">
                     <UsersRound className="h-4 w-4" />
                     Ga naar team beheer
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            {/* Integrations link */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Cable className="h-5 w-5" />
+                  Integraties
+                </CardTitle>
+                <CardDescription>
+                  Koppel externe diensten zoals Mollie, bankrekeningen en boekhoudpakketten
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link href="/settings/integrations">
+                  <Button variant="outline" className="gap-2">
+                    <Cable className="h-4 w-4" />
+                    Ga naar integraties
                   </Button>
                 </Link>
               </CardContent>
