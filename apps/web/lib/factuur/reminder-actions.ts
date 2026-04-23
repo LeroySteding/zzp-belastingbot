@@ -2,6 +2,9 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { getCompanyInfo } from '@/lib/factuur/actions';
+import { buildReminderEmail } from '@/lib/email/emails';
+import { sendEmail } from '@/lib/email/send';
+import { createNotification } from '@/lib/notifications/actions';
 
 // ============================================
 // TYPES
@@ -115,85 +118,34 @@ export async function sendReminder(invoiceId: string): Promise<{
     year: 'numeric',
   });
 
-  const subject = `Herinnering: Factuur ${invoice.invoice_number} is verlopen`;
-  const emailBody = `Beste ${(invoice.clients as any)?.name || 'klant'},
-
-Wij willen u er vriendelijk aan herinneren dat de betaling van onderstaande factuur nog niet door ons is ontvangen.
-
-Factuurgegevens:
-- Factuurnummer: ${invoice.invoice_number}
-- Factuurdatum: ${new Date(invoice.date).toLocaleDateString('nl-NL')}
-- Vervaldatum: ${dueDateFormatted}
-- Totaalbedrag: ${totalFormatted}
-- Aantal dagen verlopen: ${daysOverdue}
-
-Wij verzoeken u vriendelijk het openstaande bedrag zo spoedig mogelijk over te maken naar:
-IBAN: ${companyInfo?.iban || 'Zie factuur'}
-t.n.v. ${companyName}
-o.v.v. ${invoice.invoice_number}
-
-Mocht u de betaling reeds hebben verricht, dan kunt u deze herinnering als niet verzonden beschouwen.
-
-Bij vragen kunt u contact met ons opnemen via ${companyInfo?.email || companyInfo?.phone || 'onze contactgegevens'}.
-
-Met vriendelijke groet,
-${companyName}`;
+  // Build reminder email using the centralized template
+  const emailTemplate = buildReminderEmail({
+    clientName: (invoice.clients as any)?.name || 'klant',
+    invoiceNumber: invoice.invoice_number,
+    amount: totalFormatted,
+    dueDate: dueDateFormatted,
+    daysOverdue,
+    bankDetails: companyInfo?.iban
+      ? {
+          iban: companyInfo.iban,
+          name: companyName,
+          reference: invoice.invoice_number,
+        }
+      : undefined,
+  });
 
   try {
-    // Send via the API route (which uses Resend)
-    // We'll build the invoice object needed for PDF generation
-    const invoiceForPdf = {
-      id: invoice.id,
-      invoiceNumber: invoice.invoice_number,
-      date: invoice.date,
-      dueDate: invoice.due_date,
-      company: companyInfo || { name: '', address: '', kvk: '', btwNumber: '', iban: '' },
-      client: {
-        name: (invoice.clients as any)?.name || '',
-        address: (invoice.clients as any)?.address || '',
-        email: clientEmail,
-      },
-      items: [] as { id: string; description: string; quantity: number; unitPrice: number; btwRate: number }[],
-      status: invoice.status,
-      notes: invoice.notes,
-      template: invoice.template,
-    };
-
-    // Fetch invoice items for PDF generation
-    const { data: items } = await supabase
-      .from('invoice_items')
-      .select('id, description, quantity, unit_price, btw_rate, sort_order')
-      .eq('invoice_id', invoiceId)
-      .order('sort_order', { ascending: true });
-
-    invoiceForPdf.items = (items || []).map((item: any) => ({
-      id: item.id,
-      description: item.description,
-      quantity: Number(item.quantity),
-      unitPrice: Number(item.unit_price),
-      btwRate: item.btw_rate,
-    }));
-
-    // Use the internal API to send the reminder email
-    // We pass the data to the send-email API route
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : 'http://localhost:3000';
-
-    const response = await fetch(`${baseUrl}/api/factuur/send-email`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        invoice: invoiceForPdf,
-        recipientEmail: clientEmail,
-        subject,
-        emailBody,
-      }),
+    // Send email using the centralized sendEmail (which auto-logs to email_logs)
+    const result = await sendEmail({
+      to: clientEmail,
+      subject: emailTemplate.subject,
+      html: emailTemplate.html,
+      text: emailTemplate.text,
+      tags: [{ name: 'type', value: 'herinnering' }],
     });
 
-    if (!response.ok) {
-      const data = await response.json();
-      return { success: false, error: data.error || 'Email versturen mislukt' };
+    if (!result.success) {
+      return { success: false, error: result.error || 'Email versturen mislukt' };
     }
 
     // Update invoice reminder tracking
@@ -205,6 +157,15 @@ ${companyName}`;
       })
       .eq('id', invoiceId)
       .eq('user_id', user.id);
+
+    // Create in-app notification for overdue invoice reminder
+    await createNotification({
+      userId: user.id,
+      type: 'invoice_overdue',
+      title: 'Factuur verlopen',
+      message: `Factuur ${invoice.invoice_number} is ${daysOverdue} dagen verlopen`,
+      href: '/dashboard/invoices',
+    });
 
     return { success: true };
   } catch (err: any) {

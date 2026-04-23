@@ -34,6 +34,7 @@ import {
   Sparkles,
   TrendingUp,
   ScrollText,
+  Mail,
 } from 'lucide-react'
 import { useState } from 'react'
 import { AccountSwitcher } from '@/components/shared/account-switcher'
@@ -56,6 +57,7 @@ const navSections: NavSection[] = [
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
       { name: 'Financieel Overzicht', href: '/dashboard/financials', icon: TrendingUp },
       { name: 'AI Assistent', href: '/dashboard/assistant', icon: Sparkles },
+      { name: 'Emails', href: '/dashboard/emails', icon: Mail },
     ],
   },
   {

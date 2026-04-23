@@ -1,46 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Resend } from 'resend';
 import { renderToBuffer } from '@react-pdf/renderer';
 import React from 'react';
 import { InvoicePDF } from '@/components/factuur/InvoicePDF';
 import { Invoice } from '@/lib/factuur/types/invoice';
 import { createPaymentLink } from '@/lib/factuur/payment-actions';
-
-/**
- * Build an HTML email body. When Mollie is configured and a payment link is
- * available, a prominent "Nu Betalen" button is added below the message text.
- */
-function buildEmailHtml(
-  textBody: string,
-  paymentUrl: string | null,
-): string {
-  const escapedBody = textBody
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/\n/g, '<br/>');
-
-  const paymentBlock = paymentUrl
-    ? `
-      <div style="margin-top:24px;margin-bottom:24px;text-align:center;">
-        <a href="${paymentUrl}"
-           style="display:inline-block;padding:14px 32px;background-color:#2563eb;color:#ffffff;
-                  text-decoration:none;border-radius:8px;font-size:16px;font-weight:600;">
-          Nu Betalen
-        </a>
-        <p style="margin-top:8px;font-size:12px;color:#6b7280;">
-          Klik op de knop hierboven om deze factuur veilig online te betalen via iDEAL, creditcard of een andere methode.
-        </p>
-      </div>`
-    : '';
-
-  return `
-    <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;">
-      <p>${escapedBody}</p>
-      ${paymentBlock}
-    </div>
-  `;
-}
+import { sendEmail } from '@/lib/email/send';
+import { buildInvoiceEmail } from '@/lib/email/emails';
 
 export async function POST(request: NextRequest) {
   try {
@@ -95,39 +60,59 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Send email via Resend
-    const resend = new Resend(apiKey);
+    // Calculate total for the template
+    const total = invoice.items.reduce(
+      (sum, item) => sum + item.quantity * item.unitPrice * (1 + item.btwRate / 100),
+      0
+    );
+    const totalFormatted = new Intl.NumberFormat('nl-NL', {
+      style: 'currency',
+      currency: 'EUR',
+    }).format(total);
 
-    const fromAddress =
-      process.env.RESEND_FROM_EMAIL || 'Facturen <onboarding@resend.dev>';
+    const dueDateFormatted = new Date(invoice.dueDate).toLocaleDateString('nl-NL', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
 
-    const htmlBody = buildEmailHtml(emailBody, paymentUrl);
+    // Build HTML using the centralized invoice email template
+    const emailTemplate = buildInvoiceEmail({
+      clientName: invoice.client.name,
+      invoiceNumber: invoice.invoiceNumber,
+      amount: totalFormatted,
+      dueDate: dueDateFormatted,
+      senderName: invoice.company.name || undefined,
+      paymentUrl: paymentUrl || undefined,
+      customMessage: emailBody,
+    });
 
-    const { data, error } = await resend.emails.send({
-      from: fromAddress,
+    // Send email via centralized sendEmail (which auto-logs to email_logs)
+    const result = await sendEmail({
       to: recipientEmail,
       subject: subject,
-      text: emailBody,
-      html: htmlBody,
+      html: emailTemplate.html,
+      text: emailTemplate.text,
       attachments: [
         {
           filename: `${invoice.invoiceNumber}.pdf`,
           content: pdfBuffer,
         },
       ],
+      tags: [{ name: 'type', value: 'factuur' }],
     });
 
-    if (error) {
-      console.error('Resend error:', error);
+    if (!result.success) {
+      console.error('Send email error:', result.error);
       return NextResponse.json(
-        { error: `Email versturen mislukt: ${error.message}` },
+        { error: `Email versturen mislukt: ${result.error}` },
         { status: 500 }
       );
     }
 
     return NextResponse.json({
       success: true,
-      messageId: data?.id,
+      messageId: result.messageId,
       paymentUrl,
     });
   } catch (err: any) {
