@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Clock, Play, Pause, Square, Plus, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DEMO_DATA } from '@/lib/demo/data'
-import { useDemoToast } from '../layout'
+import { useDemoToast } from '../demo-layout-client'
 
 export default function DemoUrenPage() {
   const { showDemoToast } = useDemoToast()

@@ -1,7 +1,13 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { FileText, Clock, Receipt, Users, Check, ArrowRight, ChevronRight, Target, ScrollText, Sparkles, ScanLine, RotateCcw, Bell, CreditCard, TrendingUp, Shield, Zap, BarChart3, Building2, Landmark } from 'lucide-react'
 import LandingNav from '@/components/landing/nav'
 import StatCounters from '@/components/landing/stat-counters'
+
+export const metadata: Metadata = {
+  title: 'ZZP Platform - Facturatie, Boekhouding & Urenregistratie voor ZZP\'ers',
+  description: 'Alles-in-één platform voor ZZP\'ers: facturatie, urenregistratie, BTW aangifte, offertes, klantportaal en lead pipeline. Gratis starten vanaf €0/mnd.',
+}
 
 const testimonials = [
   { name: 'Lisa de Vries', initials: 'LV', role: 'Freelance Designer', quote: 'Sinds ik ZZP Platform gebruik, besteed ik 3 uur per week minder aan administratie. De BTW berekening is een lifesaver.' },
@@ -131,6 +137,25 @@ const faqs = [
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'ZZP Platform',
+            applicationCategory: 'BusinessApplication',
+            operatingSystem: 'Web',
+            offers: [
+              { '@type': 'Offer', price: '0', priceCurrency: 'EUR', name: 'Gratis' },
+              { '@type': 'Offer', price: '19', priceCurrency: 'EUR', name: 'Pro', billingIncrement: 'P1M' },
+              { '@type': 'Offer', price: '39', priceCurrency: 'EUR', name: 'Business', billingIncrement: 'P1M' },
+            ],
+            description: 'Alles-in-één platform voor ZZP\'ers: facturatie, urenregistratie, BTW aangifte, offertes en meer.',
+            aggregateRating: { '@type': 'AggregateRating', ratingValue: '4.8', reviewCount: '124' },
+          }),
+        }}
+      />
       {/* Nav */}
       <LandingNav />
 

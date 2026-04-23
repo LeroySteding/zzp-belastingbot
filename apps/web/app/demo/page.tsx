@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { DEMO_DATA } from '@/lib/demo/data'
-import { useDemoToast } from './layout'
+import { useDemoToast } from './demo-layout-client'
 
 function StatCard({ title, value, subtitle, icon: Icon, color, onClick }: {
   title: string

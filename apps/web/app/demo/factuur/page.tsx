@@ -5,7 +5,7 @@ import { FileText, Plus, Download, Send, MoreHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
 import { DEMO_DATA } from '@/lib/demo/data'
-import { useDemoToast } from '../layout'
+import { useDemoToast } from '../demo-layout-client'
 
 export default function DemoFactuurPage() {
   const { showDemoToast } = useDemoToast()
