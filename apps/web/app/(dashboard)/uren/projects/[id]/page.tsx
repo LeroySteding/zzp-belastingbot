@@ -46,7 +46,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     );
@@ -54,7 +54,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
   if (!project) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-muted/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <p>Project niet gevonden</p>
         </div>
@@ -65,7 +65,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const isOverBudget = stats && stats.budgetPercentage > 100;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/50">
 
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -81,10 +81,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <div className={`w-4 h-4 rounded-full ${project.color}`} />
-                <h1 className="text-3xl font-bold text-gray-900">{project.name}</h1>
+                <h1 className="text-3xl font-bold text-foreground">{project.name}</h1>
               </div>
-              <p className="text-gray-600">Klant: {client?.name || project.clientName}</p>
-              <p className="text-sm text-gray-500">{client?.email}</p>
+              <p className="text-muted-foreground">Klant: {client?.name || project.clientName}</p>
+              <p className="text-sm text-muted-foreground">{client?.email}</p>
             </div>
 
             {isOverBudget && (
@@ -100,13 +100,13 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         <div className="grid md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600">Totaal Uren</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Totaal Uren</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
                 {Math.round((stats?.totalHours || 0) * 10) / 10}h
               </div>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 van {project.budgetHours}h budget
               </p>
             </CardContent>
@@ -114,13 +114,13 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600">Omzet</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Omzet</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
                 {'\u20AC'}{Math.round(stats?.revenue || 0)}
               </div>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 @ {'\u20AC'}{project.hourlyRate}/uur
               </p>
             </CardContent>
@@ -128,7 +128,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600">Budget Gebruik</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Budget Gebruik</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
@@ -143,11 +143,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600">Registraties</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Registraties</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{entries.length}</div>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 tijd entries
               </p>
             </CardContent>
@@ -163,25 +163,25 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
           <CardContent>
             <div className="space-y-3">
               {entries.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">
+                <p className="text-muted-foreground text-center py-8">
                   Nog geen uren geregistreerd op dit project
                 </p>
               ) : (
                 entries.map((entry) => (
                   <div key={entry.id} className="flex items-center justify-between border-b pb-3 last:border-0">
                     <div className="flex-1">
-                      <p className="font-medium text-gray-900">{entry.description}</p>
-                      <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
+                      <p className="font-medium text-foreground">{entry.description}</p>
+                      <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
                         <span>{format(new Date(entry.date), 'EEEE d MMMM yyyy', { locale: nl })}</span>
                         <span>•</span>
                         <span>{entry.startTime} - {entry.endTime}</span>
                       </div>
                     </div>
                     <div className="text-right ml-4">
-                      <div className="font-bold text-gray-900">
+                      <div className="font-bold text-foreground">
                         {Math.round(entry.duration / 60 * 10) / 10}h
                       </div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-muted-foreground">
                         {'\u20AC'}{Math.round((entry.duration / 60) * project.hourlyRate)}
                       </div>
                     </div>
@@ -200,19 +200,19 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-gray-600">Uurtarief:</span>
+                <span className="text-muted-foreground">Uurtarief:</span>
                 <span className="font-medium">{'\u20AC'}{project.hourlyRate}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Budget (uren):</span>
+                <span className="text-muted-foreground">Budget (uren):</span>
                 <span className="font-medium">{project.budgetHours}h</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Budget (euro):</span>
+                <span className="text-muted-foreground">Budget (euro):</span>
                 <span className="font-medium">{'\u20AC'}{project.budgetHours * project.hourlyRate}</span>
               </div>
               <div className="flex justify-between border-t pt-3">
-                <span className="text-gray-600">Resterende uren:</span>
+                <span className="text-muted-foreground">Resterende uren:</span>
                 <span className={`font-medium ${isOverBudget ? 'text-red-600' : 'text-green-600'}`}>
                   {Math.round((project.budgetHours - (stats?.totalHours || 0)) * 10) / 10}h
                 </span>
@@ -226,11 +226,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-gray-600">Naam:</span>
+                <span className="text-muted-foreground">Naam:</span>
                 <span className="font-medium">{client?.name || project.clientName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Email:</span>
+                <span className="text-muted-foreground">Email:</span>
                 <span className="font-medium">{client?.email}</span>
               </div>
             </CardContent>

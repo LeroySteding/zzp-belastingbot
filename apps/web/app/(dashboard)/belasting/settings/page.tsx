@@ -92,8 +92,8 @@ export default function SettingsPage() {
 
       <div className="max-w-2xl mx-auto space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Instellingen</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-foreground">Instellingen</h1>
+          <p className="text-muted-foreground mt-2">
             Beheer je bedrijfsprofiel en instellingen
           </p>
         </div>
@@ -135,7 +135,7 @@ export default function SettingsPage() {
                 {errors.btw_number && (
                   <p className="text-sm text-red-600">{errors.btw_number.message}</p>
                 )}
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   Formaat: NL123456789B01
                 </p>
               </div>
@@ -150,7 +150,7 @@ export default function SettingsPage() {
                 {errors.kvk_number && (
                   <p className="text-sm text-red-600">{errors.kvk_number.message}</p>
                 )}
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   8 cijfers
                 </p>
               </div>
@@ -165,7 +165,7 @@ export default function SettingsPage() {
                 {errors.iban && (
                   <p className="text-sm text-red-600">{errors.iban.message}</p>
                 )}
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   Voor automatische incasso belastingdienst
                 </p>
               </div>
@@ -200,7 +200,7 @@ export default function SettingsPage() {
                   <Label htmlFor="kor-enabled" className="text-base">
                     KOR ingeschakeld
                   </Label>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     Schakel de KOR-modus in als je jaaromzet onder €20.000 blijft
                   </p>
                 </div>
@@ -247,7 +247,7 @@ export default function SettingsPage() {
             <div className="space-y-4">
               <div>
                 <Label>E-mailadres</Label>
-                <p className="text-sm text-gray-600 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   gebruiker@voorbeeld.nl
                 </p>
               </div>

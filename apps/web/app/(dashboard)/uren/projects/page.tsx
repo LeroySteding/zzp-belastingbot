@@ -85,7 +85,7 @@ export default function ProjectsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-muted/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-8">
             <Skeleton className="h-9 w-48" />
@@ -98,14 +98,14 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/50">
 
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6 md:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Projecten</h1>
-            <p className="text-gray-600 mt-2">Beheer je projecten en budgetten</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Projecten</h1>
+            <p className="text-muted-foreground mt-2">Beheer je projecten en budgetten</p>
           </div>
 
           <div className="flex gap-2 sm:gap-3 items-center flex-wrap">
@@ -238,7 +238,7 @@ export default function ProjectsPage() {
                         {/* Progress Bar */}
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Budget gebruik</span>
+                            <span className="text-muted-foreground">Budget gebruik</span>
                             <span className="font-medium">
                               {Math.round(stats.budgetPercentage)}%
                             </span>
@@ -247,7 +247,7 @@ export default function ProjectsPage() {
                             value={Math.min(stats.budgetPercentage, 100)}
                             className={isOverBudget ? "bg-red-100" : ""}
                           />
-                          <div className="flex justify-between text-xs text-gray-600">
+                          <div className="flex justify-between text-xs text-muted-foreground">
                             <span>{Math.round(stats.totalHours * 10) / 10}h gebruikt</span>
                             <span>{project.budgetHours}h budget</span>
                           </div>
@@ -256,7 +256,7 @@ export default function ProjectsPage() {
                         {/* Stats */}
                         <div className="grid grid-cols-3 gap-3 pt-3 border-t">
                           <div>
-                            <div className="flex items-center gap-1 text-gray-600 text-xs mb-1">
+                            <div className="flex items-center gap-1 text-muted-foreground text-xs mb-1">
                               <Clock className="h-3 w-3" />
                               Uren
                             </div>
@@ -265,7 +265,7 @@ export default function ProjectsPage() {
                             </div>
                           </div>
                           <div>
-                            <div className="flex items-center gap-1 text-gray-600 text-xs mb-1">
+                            <div className="flex items-center gap-1 text-muted-foreground text-xs mb-1">
                               <Euro className="h-3 w-3" />
                               Omzet
                             </div>
@@ -274,7 +274,7 @@ export default function ProjectsPage() {
                             </div>
                           </div>
                           <div>
-                            <div className="flex items-center gap-1 text-gray-600 text-xs mb-1">
+                            <div className="flex items-center gap-1 text-muted-foreground text-xs mb-1">
                               <TrendingUp className="h-3 w-3" />
                               Entries
                             </div>
@@ -285,8 +285,8 @@ export default function ProjectsPage() {
                         </div>
 
                         {/* Rate */}
-                        <div className="text-sm text-gray-600 pt-3 border-t">
-                          Uurtarief: <span className="font-medium text-gray-900">{'\u20AC'}{project.hourlyRate}</span>
+                        <div className="text-sm text-muted-foreground pt-3 border-t">
+                          Uurtarief: <span className="font-medium text-foreground">{'\u20AC'}{project.hourlyRate}</span>
                         </div>
                       </div>
                     )}
@@ -302,7 +302,7 @@ export default function ProjectsPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mt-6 md:mt-8">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600">Totaal Projecten</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Totaal Projecten</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{projectsData.length}</div>
@@ -311,7 +311,7 @@ export default function ProjectsPage() {
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600">Totaal Uren</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Totaal Uren</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
@@ -324,7 +324,7 @@ export default function ProjectsPage() {
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600">Totaal Omzet</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Totaal Omzet</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">
@@ -337,7 +337,7 @@ export default function ProjectsPage() {
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-gray-600">Gem. Uurtarief</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Gem. Uurtarief</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">

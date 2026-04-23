@@ -183,7 +183,7 @@ export default function IntegrationsPage() {
         );
       case 'ignored':
         return (
-          <Badge className="bg-gray-100 text-gray-600">
+          <Badge className="bg-muted text-muted-foreground">
             <XCircle className="h-3 w-3 mr-1" />
             Genegeerd
           </Badge>
@@ -197,26 +197,26 @@ export default function IntegrationsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center">
         <div className="flex items-center gap-2">
           <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-          <span className="text-gray-600">Integraties laden...</span>
+          <span className="text-muted-foreground">Integraties laden...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/50">
       {/* Header */}
-      <header className="bg-white border-b">
+      <header className="bg-card border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <Link href="/factuur" className="flex items-center gap-2">
               <FileText className="h-6 w-6 text-blue-600" />
               <span className="font-bold text-lg">ZZP Factuur</span>
             </Link>
-            <span className="text-gray-300">|</span>
+            <span className="text-border">|</span>
             <h1 className="text-2xl font-bold">Integraties</h1>
           </div>
           <div className="flex gap-3 flex-wrap">
@@ -255,15 +255,15 @@ export default function IntegrationsPage() {
           <CardContent>
             {!configured ? (
               <div className="space-y-4">
-                <p className="text-gray-600">
-                  Om Mollie te koppelen moet je de <code className="bg-gray-100 px-2 py-0.5 rounded text-sm">MOLLIE_API_KEY</code>{' '}
+                <p className="text-muted-foreground">
+                  Om Mollie te koppelen moet je de <code className="bg-muted px-2 py-0.5 rounded text-sm">MOLLIE_API_KEY</code>{' '}
                   environment variable instellen op je server.
                 </p>
-                <div className="bg-gray-50 border rounded-lg p-4">
-                  <p className="text-sm font-medium text-gray-700 mb-2">
+                <div className="bg-muted/50 border rounded-lg p-4">
+                  <p className="text-sm font-medium text-foreground mb-2">
                     Stappen om te verbinden:
                   </p>
-                  <ol className="text-sm text-gray-600 space-y-1 list-decimal list-inside">
+                  <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
                     <li>
                       Log in op je{' '}
                       <a
@@ -280,8 +280,8 @@ export default function IntegrationsPage() {
                     </li>
                     <li>Kopieer je Live of Test API key</li>
                     <li>
-                      Voeg de key toe als <code className="bg-gray-100 px-1 py-0.5 rounded">MOLLIE_API_KEY</code> in
-                      je <code className="bg-gray-100 px-1 py-0.5 rounded">.env.local</code> bestand
+                      Voeg de key toe als <code className="bg-muted px-1 py-0.5 rounded">MOLLIE_API_KEY</code> in
+                      je <code className="bg-muted px-1 py-0.5 rounded">.env.local</code> bestand
                     </li>
                     <li>Herstart de applicatie</li>
                   </ol>
@@ -300,12 +300,12 @@ export default function IntegrationsPage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-gray-600">
+                    <p className="text-muted-foreground">
                       Mollie is verbonden. Klik op &quot;Synchroniseer&quot; om recente betalingen
                       op te halen en automatisch te matchen met openstaande facturen.
                     </p>
                     {lastSyncTime && (
-                      <p className="text-sm text-gray-500 mt-1">
+                      <p className="text-sm text-muted-foreground mt-1">
                         Laatste synchronisatie: {lastSyncTime}
                       </p>
                     )}
@@ -343,7 +343,7 @@ export default function IntegrationsPage() {
           <div className="grid md:grid-cols-4 gap-6 mb-8">
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
                   Totaal betalingen
                 </CardTitle>
               </CardHeader>
@@ -353,7 +353,7 @@ export default function IntegrationsPage() {
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-1">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1">
                   <CheckCircle className="h-4 w-4 text-green-600" />
                   Gematcht
                 </CardTitle>
@@ -364,7 +364,7 @@ export default function IntegrationsPage() {
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-1">
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1">
                   <AlertCircle className="h-4 w-4 text-yellow-600" />
                   Niet gematcht
                 </CardTitle>
@@ -375,13 +375,13 @@ export default function IntegrationsPage() {
             </Card>
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-1">
-                  <XCircle className="h-4 w-4 text-gray-500" />
+                <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-1">
+                  <XCircle className="h-4 w-4 text-muted-foreground" />
                   Genegeerd
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold text-gray-500">{stats.ignored}</div>
+                <div className="text-3xl font-bold text-muted-foreground">{stats.ignored}</div>
               </CardContent>
             </Card>
           </div>
@@ -421,7 +421,7 @@ export default function IntegrationsPage() {
                           {match.description || '-'}
                         </div>
                         {match.external_id && (
-                          <div className="text-xs text-gray-400 mt-0.5">
+                          <div className="text-xs text-muted-foreground mt-0.5">
                             {match.external_id}
                           </div>
                         )}
@@ -465,7 +465,7 @@ export default function IntegrationsPage() {
                             </SelectContent>
                           </Select>
                         ) : (
-                          <span className="text-sm text-gray-400">-</span>
+                          <span className="text-sm text-muted-foreground">-</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
@@ -474,7 +474,7 @@ export default function IntegrationsPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleIgnore(match.id)}
-                            className="text-gray-500 hover:text-gray-700"
+                            className="text-muted-foreground hover:text-foreground"
                           >
                             Negeer
                           </Button>
@@ -492,8 +492,8 @@ export default function IntegrationsPage() {
         {configured && matches.length === 0 && !loading && (
           <Card>
             <CardContent className="py-12">
-              <div className="text-center text-gray-500">
-                <RefreshCw className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <div className="text-center text-muted-foreground">
+                <RefreshCw className="h-12 w-12 mx-auto mb-4 text-border" />
                 <p className="text-lg font-medium mb-2">Nog geen betalingen gesynchroniseerd</p>
                 <p className="text-sm mb-4">
                   Klik op &quot;Synchroniseer betalingen&quot; om je Mollie betalingen op te halen.

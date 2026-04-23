@@ -36,9 +36,12 @@ import {
   ScrollText,
   Mail,
   Cable,
+  RotateCcw,
+  Calculator,
 } from 'lucide-react'
 import { useState } from 'react'
 import { AccountSwitcher } from '@/components/shared/account-switcher'
+import { ThemeToggle } from '@/components/theme/theme-toggle'
 
 interface NavSection {
   title: string
@@ -70,6 +73,7 @@ const navSections: NavSection[] = [
       { name: 'Offertes', href: '/factuur/offertes', icon: FileCheck },
       { name: 'Herinneringen', href: '/factuur/reminders', icon: Bell },
       { name: 'Klanten', href: '/factuur/clients', icon: Users },
+      { name: 'Terugkerend', href: '/factuur/recurring', icon: RotateCcw },
       { name: 'Rapportages', href: '/factuur/reports', icon: FileBarChart },
     ],
   },
@@ -91,6 +95,7 @@ const navSections: NavSection[] = [
       { name: 'Importeren', href: '/belasting/import', icon: Upload },
       { name: 'Categorieën', href: '/belasting/categories', icon: Tag },
       { name: 'BTW Rapporten', href: '/belasting/reports', icon: FileText },
+      { name: 'BTW Aangifte', href: '/belasting/btw', icon: Calculator },
     ],
   },
   {
@@ -249,13 +254,16 @@ export function Sidebar() {
               <Settings className="h-4 w-4" aria-hidden="true" />
               <span>Instellingen</span>
             </Link>
-            <button
-              className="sidebar-nav-item text-sm w-full"
-              onClick={handleLogout}
-            >
-              <LogOut className="h-4 w-4" aria-hidden="true" />
-              <span>Uitloggen</span>
-            </button>
+            <div className="flex items-center justify-between mb-1">
+              <button
+                className="sidebar-nav-item text-sm flex-1"
+                onClick={handleLogout}
+              >
+                <LogOut className="h-4 w-4" aria-hidden="true" />
+                <span>Uitloggen</span>
+              </button>
+              <ThemeToggle />
+            </div>
           </div>
         </div>
       </aside>

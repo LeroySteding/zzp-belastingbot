@@ -53,7 +53,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
   }
@@ -123,8 +123,8 @@ export default function DashboardPage() {
 
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground mt-2">
             Overzicht van Q{currentQuarter} {currentYear}
           </p>
         </div>
@@ -143,16 +143,16 @@ export default function DashboardPage() {
                 <CardTitle className="text-sm font-medium">
                   Verwachte kosten volgende maand
                 </CardTitle>
-                <CalendarClock className="h-4 w-4 text-gray-600" />
+                <CalendarClock className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-orange-600">
+                <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                   € {nextMonthForecast.toFixed(2)}
                 </div>
-                <p className="text-xs text-gray-600 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {recurringExpenses.filter(e => e.recurring_frequency === 'monthly').length} terugkerende uitgaven
                 </p>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-muted-foreground mt-2">
                   Gebaseerd op maandelijkse abonnementen
                 </p>
               </CardContent>
@@ -167,11 +167,11 @@ export default function DashboardPage() {
               <CardTitle className="text-sm font-medium">
                 Totaal uitgaven dit kwartaal
               </CardTitle>
-              <Receipt className="h-4 w-4 text-gray-600" />
+              <Receipt className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">€ {summary.totalExcl}</div>
-              <p className="text-xs text-gray-600 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 excl. BTW
               </p>
             </CardContent>
@@ -182,11 +182,11 @@ export default function DashboardPage() {
               <CardTitle className="text-sm font-medium">
                 BTW te betalen
               </CardTitle>
-              <Euro className="h-4 w-4 text-gray-600" />
+              <Euro className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">€ {summary.totalBTW}</div>
-              <p className="text-xs text-gray-600 mt-1">
+              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">€ {summary.totalBTW}</div>
+              <p className="text-xs text-muted-foreground mt-1">
                 Dit kwartaal
               </p>
             </CardContent>
@@ -197,11 +197,11 @@ export default function DashboardPage() {
               <CardTitle className="text-sm font-medium">
                 Aantal boekingen
               </CardTitle>
-              <FileText className="h-4 w-4 text-gray-600" />
+              <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{summary.count}</div>
-              <p className="text-xs text-gray-600 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Dit kwartaal
               </p>
             </CardContent>
@@ -223,7 +223,7 @@ export default function DashboardPage() {
                       cx="96"
                       cy="96"
                       r="88"
-                      stroke="#e5e7eb"
+                      className="stroke-muted"
                       strokeWidth="12"
                       fill="none"
                     />
@@ -240,15 +240,15 @@ export default function DashboardPage() {
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <div className="text-3xl font-bold text-gray-900">€ {btwAmount.toFixed(0)}</div>
-                    <div className="text-sm text-gray-600 mt-1">{Math.round(btwPercentage)}% van doel</div>
+                    <div className="text-3xl font-bold text-foreground">€ {btwAmount.toFixed(0)}</div>
+                    <div className="text-sm text-muted-foreground mt-1">{Math.round(btwPercentage)}% van doel</div>
                   </div>
                 </div>
                 <div className="text-center mt-4">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Streefbedrag: € {btwTarget.toFixed(0)}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {btwAmount > btwTarget
                       ? 'Doel bereikt!'
                       : `Nog € ${(btwTarget - btwAmount).toFixed(2)} te gaan`}
@@ -287,7 +287,7 @@ export default function DashboardPage() {
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="flex items-center justify-center h-64 text-gray-500">
+                <div className="flex items-center justify-center h-64 text-muted-foreground">
                   Nog geen uitgaven dit kwartaal
                 </div>
               )}
@@ -334,19 +334,19 @@ export default function DashboardPage() {
           <CardContent>
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Aantal uitgaven:</span>
+                <span className="text-muted-foreground">Aantal uitgaven:</span>
                 <span className="font-medium">{summary.count}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Totaal excl. BTW:</span>
+                <span className="text-muted-foreground">Totaal excl. BTW:</span>
                 <span className="font-medium">€ {summary.totalExcl}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">BTW bedrag:</span>
-                <span className="font-medium text-blue-600">€ {summary.totalBTW}</span>
+                <span className="text-muted-foreground">BTW bedrag:</span>
+                <span className="font-medium text-blue-600 dark:text-blue-400">€ {summary.totalBTW}</span>
               </div>
               <div className="flex justify-between text-sm border-t pt-3">
-                <span className="text-gray-900 font-medium">Totaal incl. BTW:</span>
+                <span className="text-foreground font-medium">Totaal incl. BTW:</span>
                 <span className="font-bold text-lg">€ {summary.totalIncl}</span>
               </div>
             </div>

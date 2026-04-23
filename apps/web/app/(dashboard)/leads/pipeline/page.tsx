@@ -16,7 +16,7 @@ import { getLeadsByStage, updateLeadStage } from '@/lib/leads/actions';
 import type { Lead } from '@/lib/leads/actions';
 
 const STAGES = [
-  { key: 'nieuw', label: 'Nieuw', color: 'border-gray-300', headerBg: 'bg-gray-50', badge: 'bg-gray-100 text-gray-700' },
+  { key: 'nieuw', label: 'Nieuw', color: 'border-border', headerBg: 'bg-muted/50', badge: 'bg-muted text-foreground' },
   { key: 'gecontacteerd', label: 'Gecontacteerd', color: 'border-blue-300', headerBg: 'bg-blue-50', badge: 'bg-blue-100 text-blue-700' },
   { key: 'geinteresseerd', label: 'Ge\u00EFnteresseerd', color: 'border-yellow-300', headerBg: 'bg-yellow-50', badge: 'bg-yellow-100 text-yellow-700' },
   { key: 'offerte', label: 'Offerte', color: 'border-purple-300', headerBg: 'bg-purple-50', badge: 'bg-purple-100 text-purple-700' },

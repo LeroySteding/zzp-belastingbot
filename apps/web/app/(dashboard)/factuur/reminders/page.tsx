@@ -103,9 +103,9 @@ export default function RemindersPage() {
   const totalOverdue = overdueInvoices.reduce((sum, inv) => sum + inv.total, 0);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/50">
       {/* Header */}
-      <header className="bg-white border-b">
+      <header className="bg-card border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" asChild aria-label="Terug naar facturatie">
@@ -170,31 +170,31 @@ export default function RemindersPage() {
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-orange-600" />
                 Verlopen Facturen
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-orange-600">{overdueInvoices.length}</div>
-              <p className="text-sm text-gray-600 mt-1">onbetaalde facturen na vervaldatum</p>
+              <p className="text-sm text-muted-foreground mt-1">onbetaalde facturen na vervaldatum</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <FileText className="h-4 w-4" />
                 Totaal Openstaand
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-red-600">{formatCurrency(totalOverdue)}</div>
-              <p className="text-sm text-gray-600 mt-1">te ontvangen bedrag</p>
+              <p className="text-sm text-muted-foreground mt-1">te ontvangen bedrag</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Mail className="h-4 w-4" />
                 Herinneringen Verstuurd
               </CardTitle>
@@ -203,7 +203,7 @@ export default function RemindersPage() {
               <div className="text-3xl font-bold">
                 {history.reduce((sum, h) => sum + h.reminderCount, 0)}
               </div>
-              <p className="text-sm text-gray-600 mt-1">totaal verstuurd</p>
+              <p className="text-sm text-muted-foreground mt-1">totaal verstuurd</p>
             </CardContent>
           </Card>
         </div>
@@ -235,11 +235,11 @@ export default function RemindersPage() {
             <CardContent>
               {loading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-                  <span className="ml-2 text-gray-500">Facturen laden...</span>
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <span className="ml-2 text-muted-foreground">Facturen laden...</span>
                 </div>
               ) : overdueInvoices.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-12 text-muted-foreground">
                   <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-green-400" />
                   <p className="text-lg font-medium">Geen verlopen facturen!</p>
                   <p className="text-sm mt-1">Alle facturen zijn op tijd betaald.</p>
@@ -265,7 +265,7 @@ export default function RemindersPage() {
                           <div>
                             <div>{invoice.clientName}</div>
                             {invoice.clientEmail && (
-                              <div className="text-xs text-gray-500">{invoice.clientEmail}</div>
+                              <div className="text-xs text-muted-foreground">{invoice.clientEmail}</div>
                             )}
                           </div>
                         </TableCell>
@@ -282,12 +282,12 @@ export default function RemindersPage() {
                           {invoice.lastReminderSentAt ? (
                             <div className="text-sm">
                               <div>{formatDate(invoice.lastReminderSentAt)}</div>
-                              <div className="text-xs text-gray-500">
+                              <div className="text-xs text-muted-foreground">
                                 {invoice.reminderCount}x verstuurd
                               </div>
                             </div>
                           ) : (
-                            <span className="text-sm text-gray-400">Nog niet verstuurd</span>
+                            <span className="text-sm text-muted-foreground">Nog niet verstuurd</span>
                           )}
                         </TableCell>
                         <TableCell className="text-right">
@@ -323,12 +323,12 @@ export default function RemindersPage() {
             <CardContent>
               {loading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-                  <span className="ml-2 text-gray-500">Laden...</span>
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <span className="ml-2 text-muted-foreground">Laden...</span>
                 </div>
               ) : history.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <Mail className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                <div className="text-center py-12 text-muted-foreground">
+                  <Mail className="h-12 w-12 mx-auto mb-4 text-border" />
                   <p className="text-lg font-medium">Geen herinneringen verstuurd</p>
                   <p className="text-sm mt-1">Zodra je herinneringen verstuurt verschijnen ze hier.</p>
                 </div>

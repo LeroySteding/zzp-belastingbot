@@ -188,19 +188,19 @@ export default function NewOffertePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-muted/50 flex items-center justify-center">
         <div className="flex items-center gap-2">
           <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-          <span className="text-gray-600">Offerte voorbereiden...</span>
+          <span className="text-muted-foreground">Offerte voorbereiden...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/50">
       {/* Header */}
-      <header className="bg-white border-b">
+      <header className="bg-card border-b">
         <div className="container mx-auto px-4 py-4 flex flex-wrap justify-between items-center gap-2">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" asChild aria-label="Terug naar offertes">
@@ -410,7 +410,7 @@ export default function NewOffertePage() {
                       <SelectItem value="minimal">Minimaal</SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-gray-500 mt-1">{templateDescriptions[template]}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{templateDescriptions[template]}</p>
                 </div>
               </CardContent>
             </Card>
@@ -430,7 +430,7 @@ export default function NewOffertePage() {
                 {items.map((item, index) => (
                   <div key={item.id} className="border rounded-lg p-4 space-y-3">
                     <div className="flex justify-between items-start">
-                      <span className="text-sm font-medium text-gray-500">Regel {index + 1}</span>
+                      <span className="text-sm font-medium text-muted-foreground">Regel {index + 1}</span>
                       {items.length > 1 && (
                         <Button
                           variant="ghost"
@@ -491,7 +491,7 @@ export default function NewOffertePage() {
                       </div>
                     </div>
                     <div className="text-right text-sm">
-                      <span className="text-gray-600">Totaal: </span>
+                      <span className="text-muted-foreground">Totaal: </span>
                       <span className="font-semibold">
                         {formatCurrency(item.quantity * item.unitPrice)}
                       </span>
@@ -502,18 +502,18 @@ export default function NewOffertePage() {
                 {/* Totals */}
                 <div className="border-t pt-4 space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Subtotaal</span>
+                    <span className="text-muted-foreground">Subtotaal</span>
                     <span className="font-medium">{formatCurrency(calculation.subtotal)}</span>
                   </div>
                   {calculation.btw21 > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">BTW 21%</span>
+                      <span className="text-muted-foreground">BTW 21%</span>
                       <span className="font-medium">{formatCurrency(calculation.btw21)}</span>
                     </div>
                   )}
                   {calculation.btw9 > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">BTW 9%</span>
+                      <span className="text-muted-foreground">BTW 9%</span>
                       <span className="font-medium">{formatCurrency(calculation.btw9)}</span>
                     </div>
                   )}

@@ -33,7 +33,7 @@ export function KORBanner({ korStatus, onDismiss }: KORBannerProps) {
 
   return (
     <>
-      <Alert className="bg-blue-50 border-blue-200">
+      <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800">
         <Info className="h-4 w-4 text-blue-600" />
         <AlertTitle className="text-blue-900 flex items-center justify-between">
           <span>Je komt mogelijk in aanmerking voor de KOR!</span>
@@ -53,7 +53,7 @@ export function KORBanner({ korStatus, onDismiss }: KORBannerProps) {
               variant="outline"
               size="sm"
               onClick={() => setShowModal(true)}
-              className="bg-white hover:bg-blue-50"
+              className="bg-card hover:bg-blue-50 dark:hover:bg-blue-900/30"
             >
               Meer informatie
             </Button>
@@ -72,23 +72,23 @@ export function KORBanner({ korStatus, onDismiss }: KORBannerProps) {
           
           <div className="space-y-6">
             {/* Status */}
-            <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="bg-muted/50 p-4 rounded-lg">
               <h3 className="font-semibold mb-2">Jouw situatie</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Geschatte jaaromzet:</span>
+                  <span className="text-muted-foreground">Geschatte jaaromzet:</span>
                   <span className="font-medium">€ {korStatus.currentRevenue.toLocaleString('nl-NL')}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">KOR-grens:</span>
+                  <span className="text-muted-foreground">KOR-grens:</span>
                   <span className="font-medium">€ {korStatus.threshold.toLocaleString('nl-NL')}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Ruimte tot grens:</span>
-                  <span className="font-medium text-green-600">€ {korStatus.remainingCapacity.toLocaleString('nl-NL')}</span>
+                  <span className="text-muted-foreground">Ruimte tot grens:</span>
+                  <span className="font-medium text-green-600 dark:text-green-400">€ {korStatus.remainingCapacity.toLocaleString('nl-NL')}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Percentage gebruikt:</span>
+                  <span className="text-muted-foreground">Percentage gebruikt:</span>
                   <span className="font-medium">{korStatus.percentageUsed}%</span>
                 </div>
               </div>
@@ -99,7 +99,7 @@ export function KORBanner({ korStatus, onDismiss }: KORBannerProps) {
               <h3 className="font-semibold mb-2">Voordelen van de KOR</h3>
               <ul className="space-y-1 text-sm">
                 {getKORBenefits().map((benefit, idx) => (
-                  <li key={idx} className="text-gray-700">{benefit}</li>
+                  <li key={idx} className="text-foreground/80">{benefit}</li>
                 ))}
               </ul>
             </div>
@@ -107,7 +107,7 @@ export function KORBanner({ korStatus, onDismiss }: KORBannerProps) {
             {/* Requirements */}
             <div>
               <h3 className="font-semibold mb-2">Voorwaarden</h3>
-              <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
+              <ul className="list-disc list-inside space-y-1 text-sm text-foreground/80">
                 {getKORRequirements().map((req, idx) => (
                   <li key={idx}>{req}</li>
                 ))}
@@ -115,8 +115,8 @@ export function KORBanner({ korStatus, onDismiss }: KORBannerProps) {
             </div>
 
             {/* Warning */}
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <p className="text-sm text-yellow-900">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 dark:bg-yellow-900/20 dark:border-yellow-800">
+              <p className="text-sm text-yellow-900 dark:text-yellow-200">
                 <strong>Let op:</strong> Dit is een inschatting op basis van je uitgaven. 
                 Raadpleeg altijd een belastingadviseur voordat je de KOR aanvraagt.
                 De schatting is gebaseerd op de aanname dat je omzet ongeveer 1,5x je uitgaven is.

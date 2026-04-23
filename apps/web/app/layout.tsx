@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
+import { ThemeProvider } from '@/components/theme/theme-provider'
+import { ServiceWorkerRegister } from '@/components/pwa/service-worker-register'
 import './globals.css'
 
 const inter = Inter({
@@ -23,6 +25,12 @@ export const metadata: Metadata = {
   keywords: ['ZZP', 'facturatie', 'boekhouding', 'urenregistratie', 'BTW aangifte', 'ZZP administratie', 'freelancer', 'factuur maken', 'offerte maken', 'klantportaal', 'Nederland'],
   authors: [{ name: 'ZZP Platform' }],
   creator: 'ZZP Platform',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'ZZP Platform',
+  },
   metadataBase: new URL('https://zzpplatform.nl'),
   openGraph: {
     type: 'website',
@@ -69,14 +77,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="nl" suppressHydrationWarning className={inter.className}>
+      <head>
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.svg" />
+      </head>
       <body className="min-h-screen bg-background antialiased">
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-background focus:text-foreground"
-        >
-          Ga naar hoofdinhoud
-        </a>
-        {children}
+        <ThemeProvider>
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-background focus:text-foreground"
+          >
+            Ga naar hoofdinhoud
+          </a>
+          {children}
+          <ServiceWorkerRegister />
+        </ThemeProvider>
       </body>
     </html>
   )

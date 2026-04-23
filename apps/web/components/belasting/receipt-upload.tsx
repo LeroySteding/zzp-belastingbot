@@ -58,7 +58,7 @@ export function ReceiptUpload({ onUpload, onClear, currentReceipt, loading }: Re
           {...getRootProps()}
           className={`
             border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
-            ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'}
+            ${isDragActive ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-border hover:border-muted-foreground'}
             ${loading ? 'opacity-50 cursor-not-allowed' : ''}
           `}
         >
@@ -66,22 +66,22 @@ export function ReceiptUpload({ onUpload, onClear, currentReceipt, loading }: Re
           <div className="flex flex-col items-center gap-2">
             {loading ? (
               <>
-                <Loader2 className="h-10 w-10 text-gray-400 animate-spin" />
-                <p className="text-sm text-gray-600">Verwerken...</p>
+                <Loader2 className="h-10 w-10 text-muted-foreground animate-spin" />
+                <p className="text-sm text-muted-foreground">Verwerken...</p>
               </>
             ) : (
               <>
-                <Upload className="h-10 w-10 text-gray-400" />
-                <p className="text-sm font-medium text-gray-700">
+                <Upload className="h-10 w-10 text-muted-foreground" />
+                <p className="text-sm font-medium text-foreground">
                   {isDragActive ? 'Laat de bon hier los...' : 'Sleep een bon hierheen of klik om te uploaden'}
                 </p>
-                <p className="text-xs text-gray-500">JPG, PNG of PDF (max 10MB)</p>
+                <p className="text-xs text-muted-foreground">JPG, PNG of PDF (max 10MB)</p>
               </>
             )}
           </div>
         </div>
       ) : (
-        <div className="relative border-2 border-gray-200 rounded-lg p-4">
+        <div className="relative border-2 border-border rounded-lg p-4">
           <Button
             type="button"
             variant="ghost"
@@ -96,8 +96,8 @@ export function ReceiptUpload({ onUpload, onClear, currentReceipt, loading }: Re
 
           <div className="flex items-center gap-4">
             {isPDF ? (
-              <div className="flex-shrink-0 w-24 h-24 bg-gray-100 rounded flex items-center justify-center">
-                <FileText className="h-12 w-12 text-gray-400" />
+              <div className="flex-shrink-0 w-24 h-24 bg-muted rounded flex items-center justify-center">
+                <FileText className="h-12 w-12 text-muted-foreground" />
               </div>
             ) : (
               <img
@@ -107,10 +107,10 @@ export function ReceiptUpload({ onUpload, onClear, currentReceipt, loading }: Re
               />
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-sm font-medium text-foreground">
                 {isPDF ? 'PDF Bon' : 'Afbeelding'}
               </p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Klik op het kruisje om een andere bon te uploaden
               </p>
             </div>

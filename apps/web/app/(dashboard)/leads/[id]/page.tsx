@@ -37,7 +37,7 @@ import {
 import type { Lead, LeadActivity, LeadInput } from '@/lib/leads/actions';
 
 const STAGE_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  nieuw: { label: 'Nieuw', color: 'text-gray-700', bg: 'bg-gray-100', border: 'border-gray-300' },
+  nieuw: { label: 'Nieuw', color: 'text-foreground', bg: 'bg-muted', border: 'border-border' },
   gecontacteerd: { label: 'Gecontacteerd', color: 'text-blue-700', bg: 'bg-blue-100', border: 'border-blue-300' },
   geinteresseerd: { label: 'Ge\u00EFnteresseerd', color: 'text-yellow-700', bg: 'bg-yellow-100', border: 'border-yellow-300' },
   offerte: { label: 'Offerte', color: 'text-purple-700', bg: 'bg-purple-100', border: 'border-purple-300' },

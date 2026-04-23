@@ -50,7 +50,7 @@ export default function DashboardPage() {
       <div className="max-w-7xl">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-          <p className="text-gray-600">Welkom terug! Hier is een overzicht van je projecten.</p>
+          <p className="text-muted-foreground">Welkom terug! Hier is een overzicht van je projecten.</p>
         </div>
 
         {/* Stats */}
@@ -62,7 +62,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{activeProjects.length}</div>
-              <p className="text-xs text-gray-600 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {projects.filter(p => p.displayStatus === 'in-uitvoering').length} in uitvoering
               </p>
             </CardContent>
@@ -75,7 +75,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{pendingApprovals.length}</div>
-              <p className="text-xs text-gray-600 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 {pendingApprovals.length > 0 ? 'Actie vereist' : 'Alles up-to-date'}
               </p>
             </CardContent>
@@ -90,7 +90,7 @@ export default function DashboardPage() {
               <div className="text-3xl font-bold">
                 {avgProgress}%
               </div>
-              <p className="text-xs text-gray-600 mt-1">Over alle actieve projecten</p>
+              <p className="text-xs text-muted-foreground mt-1">Over alle actieve projecten</p>
             </CardContent>
           </Card>
         </div>
@@ -109,16 +109,16 @@ export default function DashboardPage() {
                     <div className={`p-2 rounded-lg ${
                       activity.type === 'approval' ? 'bg-orange-100' :
                       activity.type === 'comment' ? 'bg-blue-100' :
-                      activity.type === 'file' ? 'bg-green-100' : 'bg-gray-100'
+                      activity.type === 'file' ? 'bg-green-100' : 'bg-muted'
                     }`}>
                       {activity.type === 'approval' && <AlertCircle className="h-4 w-4 text-orange-600" />}
                       {activity.type === 'comment' && <Clock className="h-4 w-4 text-blue-600" />}
                       {activity.type === 'file' && <FolderKanban className="h-4 w-4 text-green-600" />}
-                      {activity.type === 'project' && <FolderKanban className="h-4 w-4 text-gray-600" />}
+                      {activity.type === 'project' && <FolderKanban className="h-4 w-4 text-muted-foreground" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium">{activity.message}</p>
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         {new Date(activity.timestamp).toLocaleDateString('nl-NL', {
                           day: 'numeric',
                           month: 'short',
@@ -132,7 +132,7 @@ export default function DashboardPage() {
                     </Link>
                   </div>
                 )) : (
-                  <p className="text-sm text-gray-500 text-center py-4">Nog geen activiteit</p>
+                  <p className="text-sm text-muted-foreground text-center py-4">Nog geen activiteit</p>
                 )}
               </div>
             </CardContent>
@@ -179,10 +179,10 @@ export default function DashboardPage() {
             <CardContent>
               <div className="space-y-3">
                 {pendingApprovals.map((project) => (
-                  <div key={project.id} className="flex items-center justify-between p-3 bg-white rounded-lg">
+                  <div key={project.id} className="flex items-center justify-between p-3 bg-card rounded-lg">
                     <div>
                       <p className="font-medium">{project.name}</p>
-                      <p className="text-sm text-gray-600">{project.clientName}</p>
+                      <p className="text-sm text-muted-foreground">{project.clientName}</p>
                     </div>
                     <Link href={`/portal/projects/${project.id}`}>
                       <Button size="sm">Bekijk</Button>

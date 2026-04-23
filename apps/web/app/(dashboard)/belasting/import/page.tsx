@@ -311,8 +311,8 @@ export default function BankImportPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Bankafschrift Importeren</h1>
-        <p className="text-gray-600 mt-2">
+        <h1 className="text-3xl font-bold text-foreground">Bankafschrift Importeren</h1>
+        <p className="text-muted-foreground mt-2">
           Upload een CSV-bestand om transacties automatisch te importeren als uitgaven
         </p>
       </div>
@@ -338,9 +338,9 @@ export default function BankImportPage() {
 
           {/* Success message after import */}
           {importResult?.success && (
-            <Alert className="border-green-200 bg-green-50">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800">
+            <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20">
+              <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+              <AlertDescription className="text-green-800 dark:text-green-300">
                 {importResult.imported} transactie(s) succesvol geimporteerd als uitgaven.
               </AlertDescription>
             </Alert>
@@ -365,7 +365,7 @@ export default function BankImportPage() {
                     onChange={handleFileChange}
                     disabled={parsing}
                   />
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-muted-foreground">
                     Ondersteund: ING, Rabobank, ABN AMRO, Knab, Revolut
                   </p>
                 </div>
@@ -458,7 +458,7 @@ export default function BankImportPage() {
                     <div
                       key={idx}
                       className={`border rounded-lg p-4 space-y-3 transition-opacity ${
-                        tx.selected ? 'opacity-100' : 'opacity-50 bg-gray-50'
+                        tx.selected ? 'opacity-100' : 'opacity-50 bg-muted/50'
                       }`}
                     >
                       <div className="flex items-start gap-3">
@@ -466,13 +466,13 @@ export default function BankImportPage() {
                           type="checkbox"
                           checked={tx.selected}
                           onChange={() => handleToggleSelect(idx)}
-                          className="mt-1.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="mt-1.5 h-4 w-4 rounded border-border text-blue-600 focus:ring-blue-500"
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-start">
                             <div className="min-w-0">
                               <p className="font-medium truncate">{tx.description}</p>
-                              <p className="text-sm text-gray-600">{tx.date}</p>
+                              <p className="text-sm text-muted-foreground">{tx.date}</p>
                             </div>
                             <p className="text-lg font-bold whitespace-nowrap ml-4">&euro; {tx.amount.toFixed(2)}</p>
                           </div>
@@ -564,10 +564,10 @@ export default function BankImportPage() {
             <CardContent>
               {loadingHistory ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
               ) : importHistory.length === 0 ? (
-                <p className="text-sm text-gray-500 text-center py-8">
+                <p className="text-sm text-muted-foreground text-center py-8">
                   Nog geen imports uitgevoerd
                 </p>
               ) : (
@@ -576,7 +576,7 @@ export default function BankImportPage() {
                     <div key={imp.id} className="border rounded-lg p-4 flex items-center justify-between">
                       <div>
                         <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-gray-400" />
+                          <FileText className="h-4 w-4 text-muted-foreground" />
                           <span className="font-medium">{imp.filename}</span>
                           <Badge variant="secondary">{imp.bank_name}</Badge>
                           <Badge
@@ -591,7 +591,7 @@ export default function BankImportPage() {
                             {imp.status === 'completed' ? 'Voltooid' : imp.status === 'failed' ? 'Mislukt' : 'Bezig'}
                           </Badge>
                         </div>
-                        <p className="text-sm text-gray-500 mt-1">
+                        <p className="text-sm text-muted-foreground mt-1">
                           {imp.import_date} &middot; {imp.transactions_imported} van {imp.total_transactions} transacties geimporteerd
                         </p>
                       </div>
@@ -607,9 +607,9 @@ export default function BankImportPage() {
         <TabsContent value="integrations" className="space-y-6">
 
           {/* PSD2 info banner */}
-          <Alert className="border-blue-200 bg-blue-50">
-            <Info className="h-4 w-4 text-blue-600" />
-            <AlertDescription className="text-blue-800">
+          <Alert className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20">
+            <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <AlertDescription className="text-blue-800 dark:text-blue-300">
               <strong>PSD2 Open Banking</strong> - Directe bankkoppelingen vereisen een AISP-registratie
               (Account Information Service Provider) bij De Nederlandsche Bank (DNB) en eIDAS-certificaten.
               De koppelingen hieronder zijn voorbereid voor productiegebruik zodra de registratie rond is.
@@ -621,18 +621,18 @@ export default function BankImportPage() {
             <Alert
               className={
                 psd2Message.type === 'success'
-                  ? 'border-green-200 bg-green-50'
-                  : 'border-red-200 bg-red-50'
+                  ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20'
+                  : 'border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20'
               }
             >
               {psd2Message.type === 'success' ? (
-                <CheckCircle className="h-4 w-4 text-green-600" />
+                <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
               ) : (
-                <AlertCircle className="h-4 w-4 text-red-600" />
+                <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
               )}
               <AlertDescription
                 className={
-                  psd2Message.type === 'success' ? 'text-green-800' : 'text-red-800'
+                  psd2Message.type === 'success' ? 'text-green-800 dark:text-green-300' : 'text-red-800 dark:text-red-300'
                 }
               >
                 {psd2Message.text}
@@ -654,7 +654,7 @@ export default function BankImportPage() {
             <CardContent className="space-y-4">
               {loadingConnections ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -675,17 +675,17 @@ export default function BankImportPage() {
                             <p className="font-medium">{bankInfo.displayName}</p>
                             {/* Status badge */}
                             {isConnected && (
-                              <Badge className="bg-green-100 text-green-800 border-green-200">
+                              <Badge className="bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800">
                                 Verbonden
                               </Badge>
                             )}
                             {isExpired && (
-                              <Badge className="bg-amber-100 text-amber-800 border-amber-200">
+                              <Badge className="bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800">
                                 Verlopen
                               </Badge>
                             )}
                             {isRevoked && (
-                              <Badge variant="outline" className="text-gray-500">
+                              <Badge variant="outline" className="text-muted-foreground">
                                 Ontkoppeld
                               </Badge>
                             )}
@@ -695,22 +695,22 @@ export default function BankImportPage() {
                               </Badge>
                             )}
                             {!connection && !bankInfo.available && (
-                              <Badge variant="outline" className="text-amber-700 border-amber-300 bg-amber-50">
+                              <Badge variant="outline" className="text-amber-700 border-amber-300 bg-amber-50 dark:text-amber-300 dark:border-amber-700 dark:bg-amber-900/30">
                                 Binnenkort
                               </Badge>
                             )}
                             {!connection && bankInfo.available && (
-                              <Badge variant="outline" className="text-gray-500">
+                              <Badge variant="outline" className="text-muted-foreground">
                                 Niet verbonden
                               </Badge>
                             )}
                           </div>
-                          <p className="text-sm text-gray-500 mt-0.5">
+                          <p className="text-sm text-muted-foreground mt-0.5">
                             {bankInfo.description}
                           </p>
                           {/* Last sync timestamp */}
                           {connection?.last_sync_at && (
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                               Laatst gesynchroniseerd:{' '}
                               {new Date(connection.last_sync_at).toLocaleString('nl-NL', {
                                 dateStyle: 'medium',
@@ -720,7 +720,7 @@ export default function BankImportPage() {
                           )}
                           {/* Connected accounts */}
                           {isConnected && connection?.accounts && connection.accounts.length > 0 && (
-                            <p className="text-xs text-gray-400 mt-0.5">
+                            <p className="text-xs text-muted-foreground mt-0.5">
                               {connection.accounts.length} rekening(en) gekoppeld
                             </p>
                           )}
@@ -766,7 +766,7 @@ export default function BankImportPage() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/30"
                               onClick={() => handleRevokeBank(bankInfo.bank)}
                               disabled={revokingBank === bankInfo.bank}
                             >
@@ -799,7 +799,7 @@ export default function BankImportPage() {
 
               {/* CSV Import beschikbaar */}
               <div>
-                <h3 className="font-semibold text-sm text-gray-700 uppercase tracking-wide mb-3">
+                <h3 className="font-semibold text-sm text-foreground uppercase tracking-wide mb-3">
                   CSV Import beschikbaar
                 </h3>
                 <div className="space-y-3">
@@ -843,7 +843,7 @@ export default function BankImportPage() {
 
               {/* Toekomstige koppelingen */}
               <div>
-                <h3 className="font-semibold text-sm text-gray-700 uppercase tracking-wide mb-3">
+                <h3 className="font-semibold text-sm text-foreground uppercase tracking-wide mb-3">
                   Overige integraties (toekomstig)
                 </h3>
                 <div className="space-y-3">
@@ -886,21 +886,21 @@ function IntegrationRow({
     <div className="flex items-center justify-between border rounded-lg p-3">
       <div className="min-w-0">
         <p className="font-medium">{name}</p>
-        <p className="text-sm text-gray-500 truncate">{description}</p>
+        <p className="text-sm text-muted-foreground truncate">{description}</p>
       </div>
       <div className="flex gap-2 ml-4 flex-shrink-0">
         {csvStatus === 'available' && (
-          <Badge className="bg-green-100 text-green-800 border-green-200">
+          <Badge className="bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800">
             CSV Import
           </Badge>
         )}
         {apiStatus === 'planned' && (
-          <Badge variant="outline" className="text-amber-700 border-amber-300 bg-amber-50">
+          <Badge variant="outline" className="text-amber-700 border-amber-300 bg-amber-50 dark:text-amber-300 dark:border-amber-700 dark:bg-amber-900/30">
             {apiLabel || 'API binnenkort'}
           </Badge>
         )}
         {apiStatus === 'available' && (
-          <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+          <Badge className="bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800">
             API verbonden
           </Badge>
         )}

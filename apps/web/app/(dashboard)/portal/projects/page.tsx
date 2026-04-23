@@ -16,7 +16,7 @@ import { useState, useEffect } from 'react';
 import { Progress } from '@/components/ui/progress';
 
 const statusColors: Record<string, string> = {
-  'offerte': 'bg-gray-100 text-gray-800',
+  'offerte': 'bg-muted text-foreground',
   'in-uitvoering': 'bg-blue-100 text-blue-800',
   'review': 'bg-orange-100 text-orange-800',
   'afgerond': 'bg-green-100 text-green-800',
@@ -74,7 +74,7 @@ export default function ProjectsPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold mb-2">Projecten</h1>
-            <p className="text-gray-600">Beheer al je projecten op één plek</p>
+            <p className="text-muted-foreground">Beheer al je projecten op één plek</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -160,7 +160,7 @@ export default function ProjectsPage() {
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Zoek projecten..."
                     className="pl-10"
@@ -202,16 +202,16 @@ export default function ProjectsPage() {
                             {project.name}
                           </h3>
                         </Link>
-                        <p className="text-sm text-gray-600">{project.clientName}</p>
+                        <p className="text-sm text-muted-foreground">{project.clientName}</p>
                       </div>
-                      <Badge className={statusColors[project.displayStatus] ?? 'bg-gray-100 text-gray-800'}>
+                      <Badge className={statusColors[project.displayStatus] ?? 'bg-muted text-foreground'}>
                         {statusLabels[project.displayStatus] ?? project.displayStatus}
                       </Badge>
                     </div>
-                    <p className="text-sm text-gray-600 mb-3">{project.description}</p>
+                    <p className="text-sm text-muted-foreground mb-3">{project.description}</p>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">Voortgang</span>
+                        <span className="text-muted-foreground">Voortgang</span>
                         <span className="font-medium">{project.progress}%</span>
                       </div>
                       <Progress value={project.progress} className="h-2" />
@@ -219,7 +219,7 @@ export default function ProjectsPage() {
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     {project.deadline && (
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-muted-foreground">
                         Deadline: {new Date(project.deadline).toLocaleDateString('nl-NL', {
                           day: 'numeric',
                           month: 'short',
@@ -242,7 +242,7 @@ export default function ProjectsPage() {
         {filteredProjects.length === 0 && (
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-gray-600 mb-4">Geen projecten gevonden</p>
+              <p className="text-muted-foreground mb-4">Geen projecten gevonden</p>
               <Button variant="outline" onClick={() => setIsDialogOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Eerste Project Aanmaken

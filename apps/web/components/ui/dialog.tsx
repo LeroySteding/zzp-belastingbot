@@ -42,7 +42,7 @@ export function DialogContent({
 }) {
   return (
     <div className={cn(
-      "bg-white rounded-lg shadow-lg w-full max-h-[90vh] overflow-y-auto mx-4 max-w-2xl md:mx-auto",
+      "bg-card rounded-lg shadow-lg w-full max-h-[90vh] overflow-y-auto mx-4 max-w-2xl md:mx-auto",
       className
     )}>
       {children}
@@ -86,7 +86,7 @@ export function DialogDescription({
   className?: string
 }) {
   return (
-    <p className={cn("text-sm text-gray-600 mt-2", className)}>
+    <p className={cn("text-sm text-muted-foreground mt-2", className)}>
       {children}
     </p>
   )

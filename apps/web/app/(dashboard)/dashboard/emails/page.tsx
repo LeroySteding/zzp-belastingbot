@@ -35,13 +35,13 @@ const typeBadgeColors: Record<string, string> = {
 };
 
 function getTypeBadgeClass(type: string): string {
-  return typeBadgeColors[type] || 'bg-gray-100 text-gray-800';
+  return typeBadgeColors[type] || 'bg-muted text-foreground';
 }
 
 function getStatusBadgeClass(status: string): string {
   if (status === 'sent') return 'bg-green-100 text-green-800';
   if (status === 'failed') return 'bg-red-100 text-red-800';
-  return 'bg-gray-100 text-gray-800';
+  return 'bg-muted text-foreground';
 }
 
 function getStatusLabel(status: string): string {

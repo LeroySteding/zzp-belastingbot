@@ -133,7 +133,7 @@ export default function ReportsPage() {
     switch (status) {
       case 'concept':
         return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-muted text-foreground rounded-full text-xs font-medium">
             <Clock className="h-3 w-3" />
             Concept
           </span>
@@ -173,8 +173,8 @@ export default function ReportsPage() {
     
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">BTW-rapporten</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-foreground">BTW-rapporten</h1>
+          <p className="text-muted-foreground mt-2">
             Genereer en beheer je BTW-aangifte rapporten per kwartaal
           </p>
         </div>
@@ -205,7 +205,7 @@ export default function ReportsPage() {
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Jaar
                   </label>
                   <Select value={selectedYear} onValueChange={setSelectedYear}>
@@ -223,7 +223,7 @@ export default function ReportsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-foreground mb-2">
                     Kwartaal
                   </label>
                   <Select value={selectedQuarter} onValueChange={setSelectedQuarter}>
@@ -263,13 +263,13 @@ export default function ReportsPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
                 <p className="mt-3">Rapporten laden...</p>
               </div>
             ) : reports.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <FileText className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+              <div className="text-center py-8 text-muted-foreground">
+                <FileText className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
                 <p>Nog geen rapporten gegenereerd</p>
                 <p className="text-sm mt-2">
                   Gebruik bovenstaand formulier om een BTW-rapport te maken
@@ -281,7 +281,7 @@ export default function ReportsPage() {
                   .sort(([a], [b]) => parseInt(b) - parseInt(a))
                   .map(([year, yearReports]) => (
                     <div key={year}>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                      <h3 className="text-lg font-semibold text-foreground mb-3">
                         {year}
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -292,10 +292,10 @@ export default function ReportsPage() {
                               <CardContent className="pt-6">
                                 <div className="flex items-start justify-between mb-4">
                                   <div>
-                                    <h4 className="font-semibold text-gray-900">
+                                    <h4 className="font-semibold text-foreground">
                                       Q{report.quarter} {report.year}
                                     </h4>
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-sm text-muted-foreground">
                                       {getQuarterPeriod(report.year, report.quarter)}
                                     </p>
                                   </div>
@@ -304,13 +304,13 @@ export default function ReportsPage() {
 
                                 <div className="space-y-2 mb-4">
                                   <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600">Excl. BTW:</span>
+                                    <span className="text-muted-foreground">Excl. BTW:</span>
                                     <span className="font-medium">
                                       {formatEuro(Number(report.total_excl))}
                                     </span>
                                   </div>
                                   <div className="flex justify-between text-sm">
-                                    <span className="text-gray-600">BTW:</span>
+                                    <span className="text-muted-foreground">BTW:</span>
                                     <span className="font-medium">
                                       {formatEuro(Number(report.total_btw))}
                                     </span>
@@ -340,7 +340,7 @@ export default function ReportsPage() {
                                   </Button>
                                 </div>
 
-                                <p className="text-xs text-gray-500 mt-3">
+                                <p className="text-xs text-muted-foreground mt-3">
                                   Laatst bijgewerkt:{' '}
                                   {format(new Date(report.updated_at), 'dd MMM yyyy', {
                                     locale: nl,
@@ -412,19 +412,19 @@ export default function ReportsPage() {
                 <h4 className="font-semibold">Samenvatting</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Periode:</span>
+                    <span className="text-muted-foreground">Periode:</span>
                     <span className="font-medium">
                       {getQuarterPeriod(previewReport.year, previewReport.quarter)}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Totaal excl. BTW:</span>
+                    <span className="text-muted-foreground">Totaal excl. BTW:</span>
                     <span className="font-medium">
                       {formatEuro(Number(previewReport.total_excl))}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">BTW:</span>
+                    <span className="text-muted-foreground">BTW:</span>
                     <span className="font-medium">
                       {formatEuro(Number(previewReport.total_btw))}
                     </span>
