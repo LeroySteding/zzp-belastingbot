@@ -91,11 +91,6 @@ export default function ExpensesPage() {
     }
   }
 
-  const handleExportCSV = () => {
-    const url = `/api/expenses/export?year=${selectedYear}&quarter=${selectedQuarter}`
-    window.location.href = url
-  }
-
   return (<>
 
       <div className="space-y-6">
@@ -107,14 +102,10 @@ export default function ExpensesPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={handleExportCSV}
-              disabled={filteredExpenses.length === 0}
-            >
-              <Download className="mr-2 h-4 w-4" />
+            <a href="/api/export/expenses" download className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-secondary transition-colors">
+              <Download className="w-4 h-4" />
               Exporteer CSV
-            </Button>
+            </a>
             <Link href="/belasting/scan">
               <Button variant="outline">
                 <ScanLine className="mr-2 h-4 w-4" />

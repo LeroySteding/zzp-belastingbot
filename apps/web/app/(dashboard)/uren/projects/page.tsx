@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Clock, Euro, TrendingUp, AlertCircle, Loader2, Briefcase } from 'lucide-react';
+import { Plus, Clock, Euro, TrendingUp, AlertCircle, Loader2, Briefcase, Download } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 import { getUrenProjects, getUrenClients, getTimeEntries, calculateProjectStats, createProject } from '@/lib/uren/actions';
 import type { UrenProject, UrenClient, UrenTimeEntry, UrenProjectStats } from '@/lib/uren/actions';
@@ -101,6 +101,11 @@ export default function ProjectsPage() {
             <p className="text-gray-600 mt-2">Beheer je projecten en budgetten</p>
           </div>
 
+          <div className="flex gap-3 items-center">
+            <a href="/api/export/time-entries" download className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-secondary transition-colors">
+              <Download className="w-4 h-4" />
+              Exporteer CSV
+            </a>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2">
@@ -176,6 +181,7 @@ export default function ProjectsPage() {
               </form>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         {/* Projects Grid */}

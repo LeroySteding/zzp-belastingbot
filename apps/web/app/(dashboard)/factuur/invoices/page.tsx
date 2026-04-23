@@ -140,6 +140,10 @@ export default function InvoicesPage() {
             <h1 className="text-2xl font-bold">Facturen</h1>
           </div>
           <div className="flex gap-3">
+            <a href="/api/export/invoices" download className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-secondary transition-colors">
+              <Download className="w-4 h-4" />
+              Exporteer CSV
+            </a>
             <Button variant="outline" asChild>
               <Link href="/factuur/recurring">
                 <RotateCcw className="h-4 w-4 mr-2" />

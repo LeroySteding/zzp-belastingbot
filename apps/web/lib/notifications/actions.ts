@@ -11,7 +11,7 @@ export interface Notification {
   created_at: string;
 }
 
-export async function getNotifications(): Promise<Notification[]> {
+export async function getNotifications(limit: number = 20): Promise<Notification[]> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
@@ -20,7 +20,7 @@ export async function getNotifications(): Promise<Notification[]> {
     .from('notifications')
     .select('*')
     .order('created_at', { ascending: false })
-    .limit(20);
+    .limit(limit);
 
   return data || [];
 }
