@@ -21,8 +21,11 @@ import {
   FileText,
   Clock,
   Receipt,
+  Search,
 } from 'lucide-react'
 import { completeOnboarding } from '@/lib/onboarding/actions'
+import { lookupKvkNumber } from '@/lib/integrations/kvk'
+import { lookupAddress } from '@/lib/integrations/address'
 
 const SERVICES = [
   'Web development',
@@ -67,6 +70,65 @@ export default function OnboardingPage() {
   const [clientName, setClientName] = useState('')
   const [clientEmail, setClientEmail] = useState('')
   const [clientPhone, setClientPhone] = useState('')
+
+  // Address lookup state
+  const [postalCode, setPostalCode] = useState('')
+  const [houseNumber, setHouseNumber] = useState('')
+  const [addressLooking, setAddressLooking] = useState(false)
+  const [addressFound, setAddressFound] = useState<string | null>(null)
+  const [addressLookupError, setAddressLookupError] = useState<string | null>(null)
+
+  // KVK lookup state
+  const [kvkLoading, setKvkLoading] = useState(false)
+  const [kvkMessage, setKvkMessage] = useState<string | null>(null)
+  const [kvkError, setKvkError] = useState<string | null>(null)
+
+  const handleKvkLookup = async () => {
+    if (!kvkNumber.trim()) return
+    setKvkLoading(true)
+    setKvkMessage(null)
+    setKvkError(null)
+
+    const result = await lookupKvkNumber(kvkNumber)
+
+    if (result.success && result.data) {
+      const info = result.data
+      if (info.companyName) setCompanyName(info.companyName)
+      if (info.address) {
+        const parts = [
+          [info.address.street, info.address.houseNumber].filter(Boolean).join(' '),
+          [info.address.postalCode, info.address.city].filter(Boolean).join(' '),
+        ].filter(Boolean)
+        setAddress(parts.join(', '))
+      }
+      setKvkMessage(`Gegevens gevonden: ${info.companyName}`)
+    } else {
+      setKvkError(result.error || 'KVK-nummer niet gevonden')
+    }
+
+    setKvkLoading(false)
+  }
+
+  const handleAddressLookup = async () => {
+    if (!postalCode.trim() || !houseNumber.trim()) return
+    setAddressLooking(true)
+    setAddressFound(null)
+    setAddressLookupError(null)
+
+    const result = await lookupAddress(postalCode, houseNumber)
+
+    setAddressLooking(false)
+    if (result.success && result.data) {
+      const street = `${result.data.street} ${result.data.houseNumber}`
+      const fullAddress = `${street}, ${result.data.postalCode} ${result.data.city}`
+      setAddress(fullAddress)
+      setAddressFound(`${street}, ${result.data.city}`)
+      setTimeout(() => setAddressFound(null), 5000)
+    } else {
+      setAddressLookupError(result.error || 'Adres niet gevonden')
+      setTimeout(() => setAddressLookupError(null), 5000)
+    }
+  }
 
   const progress = ((currentStep + 1) / STEPS.length) * 100
 
@@ -230,25 +292,58 @@ export default function OnboardingPage() {
 
               <div className="space-y-4">
                 <div className="space-y-2">
+                  <Label htmlFor="kvkNumber">KvK-nummer</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="kvkNumber"
+                      placeholder="12345678"
+                      value={kvkNumber}
+                      onChange={(e) => {
+                        setKvkNumber(e.target.value)
+                        setKvkMessage(null)
+                        setKvkError(null)
+                      }}
+                      onBlur={() => {
+                        if (kvkNumber.replace(/[\s.-]/g, '').length === 8) {
+                          handleKvkLookup()
+                        }
+                      }}
+                      autoFocus
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleKvkLookup}
+                      disabled={kvkLoading || !kvkNumber.trim()}
+                    >
+                      {kvkLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : (
+                        <Search className="h-4 w-4 mr-2" />
+                      )}
+                      Opzoeken
+                    </Button>
+                  </div>
+                  {kvkMessage && (
+                    <p className="text-sm text-green-600 flex items-center gap-1.5">
+                      <Check className="h-3.5 w-3.5" />
+                      {kvkMessage}
+                    </p>
+                  )}
+                  {kvkError && (
+                    <p className="text-sm text-red-600">{kvkError}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="companyName">Bedrijfsnaam</Label>
                   <Input
                     id="companyName"
                     placeholder="Bijv. Studio Voorbeeld"
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
-                    autoFocus
                   />
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="kvkNumber">KvK-nummer</Label>
-                    <Input
-                      id="kvkNumber"
-                      placeholder="12345678"
-                      value={kvkNumber}
-                      onChange={(e) => setKvkNumber(e.target.value)}
-                    />
-                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="btwNumber">BTW-nummer</Label>
                     <Input
@@ -258,24 +353,77 @@ export default function OnboardingPage() {
                       onChange={(e) => setBtwNumber(e.target.value)}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="iban">IBAN</Label>
+                    <Input
+                      id="iban"
+                      placeholder="NL91ABNA0417164300"
+                      value={iban}
+                      onChange={(e) => setIban(e.target.value)}
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="iban">IBAN</Label>
-                  <Input
-                    id="iban"
-                    placeholder="NL91ABNA0417164300"
-                    value={iban}
-                    onChange={(e) => setIban(e.target.value)}
-                  />
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="postalCode">Postcode</Label>
+                    <Input
+                      id="postalCode"
+                      placeholder="1234 AB"
+                      value={postalCode}
+                      onChange={(e) => setPostalCode(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="houseNumber">Huisnummer</Label>
+                    <Input
+                      id="houseNumber"
+                      placeholder="12"
+                      value={houseNumber}
+                      onChange={(e) => setHouseNumber(e.target.value)}
+                      onBlur={handleAddressLookup}
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleAddressLookup}
+                      disabled={addressLooking || !postalCode.trim() || !houseNumber.trim()}
+                      className="w-full gap-2"
+                    >
+                      {addressLooking ? (
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                      ) : (
+                        <Search className="h-4 w-4" aria-hidden="true" />
+                      )}
+                      Opzoeken
+                    </Button>
+                  </div>
                 </div>
+
+                {addressFound && (
+                  <div className="flex items-center gap-2 p-3 text-sm text-green-600 bg-green-50 rounded-md">
+                    <Check className="h-4 w-4" aria-hidden="true" />
+                    Gevonden: {addressFound}
+                  </div>
+                )}
+                {addressLookupError && (
+                  <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">
+                    {addressLookupError}
+                  </div>
+                )}
+
                 <div className="space-y-2">
-                  <Label htmlFor="address">Adres</Label>
+                  <Label htmlFor="address">Volledig adres</Label>
                   <Input
                     id="address"
                     placeholder="Straat 1, 1234 AB Stad"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Wordt automatisch ingevuld bij opzoeken, maar je kunt het ook handmatig aanpassen.
+                  </p>
                 </div>
               </div>
             </div>

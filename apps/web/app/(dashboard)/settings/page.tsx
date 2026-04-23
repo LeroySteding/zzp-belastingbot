@@ -32,6 +32,7 @@ import {
 } from 'lucide-react'
 import { getProfile, updateProfile } from '@/lib/belasting/actions'
 import { getUserSubscription } from '@/lib/subscriptions/actions'
+import { lookupAddress } from '@/lib/integrations/address'
 import {
   getNotificationPreferences,
   updateNotificationPreferences,
@@ -55,6 +56,10 @@ export default function SettingsPage() {
   const [postalCode, setPostalCode] = useState('')
   const [city, setCity] = useState('')
   const [phone, setPhone] = useState('')
+  const [houseNumber, setHouseNumber] = useState('')
+  const [addressLooking, setAddressLooking] = useState(false)
+  const [addressFound, setAddressFound] = useState<string | null>(null)
+  const [addressLookupError, setAddressLookupError] = useState<string | null>(null)
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileSuccess, setProfileSuccess] = useState(false)
   const [profileError, setProfileError] = useState<string | null>(null)
@@ -118,6 +123,27 @@ export default function SettingsPage() {
     }
     load()
   }, [])
+
+  const handleAddressLookup = async () => {
+    if (!postalCode.trim() || !houseNumber.trim()) return
+    setAddressLooking(true)
+    setAddressFound(null)
+    setAddressLookupError(null)
+
+    const result = await lookupAddress(postalCode, houseNumber)
+
+    setAddressLooking(false)
+    if (result.success && result.data) {
+      setAddress(`${result.data.street} ${result.data.houseNumber}`)
+      setCity(result.data.city)
+      setPostalCode(result.data.postalCode)
+      setAddressFound(`${result.data.street} ${result.data.houseNumber}, ${result.data.city}`)
+      setTimeout(() => setAddressFound(null), 5000)
+    } else {
+      setAddressLookupError(result.error || 'Adres niet gevonden')
+      setTimeout(() => setAddressLookupError(null), 5000)
+    }
+  }
 
   const handleProfileSave = async () => {
     setProfileSaving(true)
@@ -321,18 +347,8 @@ export default function SettingsPage() {
 
               <fieldset className="space-y-4">
                 <legend className="text-sm font-medium">Adresgegevens</legend>
-                <div className="space-y-2">
-                  <Label htmlFor="address">Adres</Label>
-                  <Input
-                    id="address"
-                    placeholder="Straatnaam 1"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                  />
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="space-y-2 sm:col-span-1">
                     <Label htmlFor="postalCode">Postcode</Label>
                     <Input
                       id="postalCode"
@@ -341,15 +357,65 @@ export default function SettingsPage() {
                       onChange={(e) => setPostalCode(e.target.value)}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="city">Stad</Label>
+                  <div className="space-y-2 sm:col-span-1">
+                    <Label htmlFor="houseNumber">Huisnummer</Label>
                     <Input
-                      id="city"
-                      placeholder="Amsterdam"
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
+                      id="houseNumber"
+                      placeholder="12"
+                      value={houseNumber}
+                      onChange={(e) => setHouseNumber(e.target.value)}
+                      onBlur={handleAddressLookup}
                     />
                   </div>
+                  <div className="flex items-end sm:col-span-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleAddressLookup}
+                      disabled={addressLooking || !postalCode.trim() || !houseNumber.trim()}
+                      className="w-full gap-2"
+                    >
+                      {addressLooking ? (
+                        <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                      ) : null}
+                      Adres opzoeken
+                    </Button>
+                  </div>
+                </div>
+
+                {addressFound && (
+                  <div className="flex items-center gap-2 p-3 text-sm text-green-600 bg-green-50 rounded-md">
+                    <CheckCircle className="h-4 w-4" aria-hidden="true" />
+                    Gevonden: {addressFound}
+                  </div>
+                )}
+                {addressLookupError && (
+                  <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">
+                    {addressLookupError}
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="address">Adres</Label>
+                  <Input
+                    id="address"
+                    placeholder="Straatnaam 1"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Wordt automatisch ingevuld bij opzoeken, maar je kunt het ook handmatig aanpassen.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="city">Stad</Label>
+                  <Input
+                    id="city"
+                    placeholder="Amsterdam"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                  />
                 </div>
 
                 <div className="space-y-2">

@@ -2,10 +2,44 @@
 
 import createMollieClient from '@mollie/api-client';
 import { createClient } from '@/lib/supabase/server';
+import {
+  getMollieSettings,
+  type MollieSettings,
+} from '@/lib/integrations/actions';
+
+// ---------------------------------------------------------------------------
+// Map internal method names to Mollie API method identifiers
+// ---------------------------------------------------------------------------
+
+const METHOD_MAP: Record<keyof MollieSettings['payment_methods'], string> = {
+  ideal: 'ideal',
+  creditcard: 'creditcard',
+  bancontact: 'bancontact',
+  sepa_direct_debit: 'directdebit',
+  paypal: 'paypal',
+  klarna: 'klarnapaylater',
+  bank_transfer: 'banktransfer',
+};
+
+/**
+ * Returns the list of Mollie method identifiers that the user has enabled
+ * in their Mollie settings. If no settings are stored, all popular Dutch
+ * methods are returned by default.
+ */
+async function getEnabledMollieMethods(): Promise<string[]> {
+  const settings = await getMollieSettings();
+  const enabled = Object.entries(settings.payment_methods)
+    .filter(([, isEnabled]) => isEnabled)
+    .map(([method]) => METHOD_MAP[method as keyof MollieSettings['payment_methods']])
+    .filter(Boolean);
+
+  return enabled.length > 0 ? enabled : ['ideal', 'creditcard', 'banktransfer'];
+}
 
 /**
  * Creates a Mollie payment link for a given invoice.
  * Returns the checkout URL the client should be redirected to, or null on failure.
+ * Respects the user's configured payment methods.
  */
 export async function createPaymentLink(invoiceId: string): Promise<string | null> {
   const apiKey = process.env.MOLLIE_API_KEY;
@@ -45,6 +79,7 @@ export async function createPaymentLink(invoiceId: string): Promise<string | nul
 
   try {
     const mollieClient = createMollieClient({ apiKey });
+    const enabledMethods = await getEnabledMollieMethods();
 
     const payment = await mollieClient.payments.create({
       amount: {
@@ -54,6 +89,7 @@ export async function createPaymentLink(invoiceId: string): Promise<string | nul
       description: `Factuur ${invoice.invoice_number}`,
       redirectUrl: `${appUrl}/factuur/payment/success?invoice=${invoiceId}`,
       webhookUrl: `${appUrl}/api/integrations/mollie/webhook`,
+      method: enabledMethods as any,
       metadata: {
         invoice_id: invoiceId,
         invoice_number: invoice.invoice_number,

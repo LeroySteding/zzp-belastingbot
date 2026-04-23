@@ -8,10 +8,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Plus, Edit, Trash2, FileText, Search, Loader2 } from 'lucide-react';
+import { Plus, Edit, Trash2, FileText, Search, Loader2, CheckCircle, XCircle, ArrowDownCircle } from 'lucide-react';
 import { Client } from '@/lib/factuur/types/invoice';
 import { formatDate } from '@/lib/factuur/invoice-utils';
 import { getClients, createClientAction, updateClientAction, deleteClientAction } from '@/lib/factuur/actions';
+import { validateVatNumber, type ViesResult } from '@/lib/integrations/vies';
+import { lookupKvkNumber } from '@/lib/integrations/kvk';
+import { lookupAddress } from '@/lib/integrations/address';
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
@@ -27,6 +30,16 @@ export default function ClientsPage() {
     kvk: '',
     btwNumber: '',
   });
+  const [viesValidating, setViesValidating] = useState(false);
+  const [viesResult, setViesResult] = useState<ViesResult | null>(null);
+  const [kvkLoading, setKvkLoading] = useState(false);
+  const [kvkMessage, setKvkMessage] = useState<string | null>(null);
+  const [kvkError, setKvkError] = useState<string | null>(null);
+  const [clientPostalCode, setClientPostalCode] = useState('');
+  const [clientHouseNumber, setClientHouseNumber] = useState('');
+  const [addressLooking, setAddressLooking] = useState(false);
+  const [addressFound, setAddressFound] = useState<string | null>(null);
+  const [addressLookupError, setAddressLookupError] = useState<string | null>(null);
 
   useEffect(() => {
     loadClients();
@@ -44,7 +57,64 @@ export default function ClientsPage() {
     client.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleKvkLookup = async () => {
+    if (!formData.kvk.trim()) return;
+    setKvkLoading(true);
+    setKvkMessage(null);
+    setKvkError(null);
+
+    const result = await lookupKvkNumber(formData.kvk);
+
+    if (result.success && result.data) {
+      const info = result.data;
+      const updates: Partial<typeof formData> = {};
+      if (info.companyName) updates.name = info.companyName;
+      if (info.address) {
+        const parts = [
+          [info.address.street, info.address.houseNumber].filter(Boolean).join(' '),
+          [info.address.postalCode, info.address.city].filter(Boolean).join(' '),
+        ].filter(Boolean);
+        updates.address = parts.join(', ');
+      }
+      updates.kvk = info.kvkNumber;
+      setFormData((prev) => ({ ...prev, ...updates }));
+      setKvkMessage(`Gegevens gevonden: ${info.companyName}`);
+    } else {
+      setKvkError(result.error || 'KVK-nummer niet gevonden');
+    }
+
+    setKvkLoading(false);
+  };
+
+  const handleClientAddressLookup = async () => {
+    if (!clientPostalCode.trim() || !clientHouseNumber.trim()) return;
+    setAddressLooking(true);
+    setAddressFound(null);
+    setAddressLookupError(null);
+
+    const result = await lookupAddress(clientPostalCode, clientHouseNumber);
+
+    setAddressLooking(false);
+    if (result.success && result.data) {
+      const street = `${result.data.street} ${result.data.houseNumber}`;
+      const fullAddress = `${street}, ${result.data.postalCode} ${result.data.city}`;
+      setFormData((prev) => ({ ...prev, address: fullAddress }));
+      setAddressFound(`${street}, ${result.data.city}`);
+      setTimeout(() => setAddressFound(null), 5000);
+    } else {
+      setAddressLookupError(result.error || 'Adres niet gevonden');
+      setTimeout(() => setAddressLookupError(null), 5000);
+    }
+  };
+
   const handleOpenDialog = (client?: Client) => {
+    setViesResult(null);
+    setKvkMessage(null);
+    setKvkError(null);
+    setAddressFound(null);
+    setAddressLookupError(null);
+    setClientPostalCode('');
+    setClientHouseNumber('');
     if (client) {
       setEditingClient(client);
       setFormData({
@@ -82,6 +152,24 @@ export default function ClientsPage() {
     }
     setSaving(false);
     setShowDialog(false);
+  };
+
+  const handleViesValidation = async () => {
+    if (!formData.btwNumber.trim()) return;
+    setViesValidating(true);
+    setViesResult(null);
+    const result = await validateVatNumber(formData.btwNumber.trim());
+    setViesResult(result);
+    setViesValidating(false);
+  };
+
+  const handleViesAutoFill = () => {
+    if (!viesResult || !viesResult.valid) return;
+    setFormData((prev) => ({
+      ...prev,
+      name: viesResult.name || prev.name,
+      address: viesResult.address || prev.address,
+    }));
   };
 
   const handleDelete = async (id: string) => {
@@ -238,6 +326,53 @@ export default function ClientsPage() {
                 placeholder="contact@bedrijf.nl"
               />
             </div>
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Adres opzoeken</Label>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <Input
+                    placeholder="Postcode"
+                    value={clientPostalCode}
+                    onChange={(e) => setClientPostalCode(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Input
+                    placeholder="Huisnr."
+                    value={clientHouseNumber}
+                    onChange={(e) => setClientHouseNumber(e.target.value)}
+                    onBlur={handleClientAddressLookup}
+                  />
+                </div>
+                <div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleClientAddressLookup}
+                    disabled={addressLooking || !clientPostalCode.trim() || !clientHouseNumber.trim()}
+                    className="w-full gap-1"
+                  >
+                    {addressLooking ? (
+                      <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                    ) : (
+                      <Search className="h-4 w-4" aria-hidden="true" />
+                    )}
+                    Opzoeken
+                  </Button>
+                </div>
+              </div>
+              {addressFound && (
+                <div className="flex items-center gap-2 p-2 text-sm text-green-600 bg-green-50 rounded-md">
+                  <CheckCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  Gevonden: {addressFound}
+                </div>
+              )}
+              {addressLookupError && (
+                <div className="p-2 text-sm text-red-600 bg-red-50 rounded-md">
+                  {addressLookupError}
+                </div>
+              )}
+            </div>
             <div>
               <Label htmlFor="address">Adres *</Label>
               <Input
@@ -246,26 +381,113 @@ export default function ClientsPage() {
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 placeholder="Straat 123, 1234 AB Amsterdam"
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Wordt automatisch ingevuld bij opzoeken, maar je kunt het ook handmatig aanpassen.
+              </p>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="kvk">KvK-nummer</Label>
+            <div>
+              <Label htmlFor="kvk">KvK-nummer</Label>
+              <div className="flex gap-2">
                 <Input
                   id="kvk"
                   value={formData.kvk}
-                  onChange={(e) => setFormData({ ...formData, kvk: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, kvk: e.target.value });
+                    setKvkMessage(null);
+                    setKvkError(null);
+                  }}
                   placeholder="12345678"
                 />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleKvkLookup}
+                  disabled={kvkLoading || !formData.kvk.trim()}
+                  className="shrink-0"
+                >
+                  {kvkLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                  ) : (
+                    <Search className="h-4 w-4 mr-1" />
+                  )}
+                  KVK opzoeken
+                </Button>
               </div>
-              <div>
-                <Label htmlFor="btwNumber">BTW-nummer</Label>
-                <Input
-                  id="btwNumber"
-                  value={formData.btwNumber}
-                  onChange={(e) => setFormData({ ...formData, btwNumber: e.target.value })}
-                  placeholder="NL123456789B01"
-                />
-              </div>
+              {kvkMessage && (
+                <div className="mt-2 text-sm flex items-center gap-2 rounded-md p-2 bg-green-50 text-green-800 border border-green-200">
+                  <CheckCircle className="h-4 w-4 shrink-0 text-green-600" />
+                  <span>{kvkMessage}</span>
+                </div>
+              )}
+              {kvkError && (
+                <div className="mt-2 text-sm flex items-center gap-2 rounded-md p-2 bg-red-50 text-red-800 border border-red-200">
+                  <XCircle className="h-4 w-4 shrink-0 text-red-600" />
+                  <span>{kvkError}</span>
+                </div>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="btwNumber">BTW-nummer</Label>
+              <div className="flex gap-2">
+                  <Input
+                    id="btwNumber"
+                    value={formData.btwNumber}
+                    onChange={(e) => {
+                      setFormData({ ...formData, btwNumber: e.target.value });
+                      setViesResult(null);
+                    }}
+                    placeholder="NL123456789B01"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleViesValidation}
+                    disabled={viesValidating || !formData.btwNumber.trim()}
+                    className="shrink-0"
+                  >
+                    {viesValidating ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                    ) : null}
+                    Valideer
+                  </Button>
+                </div>
+                {viesResult && (
+                  <div className={`mt-2 text-sm flex items-start gap-2 rounded-md p-2 ${
+                    viesResult.valid
+                      ? 'bg-green-50 text-green-800 border border-green-200'
+                      : 'bg-red-50 text-red-800 border border-red-200'
+                  }`}>
+                    {viesResult.valid ? (
+                      <CheckCircle className="h-4 w-4 mt-0.5 shrink-0 text-green-600" />
+                    ) : (
+                      <XCircle className="h-4 w-4 mt-0.5 shrink-0 text-red-600" />
+                    )}
+                    <div className="flex-1">
+                      {viesResult.valid ? (
+                        <>
+                          <span className="font-medium">Geldig</span>
+                          {(viesResult.name || viesResult.address) && (
+                            <span> - {[viesResult.name, viesResult.address].filter(Boolean).join(', ')}</span>
+                          )}
+                          {(viesResult.name || viesResult.address) && (
+                            <button
+                              type="button"
+                              onClick={handleViesAutoFill}
+                              className="ml-2 inline-flex items-center gap-1 text-green-700 hover:text-green-900 underline text-xs font-medium"
+                            >
+                              <ArrowDownCircle className="h-3 w-3" />
+                              Gegevens overnemen
+                            </button>
+                          )}
+                        </>
+                      ) : (
+                        <span className="font-medium">Ongeldig BTW-nummer</span>
+                      )}
+                    </div>
+                  </div>
+                )}
             </div>
             <div className="flex justify-end gap-2 pt-4">
               <Button variant="outline" onClick={() => setShowDialog(false)}>

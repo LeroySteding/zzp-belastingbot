@@ -488,5 +488,11 @@ DROP TRIGGER IF EXISTS set_updated_at_notification_preferences ON notification_p
 CREATE TRIGGER set_updated_at_notification_preferences BEFORE UPDATE ON notification_preferences FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
 
 -- ============================================
+-- MOLLIE INTEGRATION (factuur module)
+-- ============================================
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS mollie_api_key TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS mollie_settings JSONB DEFAULT '{}';
+
+-- ============================================
 -- DONE!
 -- ============================================

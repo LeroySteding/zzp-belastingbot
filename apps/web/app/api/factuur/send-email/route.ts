@@ -6,6 +6,7 @@ import { Invoice } from '@/lib/factuur/types/invoice';
 import { createPaymentLink } from '@/lib/factuur/payment-actions';
 import { sendEmail } from '@/lib/email/send';
 import { buildInvoiceEmail } from '@/lib/email/emails';
+import { getMollieSettings } from '@/lib/integrations/actions';
 
 export async function POST(request: NextRequest) {
   try {
@@ -50,10 +51,14 @@ export async function POST(request: NextRequest) {
     );
 
     // Try to create a Mollie payment link (will return null if Mollie is not configured)
+    // Respects the user's "add_payment_link_to_emails" setting
     let paymentUrl: string | null = null;
     if (process.env.MOLLIE_API_KEY && invoice.id) {
       try {
-        paymentUrl = await createPaymentLink(invoice.id);
+        const mollieSettings = await getMollieSettings();
+        if (mollieSettings.add_payment_link_to_emails) {
+          paymentUrl = await createPaymentLink(invoice.id);
+        }
       } catch (e) {
         // Non-fatal: send the email without a payment link
         console.warn('Kon geen Mollie betaallink aanmaken:', e);
