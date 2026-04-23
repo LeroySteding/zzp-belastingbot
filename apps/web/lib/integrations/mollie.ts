@@ -191,15 +191,29 @@ export async function matchPaymentToInvoice(
 
   // --- Strategy 3: Match by exact amount on an open invoice ----------------
   // Only match if there is exactly one open invoice with this amount to avoid
-  // ambiguity.
+  // ambiguity. Additional safety constraints:
+  // - Only match invoices with status 'verzonden' (not concept or already betaald)
+  // - Only match if invoice date is within 30 days of payment date
+  const paymentDate = payment.paidAt || payment.createdAt;
+  const paymentDateObj = paymentDate ? new Date(paymentDate) : new Date();
+  const thirtyDaysBeforePayment = new Date(paymentDateObj);
+  thirtyDaysBeforePayment.setDate(thirtyDaysBeforePayment.getDate() - 30);
+
   const { data: amountMatches } = await supabase
     .from('invoices')
     .select('id, invoice_number')
     .eq('user_id', userId)
     .eq('total', paymentAmount)
-    .in('status', ['verzonden', 'concept']);
+    .eq('status', 'verzonden')
+    .gte('date', thirtyDaysBeforePayment.toISOString().split('T')[0])
+    .lte('date', paymentDateObj.toISOString().split('T')[0]);
 
   if (amountMatches && amountMatches.length === 1) {
+    console.warn(
+      `[Mollie] Amount-based matching used for payment ${payment.id}: ` +
+      `matched invoice ${amountMatches[0].invoice_number} by amount ${paymentAmount}. ` +
+      `Verify this match is correct.`,
+    );
     return {
       invoiceId: amountMatches[0].id,
       invoiceNumber: amountMatches[0].invoice_number,
@@ -315,16 +329,27 @@ export async function syncMolliePayments(userId: string): Promise<SyncResult> {
 // Process a single webhook payment (called from webhook route)
 // ---------------------------------------------------------------------------
 
-export async function processMollieWebhook(paymentId: string): Promise<void> {
+export async function processMollieWebhook(paymentId: string): Promise<{ success: boolean; message?: string }> {
   const mollieClient = getMollieClient();
   const supabase = await createClient();
+
+  // Check if this payment was already processed (idempotency guard)
+  const { data: existingMatch } = await supabase
+    .from('payment_matches')
+    .select('id')
+    .eq('payment_id', paymentId)
+    .single();
+
+  if (existingMatch) {
+    return { success: true, message: 'Payment already processed' };
+  }
 
   // Fetch the payment details from Mollie
   const payment = await mollieClient.payments.get(paymentId);
 
-  if (payment.status !== PaymentStatus.paid) return;
+  if (payment.status !== PaymentStatus.paid) return { success: true, message: 'Payment not in paid status' };
 
-  // Check if we already tracked this payment
+  // Double-check by external_id as well (belt and suspenders)
   const { data: existing } = await supabase
     .from('payment_matches')
     .select('id')
@@ -332,7 +357,7 @@ export async function processMollieWebhook(paymentId: string): Promise<void> {
     .eq('external_id', payment.id)
     .maybeSingle();
 
-  if (existing) return; // already processed
+  if (existing) return { success: true, message: 'Payment already processed' };
 
   const paymentAmount = parseFloat(payment.amount.value);
 
@@ -359,7 +384,7 @@ export async function processMollieWebhook(paymentId: string): Promise<void> {
     }
   }
 
-  if (!userId) return; // Cannot determine owner
+  if (!userId) return { success: false, message: 'Cannot determine owner' };
 
   const match = await matchPaymentToInvoice(payment, userId);
 
@@ -403,6 +428,8 @@ export async function processMollieWebhook(paymentId: string): Promise<void> {
       });
     }
   }
+
+  return { success: true };
 }
 
 // ---------------------------------------------------------------------------

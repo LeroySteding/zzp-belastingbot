@@ -86,9 +86,11 @@ export default function ClientsPage() {
 
   const handleDelete = async (id: string) => {
     if (confirm('Weet je zeker dat je deze klant wilt verwijderen?')) {
-      const success = await deleteClientAction(id);
-      if (success) {
+      const result = await deleteClientAction(id);
+      if (result.success) {
         setClients(clients.filter(c => c.id !== id));
+      } else if (result.error) {
+        alert(result.error);
       }
     }
   };
