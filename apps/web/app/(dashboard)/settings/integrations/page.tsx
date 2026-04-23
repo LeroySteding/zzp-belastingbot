@@ -48,6 +48,9 @@ import {
 } from '@/lib/integrations/actions';
 import { getBankConnections } from '@/lib/integrations/psd2/actions';
 import type { BankConnection } from '@/lib/integrations/psd2/types';
+import { getGoCardlessStatus } from '@/lib/integrations/gocardless';
+import { getAggregatorConfig } from '@/lib/integrations/bank-aggregator/actions';
+import { AGGREGATOR_PROVIDERS } from '@/lib/integrations/bank-aggregator';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -864,6 +867,150 @@ function PdokAdresserviceCard() {
 }
 
 // ---------------------------------------------------------------------------
+// GoCardless Card
+// ---------------------------------------------------------------------------
+
+function GoCardlessCard({
+  connected,
+  environment,
+}: {
+  connected: boolean;
+  environment: 'sandbox' | 'live';
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal-100">
+              <CreditCard className="h-5 w-5 text-teal-700" aria-hidden="true" />
+            </div>
+            <div>
+              <CardTitle className="text-base">GoCardless</CardTitle>
+              <CardDescription>
+                SEPA Automatische Incasso voor terugkerende facturen.
+                Ideaal voor maandelijkse of driemaandelijkse betalingen.
+              </CardDescription>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {connected && environment === 'sandbox' && (
+              <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+                Sandbox
+              </Badge>
+            )}
+            {connected && environment === 'live' && (
+              <Badge className="bg-green-100 text-green-800 border-green-200">
+                Live
+              </Badge>
+            )}
+            <StatusBadge connected={connected} />
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {connected ? (
+          <div className="space-y-3">
+            <div className="text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">Omgeving: </span>
+              {environment === 'live' ? 'Productie (live)' : 'Sandbox (test)'}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              GoCardless is verbonden. SEPA Direct Debit betalingen worden
+              automatisch verwerkt en facturen worden als betaald gemarkeerd.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Stel de volgende omgevingsvariabelen in om GoCardless te activeren:
+            </p>
+            <div className="space-y-1">
+              <code className="block rounded bg-muted px-3 py-1 text-xs font-mono">
+                GOCARDLESS_ACCESS_TOKEN=your-access-token
+              </code>
+              <code className="block rounded bg-muted px-3 py-1 text-xs font-mono">
+                GOCARDLESS_ENVIRONMENT=sandbox
+              </code>
+              <code className="block rounded bg-muted px-3 py-1 text-xs font-mono">
+                GOCARDLESS_WEBHOOK_SECRET=your-webhook-secret
+              </code>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              <a
+                href="https://manage.gocardless.com/developers"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-primary hover:underline"
+              >
+                GoCardless Developer Dashboard
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Bank Aggregator Card
+// ---------------------------------------------------------------------------
+
+function BankAggregatorCard({
+  configured,
+  providerName,
+}: {
+  configured: boolean;
+  providerName: string | null;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100">
+              <Landmark className="h-5 w-5 text-violet-700" aria-hidden="true" />
+            </div>
+            <div>
+              <CardTitle className="text-base">Bank Aggregator</CardTitle>
+              <CardDescription>
+                Synchroniseer transacties via PSD2 aggregators (IBANXS, Enable Banking, Yapily)
+              </CardDescription>
+            </div>
+          </div>
+          <StatusBadge connected={configured} />
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {configured && providerName ? (
+          <div className="space-y-3">
+            <div className="text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">Provider: </span>
+              {providerName}
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/belasting/bank-sync">
+                <RefreshCw className="h-4 w-4 mr-2" aria-hidden="true" />
+                Bank Sync openen
+              </Link>
+            </Button>
+          </div>
+        ) : (
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/belasting/bank-sync">
+              <Plug className="h-4 w-4 mr-2" aria-hidden="true" />
+              Configureren
+            </Link>
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main Page
 // ---------------------------------------------------------------------------
 
@@ -871,16 +1018,28 @@ export default function IntegrationsPage() {
   const [loading, setLoading] = useState(true);
   const [statuses, setStatuses] = useState<IntegrationStatus[]>([]);
   const [bankConnections, setBankConnections] = useState<BankConnection[]>([]);
+  const [goCardlessStatus, setGoCardlessStatus] = useState<{
+    configured: boolean;
+    environment: 'sandbox' | 'live';
+  }>({ configured: false, environment: 'sandbox' });
+  const [aggregatorConfig, setAggregatorConfig] = useState<{
+    provider: string | null;
+    configured: boolean;
+  }>({ provider: null, configured: false });
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [allStatuses, connections] = await Promise.all([
+      const [allStatuses, connections, gcStatus, aggConfig] = await Promise.all([
         getAllIntegrationStatuses(),
         getBankConnections().catch(() => [] as BankConnection[]),
+        getGoCardlessStatus().catch(() => ({ configured: false, environment: 'sandbox' as const })),
+        getAggregatorConfig().catch(() => ({ provider: null, configured: false, sandboxMode: true })),
       ]);
       setStatuses(allStatuses);
       setBankConnections(connections);
+      setGoCardlessStatus(gcStatus);
+      setAggregatorConfig({ provider: aggConfig.provider, configured: aggConfig.configured });
     } catch {
       // Continue with empty state
     } finally {
@@ -893,6 +1052,9 @@ export default function IntegrationsPage() {
   }, [loadData]);
 
   const mollieStatus = statuses.find((s) => s.id === 'mollie');
+  const aggregatorProviderName = aggregatorConfig.provider
+    ? AGGREGATOR_PROVIDERS.find((p) => p.id === aggregatorConfig.provider)?.name || aggregatorConfig.provider
+    : null;
 
   const psd2Banks = [
     {
@@ -948,7 +1110,13 @@ export default function IntegrationsPage() {
           title="Betalingen"
           description="Ontvang en beheer betalingen via externe betaalproviders"
         />
-        <MollieCard status={mollieStatus} onUpdate={loadData} />
+        <div className="grid gap-4">
+          <MollieCard status={mollieStatus} onUpdate={loadData} />
+          <GoCardlessCard
+            connected={goCardlessStatus.configured}
+            environment={goCardlessStatus.environment}
+          />
+        </div>
       </section>
 
       <Separator />
@@ -962,6 +1130,10 @@ export default function IntegrationsPage() {
           description="Koppel je zakelijke bankrekening voor automatische transactie-import via PSD2"
         />
         <div className="grid gap-4 md:grid-cols-2">
+          <BankAggregatorCard
+            configured={aggregatorConfig.configured}
+            providerName={aggregatorProviderName}
+          />
           {psd2Banks.map((b) => {
             const connection = bankConnections.find((c) => c.bank === b.bank);
             return (
