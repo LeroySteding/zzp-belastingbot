@@ -1,5 +1,28 @@
 import Link from 'next/link'
 import { FileText, Clock, Receipt, Users, Check, ArrowRight, ChevronRight, Target, ScrollText, Sparkles, ScanLine, RotateCcw, Bell, CreditCard, TrendingUp, Shield, Zap, BarChart3, Building2, Landmark } from 'lucide-react'
+import LandingNav from '@/components/landing/nav'
+import StatCounters from '@/components/landing/stat-counters'
+
+const testimonials = [
+  { name: 'Lisa de Vries', initials: 'LV', role: 'Freelance Designer', quote: 'Sinds ik ZZP Platform gebruik, besteed ik 3 uur per week minder aan administratie. De BTW berekening is een lifesaver.' },
+  { name: 'Mark Jansen', initials: 'MJ', role: 'IT Consultant', quote: 'Eindelijk een platform dat snapt wat een ZZP\'er nodig heeft. Geen overbodige features, alles werkt gewoon.' },
+  { name: 'Sophie Bakker', initials: 'SB', role: 'Content Specialist', quote: 'De combinatie van facturatie en urenregistratie bespaart mij enorm veel tijd. En de klantportaal is super professioneel.' },
+]
+
+const comparison = [
+  { feature: 'Startprijs', zzp: '€0/mnd', moneybird: '€14/mnd', freshbooks: '€17/mnd' },
+  { feature: 'Facturatie', zzp: true, moneybird: true, freshbooks: true },
+  { feature: 'Urenregistratie', zzp: true, moneybird: false, freshbooks: true },
+  { feature: 'Offertes', zzp: true, moneybird: true, freshbooks: true },
+  { feature: 'BTW Aangifte', zzp: true, moneybird: true, freshbooks: false },
+  { feature: 'Klantportaal', zzp: true, moneybird: false, freshbooks: false },
+  { feature: 'Lead Pipeline / CRM', zzp: true, moneybird: false, freshbooks: false },
+  { feature: 'AI Assistent', zzp: true, moneybird: false, freshbooks: false },
+  { feature: 'Contracten', zzp: true, moneybird: false, freshbooks: false },
+  { feature: 'Bank import (5 banken)', zzp: true, moneybird: true, freshbooks: false },
+  { feature: 'OCR Bon Scanner', zzp: true, moneybird: true, freshbooks: true },
+  { feature: 'iDEAL Betaallinks', zzp: true, moneybird: true, freshbooks: false },
+]
 
 const modules = [
   {
@@ -109,26 +132,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Nav */}
-      <nav className="border-b border-border/40 sticky top-0 bg-background/95 backdrop-blur-sm z-50">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-foreground flex items-center justify-center">
-              <span className="text-background font-bold text-sm">ZP</span>
-            </div>
-            <span className="font-semibold text-lg">ZZP Platform</span>
-          </div>
-          <div className="flex items-center gap-6">
-            <Link href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block">Features</Link>
-            <Link href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block">Prijzen</Link>
-            <Link href="/demo" className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block">Demo</Link>
-            <Link href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden md:block">FAQ</Link>
-            <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Inloggen</Link>
-            <Link href="/signup" className="text-sm font-medium bg-foreground text-background px-4 py-2 rounded-lg hover:bg-foreground/90 transition-colors">
-              Gratis starten
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <LandingNav />
 
       {/* Hero */}
       <section className="max-w-6xl mx-auto px-6 pt-20 pb-16 sm:pt-28 sm:pb-24">
@@ -158,6 +162,43 @@ export default function HomePage() {
             >
               Bekijk demo
             </Link>
+          </div>
+        </div>
+        <StatCounters />
+      </section>
+
+      {/* Dashboard mockup */}
+      <section className="max-w-5xl mx-auto px-6 pb-16">
+        <div className="rounded-2xl border border-border shadow-2xl overflow-hidden bg-card">
+          {/* Top bar */}
+          <div className="h-10 bg-secondary/50 border-b border-border flex items-center px-4 gap-2">
+            <div className="w-3 h-3 rounded-full bg-red-400/60" />
+            <div className="w-3 h-3 rounded-full bg-yellow-400/60" />
+            <div className="w-3 h-3 rounded-full bg-green-400/60" />
+            <span className="text-xs text-muted-foreground ml-2">dashboard</span>
+          </div>
+          {/* Fake dashboard content */}
+          <div className="p-6 space-y-4">
+            {/* 4 mini stat cards */}
+            <div className="grid grid-cols-4 gap-3">
+              {[
+                { label: 'Open facturen', value: '€4.250', color: '#3B82F6' },
+                { label: 'Uren deze week', value: '32,5u', color: '#8B5CF6' },
+                { label: 'BTW Q2', value: '€1.245', color: '#10B981' },
+                { label: 'Projecten', value: '4', color: '#F59E0B' },
+              ].map(s => (
+                <div key={s.label} className="p-3 rounded-lg border border-border bg-background">
+                  <p className="text-[10px] text-muted-foreground">{s.label}</p>
+                  <p className="text-lg font-bold" style={{color: s.color}}>{s.value}</p>
+                </div>
+              ))}
+            </div>
+            {/* Fake bar chart */}
+            <div className="h-32 flex items-end gap-1.5 px-2">
+              {[40, 65, 45, 80, 55, 70, 90, 60, 75, 50, 85, 95].map((h, i) => (
+                <div key={i} className="flex-1 rounded-t" style={{height: `${h}%`, backgroundColor: i === 11 ? '#3B82F6' : '#3B82F620'}} />
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -276,6 +317,87 @@ export default function HomePage() {
                 <p className="text-sm text-muted-foreground">{item.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="max-w-6xl mx-auto px-6 py-20 sm:py-28">
+        <div className="text-center mb-14">
+          <p className="text-sm font-medium text-muted-foreground mb-2 tracking-wide uppercase">Ervaringen</p>
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Wat ZZP&apos;ers zeggen</h2>
+        </div>
+        <div className="grid sm:grid-cols-3 gap-6">
+          {testimonials.map(t => (
+            <div key={t.name} className="p-6 rounded-2xl border border-border bg-card">
+              <div className="flex gap-1 mb-4">
+                {[1,2,3,4,5].map(i => <span key={i} className="text-yellow-400">&#9733;</span>)}
+              </div>
+              <p className="text-[15px] leading-relaxed mb-4 text-muted-foreground">&ldquo;{t.quote}&rdquo;</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-semibold text-sm">{t.initials}</div>
+                <div>
+                  <p className="font-medium text-sm">{t.name}</p>
+                  <p className="text-xs text-muted-foreground">{t.role}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Comparison table */}
+      <section className="bg-secondary/30 border-y border-border/40">
+        <div className="max-w-4xl mx-auto px-6 py-20 sm:py-28">
+          <div className="text-center mb-14">
+            <p className="text-sm font-medium text-muted-foreground mb-2 tracking-wide uppercase">Vergelijk</p>
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Waarom overstappen?</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 pr-4 font-medium">Feature</th>
+                  <th className="text-center py-3 px-4 font-semibold">ZZP Platform</th>
+                  <th className="text-center py-3 px-4 text-muted-foreground">Moneybird</th>
+                  <th className="text-center py-3 px-4 text-muted-foreground">FreshBooks</th>
+                </tr>
+              </thead>
+              <tbody>
+                {comparison.map((row) => (
+                  <tr key={row.feature} className="border-b border-border/50">
+                    <td className="py-3 pr-4">{row.feature}</td>
+                    <td className="py-3 px-4 text-center">
+                      {typeof row.zzp === 'string' ? (
+                        <span className="font-semibold">{row.zzp}</span>
+                      ) : row.zzp ? (
+                        <Check className="h-4 w-4 text-green-500 mx-auto" />
+                      ) : (
+                        <span className="text-muted-foreground">&mdash;</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      {typeof row.moneybird === 'string' ? (
+                        <span className="text-muted-foreground">{row.moneybird}</span>
+                      ) : row.moneybird ? (
+                        <Check className="h-4 w-4 text-muted-foreground mx-auto" />
+                      ) : (
+                        <span className="text-muted-foreground">&mdash;</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      {typeof row.freshbooks === 'string' ? (
+                        <span className="text-muted-foreground">{row.freshbooks}</span>
+                      ) : row.freshbooks ? (
+                        <Check className="h-4 w-4 text-muted-foreground mx-auto" />
+                      ) : (
+                        <span className="text-muted-foreground">&mdash;</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
