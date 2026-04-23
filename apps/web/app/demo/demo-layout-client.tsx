@@ -84,8 +84,10 @@ export default function DemoLayoutClient({
             size="icon"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="bg-background"
+            aria-label={mobileMenuOpen ? 'Menu sluiten' : 'Menu openen'}
+            aria-expanded={mobileMenuOpen}
           >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {mobileMenuOpen ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
           </Button>
         </div>
 

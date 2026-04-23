@@ -273,7 +273,7 @@ export default function FinancialsPage() {
         <h2 className="text-lg font-semibold mb-4">
           Omzet vs Kosten per maand
         </h2>
-        <div className="h-[350px]">
+        <div className="h-[350px]" role="img" aria-label="Grafiek: Omzet versus kosten per maand">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData}>
               <defs>
@@ -334,7 +334,7 @@ export default function FinancialsPage() {
           <h2 className="text-lg font-semibold mb-4">
             Netto winst per maand
           </h2>
-          <div className="h-[300px]">
+          <div className="h-[300px]" role="img" aria-label="Grafiek: Netto winst per maand">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" className="opacity-30" />

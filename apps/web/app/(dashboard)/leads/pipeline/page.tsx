@@ -240,18 +240,18 @@ export default function PipelinePage() {
                               onClick={() => handleMoveStage(lead.id, 'prev')}
                               disabled={!canMoveLeft || isMoving}
                               className="text-xs text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors p-1"
-                              title="Vorige stap"
+                              aria-label="Vorige stap"
                             >
-                              <ChevronLeft className="h-4 w-4" />
+                              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
                             </button>
-                            <GripVertical className="h-3 w-3 text-muted-foreground/30" />
+                            <GripVertical className="h-3 w-3 text-muted-foreground/30" aria-hidden="true" />
                             <button
                               onClick={() => handleMoveStage(lead.id, 'next')}
                               disabled={!canMoveRight || isMoving}
                               className="text-xs text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors p-1"
-                              title="Volgende stap"
+                              aria-label="Volgende stap"
                             >
-                              <ChevronRight className="h-4 w-4" />
+                              <ChevronRight className="h-4 w-4" aria-hidden="true" />
                             </button>
                           </div>
                         </div>
