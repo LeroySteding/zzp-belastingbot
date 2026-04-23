@@ -3,6 +3,13 @@
 import { createClient } from '@/lib/supabase/server';
 
 // ============================================
+// HELPERS
+// ============================================
+
+/** Round a number to 2 decimal places for consistent currency formatting. */
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+// ============================================
 // TYPES
 // ============================================
 
@@ -59,10 +66,6 @@ export interface DashboardSummary {
   revenueTrend: number;
 }
 
-// ============================================
-// HELPERS
-// ============================================
-
 const MONTH_NAMES_SHORT = [
   'Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun',
   'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec',
@@ -106,12 +109,12 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     topClientsResult,
     projectDeadlinesResult,
   ] = await Promise.all([
-    // 1. Revenue invoices (last 6 months)
+    // 1. Revenue invoices (last 6 months) - only 'betaald' counts as recognized revenue
     supabase
       .from('invoices')
       .select('id, date, status, subtotal, total')
       .eq('user_id', user.id)
-      .in('status', ['betaald', 'verzonden'])
+      .in('status', ['betaald'])
       .gte('date', sixMonthsAgoStr)
       .order('date', { ascending: true }),
 
@@ -129,12 +132,12 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
       .eq('user_id', user.id)
       .eq('status', 'verzonden'),
 
-    // 4. Top clients (current year invoices with clients)
+    // 4. Top clients (current year paid invoices with clients)
     supabase
       .from('invoices')
       .select('id, subtotal, total, client_id, clients(name)')
       .eq('user_id', user.id)
-      .in('status', ['betaald', 'verzonden'])
+      .in('status', ['betaald'])
       .gte('date', yearStart)
       .lte('date', yearEnd),
 
@@ -195,9 +198,9 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     const monthIdx = parseInt(mo, 10) - 1;
     return {
       month: MONTH_NAMES_SHORT[monthIdx],
-      income: Math.round(val.income * 100) / 100,
-      expenses: Math.round(val.expenses * 100) / 100,
-      profit: Math.round((val.income - val.expenses) * 100) / 100,
+      income: round2(val.income),
+      expenses: round2(val.expenses),
+      profit: round2(val.income - val.expenses),
     };
   });
 
@@ -226,9 +229,9 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   }
 
   const invoiceAging: InvoiceAgingData[] = [
-    { label: 'Op tijd', count: agingBuckets.opTijd.count, total: Math.round(agingBuckets.opTijd.total * 100) / 100, color: '#22c55e' },
-    { label: 'Binnenkort', count: agingBuckets.binnenkort.count, total: Math.round(agingBuckets.binnenkort.total * 100) / 100, color: '#f97316' },
-    { label: 'Verlopen', count: agingBuckets.verlopen.count, total: Math.round(agingBuckets.verlopen.total * 100) / 100, color: '#ef4444' },
+    { label: 'Op tijd', count: agingBuckets.opTijd.count, total: round2(agingBuckets.opTijd.total), color: '#22c55e' },
+    { label: 'Binnenkort', count: agingBuckets.binnenkort.count, total: round2(agingBuckets.binnenkort.total), color: '#f97316' },
+    { label: 'Verlopen', count: agingBuckets.verlopen.count, total: round2(agingBuckets.verlopen.total), color: '#ef4444' },
   ];
 
   // ---- Top Clients ----
@@ -249,7 +252,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     .slice(0, 5)
     .map(c => ({
       clientName: c.name,
-      revenue: Math.round(c.revenue * 100) / 100,
+      revenue: round2(c.revenue),
       invoiceCount: c.count,
     }));
 
@@ -257,7 +260,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   const expenseCategories: ExpenseCategory[] = Object.entries(categoryTotals)
     .map(([category, amount]) => ({
       category,
-      amount: Math.round(amount * 100) / 100,
+      amount: round2(amount),
       percentage: totalExpenseAmount > 0 ? Math.round((amount / totalExpenseAmount) * 100) : 0,
     }))
     .sort((a, b) => b.amount - a.amount);
@@ -278,9 +281,9 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   else if (currentNet < prevNet) trend = 'down';
 
   const cashFlow: CashFlowData = {
-    income: Math.round(currentData.income * 100) / 100,
-    expenses: Math.round(currentData.expenses * 100) / 100,
-    net: Math.round(currentNet * 100) / 100,
+    income: round2(currentData.income),
+    expenses: round2(currentData.expenses),
+    net: round2(currentNet),
     trend,
   };
 
@@ -370,7 +373,7 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     expenseCategories,
     cashFlow,
     deadlines,
-    totalRevenue: Math.round(totalRevenue * 100) / 100,
+    totalRevenue: round2(totalRevenue),
     revenueTrend,
   };
 }

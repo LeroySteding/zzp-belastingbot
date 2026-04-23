@@ -3,6 +3,13 @@
 import { createClient } from '@/lib/supabase/server';
 
 // ============================================
+// HELPERS
+// ============================================
+
+/** Round a number to 2 decimal places for consistent currency formatting. */
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+// ============================================
 // TYPES
 // ============================================
 
@@ -10,6 +17,7 @@ export interface MonthlyData {
   month: number;
   monthName: string;
   income: number;
+  pendingRevenue: number;
   expenses: number;
   profit: number;
   btwOutput: number;
@@ -22,9 +30,10 @@ export interface MonthlyData {
 export interface FinancialOverview {
   year: number;
   months: MonthlyData[];
-  yearTotal: { income: number; expenses: number; profit: number; btw: number };
+  yearTotal: { income: number; pendingRevenue: number; expenses: number; profit: number; btw: number };
   forecast: MonthlyData[];
   expensesByCategory: { category: string; amount: number }[];
+  korActive: boolean;
 }
 
 const MONTH_NAMES = [
@@ -43,15 +52,27 @@ export async function getFinancialOverview(year: number): Promise<FinancialOverv
   const emptyOverview: FinancialOverview = {
     year,
     months: [],
-    yearTotal: { income: 0, expenses: 0, profit: 0, btw: 0 },
+    yearTotal: { income: 0, pendingRevenue: 0, expenses: 0, profit: 0, btw: 0 },
     forecast: [],
     expensesByCategory: [],
+    korActive: false,
   };
 
   if (!user) return emptyOverview;
 
-  // Fetch paid invoices for the year
-  const { data: invoices } = await supabase
+  // Check KOR (Kleineondernemersregeling) status from profile.
+  // kor_enabled is a boolean column added via migration 20240103000000_advanced_features.
+  // If the profile or field does not exist, default to false.
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('kor_enabled')
+    .eq('id', user.id)
+    .single();
+
+  const korEnabled: boolean = profile?.kor_enabled ?? false;
+
+  // Fetch paid invoices (recognized revenue) for the year
+  const { data: paidInvoices } = await supabase
     .from('invoices')
     .select(`
       id, date, status, subtotal, total_btw, total,
@@ -60,7 +81,18 @@ export async function getFinancialOverview(year: number): Promise<FinancialOverv
     .eq('user_id', user.id)
     .gte('date', `${year}-01-01`)
     .lte('date', `${year}-12-31`)
-    .in('status', ['betaald', 'verzonden']);
+    .in('status', ['betaald']);
+
+  // Fetch sent-but-unpaid invoices (pending revenue / openstaand)
+  const { data: pendingInvoices } = await supabase
+    .from('invoices')
+    .select(`
+      id, date, status, subtotal, total_btw, total
+    `)
+    .eq('user_id', user.id)
+    .gte('date', `${year}-01-01`)
+    .lte('date', `${year}-12-31`)
+    .in('status', ['verzonden']);
 
   // Fetch expenses for the year
   const { data: expenses } = await supabase
@@ -76,6 +108,7 @@ export async function getFinancialOverview(year: number): Promise<FinancialOverv
       month: m,
       monthName: MONTH_NAMES[m - 1],
       income: 0,
+      pendingRevenue: 0,
       expenses: 0,
       profit: 0,
       btwOutput: 0,
@@ -86,14 +119,23 @@ export async function getFinancialOverview(year: number): Promise<FinancialOverv
     };
   }
 
-  // Aggregate invoice income by month
-  if (invoices) {
-    for (const inv of invoices) {
+  // Aggregate paid invoice income by month (recognized revenue)
+  if (paidInvoices) {
+    for (const inv of paidInvoices) {
       const month = new Date(inv.date).getMonth() + 1;
       const md = monthlyMap[month];
       md.income += Number(inv.subtotal) || 0;
       md.btwOutput += Number(inv.total_btw) || 0;
       md.invoiceCount += 1;
+    }
+  }
+
+  // Aggregate pending (verzonden) invoices as openstaand revenue
+  if (pendingInvoices) {
+    for (const inv of pendingInvoices) {
+      const month = new Date(inv.date).getMonth() + 1;
+      const md = monthlyMap[month];
+      md.pendingRevenue += Number(inv.subtotal) || 0;
     }
   }
 
@@ -112,14 +154,31 @@ export async function getFinancialOverview(year: number): Promise<FinancialOverv
     }
   }
 
+  // Determine KOR active status: enabled in profile AND yearly revenue < 20000
+  const yearlyIncomeRaw = Object.values(monthlyMap).reduce((s, md) => s + md.income, 0);
+  const korActive = korEnabled && yearlyIncomeRaw < 20000;
+
   // Calculate profit and BTW balance per month
   const currentMonth = new Date().getFullYear() === year ? new Date().getMonth() + 1 : 12;
   const actualMonths: MonthlyData[] = [];
 
   for (let m = 1; m <= 12; m++) {
     const md = monthlyMap[m];
-    md.profit = md.income - md.expenses;
-    md.btwBalance = md.btwOutput - md.btwInput;
+
+    // KOR users don't charge or reclaim BTW
+    if (korActive) {
+      md.btwOutput = 0;
+      md.btwInput = 0;
+    }
+
+    md.profit = round2(md.income - md.expenses);
+    md.btwBalance = round2(md.btwOutput - md.btwInput);
+    md.income = round2(md.income);
+    md.pendingRevenue = round2(md.pendingRevenue);
+    md.expenses = round2(md.expenses);
+    md.btwOutput = round2(md.btwOutput);
+    md.btwInput = round2(md.btwInput);
+
     if (m <= currentMonth) {
       actualMonths.push(md);
     }
@@ -127,10 +186,11 @@ export async function getFinancialOverview(year: number): Promise<FinancialOverv
 
   // Calculate year totals (actual months only)
   const yearTotal = {
-    income: actualMonths.reduce((s, m) => s + m.income, 0),
-    expenses: actualMonths.reduce((s, m) => s + m.expenses, 0),
-    profit: actualMonths.reduce((s, m) => s + m.profit, 0),
-    btw: actualMonths.reduce((s, m) => s + m.btwBalance, 0),
+    income: round2(actualMonths.reduce((s, m) => s + m.income, 0)),
+    pendingRevenue: round2(actualMonths.reduce((s, m) => s + m.pendingRevenue, 0)),
+    expenses: round2(actualMonths.reduce((s, m) => s + m.expenses, 0)),
+    profit: round2(actualMonths.reduce((s, m) => s + m.profit, 0)),
+    btw: round2(actualMonths.reduce((s, m) => s + m.btwBalance, 0)),
   };
 
   // Forecasting: average of last 3 actual months, project forward
@@ -139,6 +199,8 @@ export async function getFinancialOverview(year: number): Promise<FinancialOverv
     const lookback = actualMonths.slice(-3);
     const avgIncome = lookback.length > 0
       ? lookback.reduce((s, m) => s + m.income, 0) / lookback.length : 0;
+    const avgPendingRevenue = lookback.length > 0
+      ? lookback.reduce((s, m) => s + m.pendingRevenue, 0) / lookback.length : 0;
     const avgExpenses = lookback.length > 0
       ? lookback.reduce((s, m) => s + m.expenses, 0) / lookback.length : 0;
     const avgBtwOutput = lookback.length > 0
@@ -150,12 +212,13 @@ export async function getFinancialOverview(year: number): Promise<FinancialOverv
       forecast.push({
         month: m,
         monthName: MONTH_NAMES[m - 1],
-        income: Math.round(avgIncome * 100) / 100,
-        expenses: Math.round(avgExpenses * 100) / 100,
-        profit: Math.round((avgIncome - avgExpenses) * 100) / 100,
-        btwOutput: Math.round(avgBtwOutput * 100) / 100,
-        btwInput: Math.round(avgBtwInput * 100) / 100,
-        btwBalance: Math.round((avgBtwOutput - avgBtwInput) * 100) / 100,
+        income: round2(avgIncome),
+        pendingRevenue: round2(avgPendingRevenue),
+        expenses: round2(avgExpenses),
+        profit: round2(avgIncome - avgExpenses),
+        btwOutput: round2(avgBtwOutput),
+        btwInput: round2(avgBtwInput),
+        btwBalance: round2(avgBtwOutput - avgBtwInput),
         invoiceCount: 0,
         expenseCount: 0,
       });
@@ -163,7 +226,7 @@ export async function getFinancialOverview(year: number): Promise<FinancialOverv
   }
 
   const expensesByCategory = Object.entries(categoryTotals)
-    .map(([category, amount]) => ({ category, amount: Math.round(amount * 100) / 100 }))
+    .map(([category, amount]) => ({ category, amount: round2(amount) }))
     .sort((a, b) => b.amount - a.amount);
 
   return {
@@ -172,6 +235,7 @@ export async function getFinancialOverview(year: number): Promise<FinancialOverv
     yearTotal,
     forecast,
     expensesByCategory,
+    korActive,
   };
 }
 
