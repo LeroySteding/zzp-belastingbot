@@ -9,8 +9,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Clock, Euro, TrendingUp, AlertCircle, Loader2, Briefcase, Download } from 'lucide-react';
+import { Plus, Clock, Euro, TrendingUp, AlertCircle, Briefcase, Download } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Skeleton, ProjectCardsSkeleton } from '@/components/ui/skeleton';
 import { getUrenProjects, getUrenClients, getTimeEntries, calculateProjectStats, createProject } from '@/lib/uren/actions';
 import type { UrenProject, UrenClient, UrenTimeEntry, UrenProjectStats } from '@/lib/uren/actions';
 import Link from 'next/link';
@@ -84,8 +85,14 @@ export default function ProjectsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-8">
+            <Skeleton className="h-9 w-48" />
+            <Skeleton className="h-4 w-72 mt-2" />
+          </div>
+          <ProjectCardsSkeleton count={6} />
+        </div>
       </div>
     );
   }

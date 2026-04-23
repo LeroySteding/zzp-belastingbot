@@ -29,6 +29,7 @@ import {
   Legend,
 } from 'recharts';
 import { formatCurrency } from '@/lib/utils';
+import { Skeleton, FinancialsSkeleton } from '@/components/ui/skeleton';
 import {
   getFinancialOverview,
   exportFinancialCSV,
@@ -167,11 +168,13 @@ export default function FinancialsPage() {
 
   if (loading) {
     return (
-      <div className="animate-fade-in flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">
-          Financieel overzicht laden...
-        </span>
+      <div className="animate-fade-in space-y-8">
+        <div>
+          <Skeleton className="h-4 w-40 mb-2" />
+          <Skeleton className="h-8 w-56" />
+          <Skeleton className="h-4 w-72 mt-1" />
+        </div>
+        <FinancialsSkeleton />
       </div>
     );
   }

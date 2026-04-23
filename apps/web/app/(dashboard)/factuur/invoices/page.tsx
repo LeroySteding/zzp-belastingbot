@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Download, Copy, Trash2, FileText, Loader2, RotateCcw, LinkIcon, CheckCircle2 } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
+import { TableSkeleton } from '@/components/ui/skeleton';
 import { formatCurrency, formatDate, getInvoiceTotal } from '@/lib/factuur/invoice-utils';
 import { Invoice, InvoiceStatus } from '@/lib/factuur/types/invoice';
 import { getInvoices, deleteInvoiceAction, duplicateInvoiceAction } from '@/lib/factuur/actions';
@@ -219,9 +220,8 @@ export default function InvoicesPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-                <span className="ml-2 text-gray-500">Facturen laden...</span>
+              <div className="py-4">
+                <TableSkeleton rows={5} />
               </div>
             ) : (
               <Table>

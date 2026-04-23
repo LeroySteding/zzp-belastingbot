@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/dialog'
 import { Plus, Pencil, Trash2, Receipt, FileText, Download, Loader2, ScanLine } from 'lucide-react'
 import { EmptyState } from '@/components/ui/empty-state'
+import { ExpensesListSkeleton } from '@/components/ui/skeleton'
 import { getExpenses, deleteExpense } from '@/lib/belasting/actions'
 import type { Expense } from '@/lib/belasting/types'
 import { EXPENSE_CATEGORIES } from '@/lib/types/index'
@@ -178,9 +179,7 @@ export default function ExpensesPage() {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-          </div>
+          <ExpensesListSkeleton />
         ) : (
           <>
             {/* BTW Summary */}

@@ -11,7 +11,6 @@ import {
   Play,
   PlusCircle,
   CalendarClock,
-  Loader2,
   Sparkles,
   TrendingUp,
   TrendingDown,
@@ -36,6 +35,7 @@ import {
   Cell,
 } from 'recharts'
 import { formatCurrency } from '@/lib/utils'
+import { Skeleton, DashboardSkeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { getInvoices } from '@/lib/factuur/actions'
 import { getTimeEntries, getUrenProjects } from '@/lib/uren/actions'
@@ -208,9 +208,12 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="animate-fade-in flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">Dashboard laden...</span>
+      <div className="animate-fade-in space-y-8">
+        <div>
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-4 w-64 mt-2" />
+        </div>
+        <DashboardSkeleton />
       </div>
     )
   }
