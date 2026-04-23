@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { renderToBuffer } from '@react-pdf/renderer';
 import React from 'react';
-import { InvoicePDF } from '@/components/factuur/InvoicePDF';
+import { InvoicePDFTemplate } from '@/lib/factuur/pdf/invoice-template';
 import { Invoice } from '@/lib/factuur/types/invoice';
 import { createPaymentLink } from '@/lib/factuur/payment-actions';
 import { sendEmail } from '@/lib/email/send';
@@ -45,11 +45,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate the PDF buffer using the shared InvoicePDF component
-    const pdfBuffer = await renderToBuffer(
-      React.createElement(InvoicePDF, { invoice }) as any
-    );
-
     // Try to create a Mollie payment link (will return null if Mollie is not configured)
     // Respects the user's "add_payment_link_to_emails" setting
     let paymentUrl: string | null = null;
@@ -64,6 +59,15 @@ export async function POST(request: NextRequest) {
         console.warn('Kon geen Mollie betaallink aanmaken:', e);
       }
     }
+
+    // Generate the PDF buffer using the InvoicePDFTemplate component
+    // Payment URL is included in the PDF if available
+    const pdfBuffer = await renderToBuffer(
+      React.createElement(InvoicePDFTemplate, {
+        invoice,
+        paymentUrl: paymentUrl || undefined,
+      }) as any
+    );
 
     // Calculate total for the template
     const total = invoice.items.reduce(

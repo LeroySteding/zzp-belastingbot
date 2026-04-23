@@ -7,13 +7,13 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, FileText, Loader2, FileCheck, Send, XCircle, Clock, CheckCircle } from 'lucide-react';
+import { Plus, Trash2, FileText, Loader2, FileCheck, Send, XCircle, Clock, CheckCircle, Download } from 'lucide-react';
 import { EmptyState } from '@/components/ui/empty-state';
 import { formatCurrency, formatDate } from '@/lib/factuur/invoice-utils';
 import { getOffertes, deleteOfferte, type Offerte, type OfferteStatus } from '@/lib/offerte/actions';
 
 const statusColors: Record<string, string> = {
-  concept: 'bg-gray-100 text-gray-800',
+  concept: 'bg-muted text-foreground',
   verzonden: 'bg-blue-100 text-blue-800',
   geaccepteerd: 'bg-green-100 text-green-800',
   afgewezen: 'bg-red-100 text-red-800',
@@ -48,6 +48,34 @@ export default function OffertesPage() {
     ? offertes
     : offertes.filter(off => off.status === statusFilter);
 
+  const [downloading, setDownloading] = useState<string | null>(null);
+
+  const handleDownload = async (offerte: Offerte) => {
+    setDownloading(offerte.id);
+    try {
+      const response = await fetch(`/api/factuur/pdf?id=${offerte.id}&type=offerte`);
+
+      if (!response.ok) {
+        throw new Error('PDF generatie mislukt');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `offerte-${offerte.offerteNumber}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Er is een fout opgetreden bij het downloaden van de PDF.');
+    } finally {
+      setDownloading(null);
+    }
+  };
+
   const handleDelete = async (offerte: Offerte) => {
     if (confirm(`Weet je zeker dat je offerte ${offerte.offerteNumber} wilt verwijderen?`)) {
       const success = await deleteOfferte(offerte.id);
@@ -67,16 +95,16 @@ export default function OffertesPage() {
     .reduce((sum, off) => sum + off.total, 0);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/50">
       {/* Header */}
-      <header className="bg-white border-b">
+      <header className="bg-card border-b">
         <div className="container mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div className="flex items-center gap-4">
             <Link href="/factuur" className="flex items-center gap-2">
               <FileText className="h-6 w-6 text-blue-600" />
               <span className="font-bold text-lg">ZZP Factuur</span>
             </Link>
-            <span className="text-gray-300 hidden sm:inline">|</span>
+            <span className="text-border hidden sm:inline">|</span>
             <h1 className="text-xl sm:text-2xl font-bold">Offertes</h1>
           </div>
           <div className="flex gap-2 flex-wrap">
@@ -98,31 +126,31 @@ export default function OffertesPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Clock className="h-4 w-4" />
                 Concepten
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-gray-600">{conceptCount}</div>
-              <p className="text-sm text-gray-600 mt-1">nog te verzenden</p>
+              <div className="text-3xl font-bold text-muted-foreground">{conceptCount}</div>
+              <p className="text-sm text-muted-foreground mt-1">nog te verzenden</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Send className="h-4 w-4" />
                 Verzonden
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-blue-600">{verzondenCount}</div>
-              <p className="text-sm text-gray-600 mt-1">{formatCurrency(openTotal)} openstaand</p>
+              <p className="text-sm text-muted-foreground mt-1">{formatCurrency(openTotal)} openstaand</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <CheckCircle className="h-4 w-4" />
                 Geaccepteerd
               </CardTitle>
@@ -131,21 +159,21 @@ export default function OffertesPage() {
               <div className="text-3xl font-bold text-green-600">
                 {formatCurrency(geaccepteerdTotal)}
               </div>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {offertes.filter(off => off.status === 'geaccepteerd').length} offertes
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <FileCheck className="h-4 w-4" />
                 Totaal
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{offertes.length}</div>
-              <p className="text-sm text-gray-600 mt-1">offertes dit jaar</p>
+              <p className="text-sm text-muted-foreground mt-1">offertes dit jaar</p>
             </CardContent>
           </Card>
         </div>
@@ -156,7 +184,7 @@ export default function OffertesPage() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <CardTitle>Alle Offertes</CardTitle>
               <div className="flex gap-2 sm:gap-4 items-center">
-                <span className="text-sm text-gray-600 hidden sm:inline">Filter op status:</span>
+                <span className="text-sm text-muted-foreground hidden sm:inline">Filter op status:</span>
                 <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as any)}>
                   <SelectTrigger className="w-36 sm:w-44">
                     <SelectValue />
@@ -176,8 +204,8 @@ export default function OffertesPage() {
           <CardContent>
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-                <span className="ml-2 text-gray-500">Offertes laden...</span>
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-muted-foreground">Offertes laden...</span>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -198,7 +226,7 @@ export default function OffertesPage() {
                     <TableRow>
                       <TableCell colSpan={7}>
                         {statusFilter !== 'all' ? (
-                          <div className="text-center py-8 text-gray-500">Geen offertes met deze status</div>
+                          <div className="text-center py-8 text-muted-foreground">Geen offertes met deze status</div>
                         ) : (
                           <EmptyState
                             icon={FileCheck}
@@ -239,6 +267,19 @@ export default function OffertesPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDownload(offerte)}
+                              disabled={downloading === offerte.id}
+                              aria-label="Download PDF"
+                            >
+                              {downloading === offerte.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                              ) : (
+                                <Download className="h-4 w-4" aria-hidden="true" />
+                              )}
+                            </Button>
                             <Button
                               variant="ghost"
                               size="sm"

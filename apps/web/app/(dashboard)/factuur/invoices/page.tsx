@@ -16,7 +16,7 @@ import { getInvoices, deleteInvoiceAction, duplicateInvoiceAction } from '@/lib/
 import { getOrCreatePaymentLink, isMollieConfigured } from '@/lib/factuur/payment-actions';
 
 const statusColors: Record<string, string> = {
-  concept: 'bg-gray-100 text-gray-800',
+  concept: 'bg-muted text-foreground',
   verzonden: 'bg-blue-100 text-blue-800',
   betaald: 'bg-green-100 text-green-800',
 };
@@ -90,11 +90,7 @@ export default function InvoicesPage() {
   const handleDownload = async (invoice: Invoice) => {
     setDownloading(invoice.id);
     try {
-      const response = await fetch('/api/factuur/pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(invoice),
-      });
+      const response = await fetch(`/api/factuur/pdf?id=${invoice.id}&type=invoice`);
 
       if (!response.ok) {
         throw new Error('PDF generatie mislukt');
@@ -104,7 +100,7 @@ export default function InvoicesPage() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${invoice.invoiceNumber}.pdf`;
+      a.download = `factuur-${invoice.invoiceNumber}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -128,16 +124,16 @@ export default function InvoicesPage() {
   const draftCount = invoices.filter(inv => inv.status === 'concept').length;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-muted/50">
       {/* Header */}
-      <header className="bg-white border-b">
+      <header className="bg-card border-b">
         <div className="container mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div className="flex items-center gap-4">
             <Link href="/dashboard" className="flex items-center gap-2">
               <FileText className="h-6 w-6 text-blue-600" />
               <span className="font-bold text-lg">ZZP Factuur</span>
             </Link>
-            <span className="text-gray-300 hidden sm:inline">|</span>
+            <span className="text-border hidden sm:inline">|</span>
             <h1 className="text-xl sm:text-2xl font-bold">Facturen</h1>
           </div>
           <div className="flex gap-2 flex-wrap">
@@ -166,33 +162,33 @@ export default function InvoicesPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Totaal Verzonden</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Totaal Verzonden</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{formatCurrency(sentTotal)}</div>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {invoices.filter(inv => inv.status === 'verzonden').length} facturen
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Totaal Betaald</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Totaal Betaald</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-green-600">{formatCurrency(paidTotal)}</div>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-muted-foreground mt-1">
                 {invoices.filter(inv => inv.status === 'betaald').length} facturen
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Concepten</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Concepten</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-gray-600">{draftCount}</div>
-              <p className="text-sm text-gray-600 mt-1">nog te verzenden</p>
+              <div className="text-3xl font-bold text-muted-foreground">{draftCount}</div>
+              <p className="text-sm text-muted-foreground mt-1">nog te verzenden</p>
             </CardContent>
           </Card>
         </div>
@@ -203,7 +199,7 @@ export default function InvoicesPage() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <CardTitle>Alle Facturen</CardTitle>
               <div className="flex gap-2 sm:gap-4 items-center">
-                <span className="text-sm text-gray-600 hidden sm:inline">Filter op status:</span>
+                <span className="text-sm text-muted-foreground hidden sm:inline">Filter op status:</span>
                 <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as any)}>
                   <SelectTrigger className="w-36 sm:w-40">
                     <SelectValue />
@@ -242,7 +238,7 @@ export default function InvoicesPage() {
                     <TableRow>
                       <TableCell colSpan={7}>
                         {statusFilter !== 'all' ? (
-                          <div className="text-center py-8 text-gray-500">Geen facturen met deze status</div>
+                          <div className="text-center py-8 text-muted-foreground">Geen facturen met deze status</div>
                         ) : (
                           <EmptyState
                             icon={FileText}
